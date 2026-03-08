@@ -205,7 +205,7 @@ tr:hover td{background:#faf8f5}
 <aside class="sidebar">
   <div class="logo">
     <h1>Zeit<span>.</span>NBS</h1>
-    <small>NBS GmbH</small>
+    <small>§ 26 AZG · NBS GmbH</small>
   </div>
   <div class="user-pill">
     <div class="up-av" id="nav-av"></div>
@@ -213,7 +213,7 @@ tr:hover td{background:#faf8f5}
     <button class="logout-btn" onclick="logout()" title="Abmelden">⏏</button>
   </div>
   <nav id="main-nav"></nav>
-  <div class="sidebar-foot">NBS GmbH</div>
+  <div class="sidebar-foot">§ 26 AZG · § 132 BAO · NBS GmbH</div>
 </aside>
 
 <main class="main" id="main-content">
@@ -262,10 +262,17 @@ tr:hover td{background:#faf8f5}
     </div>
   </div>
 
+  <div class="law"><h4>⚖️ AZG Österreich</h4>
+    <ul>
+      <li>Max. <b>8 Std./Tag, 40 Std./Woche</b> · absolutes Maximum: 12 Std./Tag, 60 Std./Woche</li>
+      <li>Pflichtpause: <b>nach 6 Std. = mind. 30 Min.</b> · Tägliche Ruhezeit: mind. 11 Std.</li>
+      <li>Überstunden ab 9. Std./Tag oder 41. Std./Woche · 50% Zuschlag oder 1,5× ZA</li>
+    </ul>
+  </div>
   <div class="sr" id="db-stats"></div>
   <div class="g2">
     <div class="card"><div class="ch"><h3>📍 Aktiv eingestempelt</h3></div><div class="cb" id="db-active"></div></div>
-    <div class="card"><div class="ch"><h3>📊 Heute im Büro</h3></div><div class="cb" id="db-warns"></div></div>
+    <div class="card"><div class="ch"><h3>⚠️ AZG-Warnungen heute</h3></div><div class="cb" id="db-warns"></div></div>
   </div>
   <div class="card mt2"><div class="ch"><h3>🌴 Offene Urlaubsansuchen</h3><span id="pending-count"></span></div><div class="cb" style="padding:0" id="db-pending"></div></div>
 </div>
@@ -287,7 +294,7 @@ tr:hover td{background:#faf8f5}
 
 <!-- STEMPELUHR -->
 <div id="page-stempel" class="page">
-  <div class="ph"><div><h2>Stempeluhr</h2><p>Kommen · Gehen · Pause</p></div></div>
+  <div class="ph"><div><h2>Stempeluhr</h2><p>Kommen · Gehen · Pause</p></div><span class="tag-azg">§ 26 AZG</span></div>
   <div class="sbar">
     <div><div class="scl" id="live-clock">00:00:00</div><div style="font-size:11px;color:rgba(255,255,255,.4)" id="live-date"></div></div>
     <div style="flex:1;min-width:180px" id="stamp-emp-wrap">
@@ -316,10 +323,10 @@ tr:hover td{background:#faf8f5}
   </div>
     <div id="stamp-warn" class="alert aw" style="display:none"><span>⚠️</span><span id="stamp-warn-txt"></span></div>
   <div class="card"><div class="ch"><h3>Heutige Einträge</h3></div>
-    <div class="cb" style="padding:0"><table><thead><tr><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Dauer</th><th>Status</th><th></th></tr></thead><tbody id="today-tbody"></tbody></table></div>
+    <div class="cb" style="padding:0"><table><thead><tr><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Dauer</th><th>Status</th><th>AZG</th><th></th></tr></thead><tbody id="today-tbody"></tbody></table></div>
   </div>
   <div class="card mt2">
-    <div class="ch"><h3>✏️ Manuell nachtragen</h3></div>
+    <div class="ch"><h3>✏️ Manuell nachtragen</h3><span class="tm ts">§ 26 AZG erlaubt Nachträge</span></div>
     <div class="cb">
       <div class="fr c4">
         <div id="manual-emp-wrap"><label>Mitarbeiter</label><select id="m-emp"><option value="">—</option></select></div>
@@ -435,7 +442,7 @@ tr:hover td{background:#faf8f5}
 
 <!-- MONATSÜBERSICHT -->
 <div id="page-monatsansicht" class="page">
-  <div class="ph"><div><h2>Monatsübersicht</h2><p>Arbeitszeitnachweis</p></div>
+  <div class="ph"><div><h2>Monatsübersicht</h2><p>Arbeitszeitnachweis · § 26 AZG</p></div>
     <div class="flex" style="flex-wrap:wrap;gap:8px">
       <input type="text" id="mv-search" placeholder="🔍 Mitarbeiter suchen…" oninput="renderMonthView()" style="width:180px">
       <select id="mv-emp" onchange="renderMonthView()" style="width:180px"></select>
@@ -445,31 +452,37 @@ tr:hover td{background:#faf8f5}
     </div>
   </div>
   <div id="mv-signed-banner" style="display:none;margin-bottom:14px"></div>
-  <div class="alert ai" style="font-size:12px;margin-bottom:16px"><span>ℹ️</span>Bitte monatlich die Stunden kontrollieren und bestätigen.</div>
+  <div class="alert ai" style="font-size:12px;margin-bottom:16px"><span>ℹ️</span><b>§ 26 Abs. 2 AZG:</b> Arbeitgeber muss Aufzeichnungen nach Ende der Entgeltzahlungsperiode kontrollieren und bestätigen.</div>
   <div class="card" id="mv-summary-card" style="margin-bottom:14px;display:none">
     <div class="cb" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" id="mv-summary"></div>
   </div>
   <div class="card"><div class="cb" style="padding:0">
-    <table><thead><tr><th>Datum</th><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Ist</th><th>Soll</th><th>Saldo</th><th></th></tr></thead>
+    <table><thead><tr><th>Datum</th><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Ist</th><th>Soll</th><th>Saldo</th><th>AZG</th><th></th></tr></thead>
     <tbody id="mv-tbody"></tbody></table>
   </div></div>
 </div>
 
 <!-- ÜBERSTUNDEN -->
 <div id="page-ueberstunden" class="page">
-  <div class="ph"><div><h2>Überstunden</h2><p>Auswertung</p></div>
+  <div class="ph"><div><h2>Überstunden</h2><p>Berechnung nach AZG</p></div>
     <select id="ot-emp" onchange="renderOT()" style="width:200px"><option value="alle">Alle Mitarbeiter</option></select>
+  </div>
+  <div class="law"><h4>⚖️ AZG</h4>
+    <ul>
+      <li>Überstunden ab <b>9. Std./Tag</b> oder <b>41. Std./Woche</b> · Zuschlag: <b>50%</b> oder 1,5× Zeitausgleich</li>
+      <li>Anja Mayer: Teilzeit <b>25 Std./Woche</b> · Mehrstunden bis 8. Std./Tag ohne Zuschlag · Stundenlohn: € 15,-</li>
+    </ul>
   </div>
   <div class="sr" id="ot-stats"></div>
   <div class="card"><div class="cb" style="padding:0">
-    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>Überstunden</th><th>Mehrstunden</th><th>Max. Tag</th></tr></thead>
+    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>Überstunden</th><th>Mehrstunden</th><th>Max. Tag</th><th>AZG</th></tr></thead>
     <tbody id="ot-tbody"></tbody></table>
   </div></div>
 </div>
 
 <!-- EXPORT -->
 <div id="page-export" class="page">
-  <div class="ph"><div><h2>Export & Stundenzettel</h2><p>Daten exportieren</p></div></div>
+  <div class="ph"><div><h2>Export & Stundenzettel</h2><p>§ 26 AZG · § 132 BAO · Betriebsprüfung</p></div></div>
   <div style="background:#fff;border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px">
     <div class="card" style="margin-bottom:18px"><div class="ch"><h3>📥 Stunden importieren</h3></div><div class="cb">
     <p style="font-size:13px;color:var(--ink2);margin:0 0 14px">Vergangene Monate (z.B. Jänner/Februar) aus CSV-Datei importieren.</p>
@@ -489,7 +502,7 @@ tr:hover td{background:#faf8f5}
     </div>
   </div>
 
-
+    <div class="alert ai" style="margin-bottom:16px"><span>ℹ️</span>Aufbewahrungspflicht: <b>mind. 1 Jahr</b> (AZG) · steuerrechtlich <b>7 Jahre</b> (§ 132 BAO)</div>
   <div class="g3">
     <div class="card"><div class="ch"><h3>📊 Monats-Excel</h3></div><div class="cb">
       <p class="tm ts" style="margin-bottom:12px">Vollständiger Monatsbericht als Excel für die Betriebsprüfung</p>
@@ -503,7 +516,7 @@ tr:hover td{background:#faf8f5}
       <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doExportCSV()">⬇️ CSV herunterladen</button>
     </div></div>
     <div class="card"><div class="ch"><h3>📄 Stundenzettel</h3></div><div class="cb">
-      <p class="tm ts" style="margin-bottom:12px">Monatsnachweis mit Unterschriftsfeld</p>
+      <p class="tm ts" style="margin-bottom:12px">Gesetzlich konformer Nachweis mit Unterschriftsfeld (§ 26 AZG)</p>
       <div class="fr"><div><label>Mitarbeiter</label><select id="prt-emp"></select></div></div>
       <div class="fr"><div><label>Monat</label><input type="month" id="prt-month"></div></div>
       <button class="btn btn-s" style="width:100%;justify-content:center" onclick="printZettel()">🖨️ Stundenzettel drucken</button>
@@ -1031,7 +1044,7 @@ const isAdmin = () => currentUser && currentUser.type==='admin';
 
 function azgCheck(workMin,breakMin){
   const w=[];
-  if(workMin>12*60)w.push({l:'danger',msg:'Tagesarbeitszeit > 12 Std.'});
+  if(workMin>12*60)w.push({l:'danger',msg:'Tagesarbeitszeit > 12 Std. (AZG-Maximum!)'});
   else if(workMin>10*60)w.push({l:'warn',msg:'Tagesarbeitszeit > 10 Std.'});
   if(workMin+breakMin>6*60&&breakMin<30)w.push({l:'danger',msg:'Pflichtpause nach 6h nicht eingehalten (mind. 30 Min.)'});
   return w;
@@ -1203,7 +1216,7 @@ async function doGehen(){
   entries.push(newGEntry);
   delete activeStamps[id];
   try{ const nid=await dbSaveEntry({...newGEntry,_new:true}); newGEntry.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);}
-  if(warns.length){const w=document.getElementById('stamp-warn');w.style.display='flex';document.getElementById('stamp-warn-txt').textContent=warns.map(x=>x.msg).join(' · ');}
+  if(warns.length){const w=document.getElementById('stamp-warn');w.style.display='flex';document.getElementById('stamp-warn-txt').textContent='AZG: '+warns.map(x=>x.msg).join(' · ');}
   updateStampStatus();renderTodayTable();
   // Stimmungsbarometer anzeigen (nur wenn Mitarbeiter für sich selbst ausstempelt)
   if(!isAdmin() || id === currentUser.empId){
@@ -1430,7 +1443,7 @@ function renderEmpDashboard(){
   // My requests
   const myReqs=absences.filter(a=>a.empId===emp.id).slice(-5).reverse();
   const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌',urlaub_genossen:'✔️'};
-  document.getElementById('emp-requests').innerHTML=myReqs.length?`<table><thead><tr><th>Art</th><th>Von</th><th>Bis</th><th>Status</th></tr></thead><tbody>${myReqs.map(a=>`<tr><td>${absTypeLabel[a.type]||a.type}</td><td>${a.from}</td><td>${a.to}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${absStatusLabel[a.status]||a.status}</span>;
+  document.getElementById('emp-requests').innerHTML=myReqs.length?`<table><thead><tr><th>Art</th><th>Von</th><th>Bis</th><th>Status</th></tr></thead><tbody>${myReqs.map(a=>`<tr><td>${absTypeLabel[a.type]||a.type}</td><td>${a.from}</td><td>${a.to}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${absStatusLabel[a.status]||a.status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">Keine Ansuchen</div>';
 }
 
 // ══ VACATION REQUEST (Employee) ══
@@ -1762,7 +1775,7 @@ function renderMonthView(){
   const sigKeys=Object.keys(signatures).filter(k=>k.endsWith('_'+mv)&&(empF==='alle'||k.startsWith(empF+'_')));
   if(sigKeys.length){
     banner.style.display='block';
-    banner.innerHTML=sigKeys.map(k=>{const s=signatures[k];const eid=parseInt(k.split('_')[0]);return`<div class="alert as" style="margin-bottom:6px"><span>✅</span><b>${empName(eid)}</b> — Monat ${mv} bestätigt am <b>${s.date}</b> von <b>${s.by}</b></div>`;}).join('');
+    banner.innerHTML=sigKeys.map(k=>{const s=signatures[k];const eid=parseInt(k.split('_')[0]);return`<div class="alert as" style="margin-bottom:6px"><span>✅</span><b>${empName(eid)}</b> — Monat ${mv} bestätigt am <b>${s.date}</b> von <b>${s.by}</b> <span class="tag-azg">§ 26 AZG</span></div>`;}).join('');
   } else {banner.style.display='none';}
   const tbody=document.getElementById('mv-tbody');
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge</td></tr>';document.getElementById('mv-summary-card').style.display='none';return;}
@@ -1805,7 +1818,7 @@ async function signMonth(){
   }
   renderMonthView();
   const names=empList.map(e=>e.first+' '+e.last).join(', ');
-  if(confirm(`✅ Monat ${mv} bestätigt für: ${names}\n\nDatum: ${dateStr}\n\nBestätigung jetzt herunterladen?`)){
+  if(confirm(`✅ Monat ${mv} bestätigt für: ${names}\n\nDatum: ${dateStr}\n§ 26 Abs. 2 AZG: Arbeitgeberkontrolle durchgeführt.\n\nBestätigung jetzt herunterladen?`)){
     downloadSignaturePDF(mv,empList,dateStr,byName);
   }
 }
@@ -1823,9 +1836,9 @@ function downloadSignaturePDF(mv,empList,dateStr,byName){
   <style>body{font-family:Arial,sans-serif;margin:40px;color:#222}h1{font-size:20px;margin-bottom:4px}h2{font-size:15px;color:#666;font-weight:normal;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-bottom:24px}th{background:#f5f5f5;padding:8px 12px;text-align:left;border-bottom:2px solid #ddd;font-size:13px}td{font-size:13px}.footer{font-size:11px;color:#888;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}.sig{margin-top:40px;display:flex;gap:60px}.sig-box{flex:1;border-top:1px solid #222;padding-top:8px;font-size:12px}</style></head>
   <body>
   <h1>NBS GmbH — Arbeitszeitnachweis</h1>
-  <h2>${monName} </h2>
+  <h2>${monName} · § 26 Abs. 2 AZG</h2>
   <table><thead><tr><th>Mitarbeiter/in</th><th style="text-align:center">Einträge</th><th style="text-align:center">Gesamtstunden</th><th style="text-align:center">Bestätigt</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="footer">Bestätigt am ${dateStr} von ${byName}<br>Die Arbeitszeit wurde überprüft und bestätigt.</div>
+  <div class="footer">Bestätigt am ${dateStr} von ${byName}<br>Gemäß § 26 Abs. 2 AZG wurde die Aufzeichnung der Arbeitszeit überprüft und bestätigt.</div>
   <div class="sig"><div class="sig-box">Ort, Datum</div><div class="sig-box">Unterschrift Arbeitgeber/in (${byName})</div></div>
   
 <!-- IMPORT MODAL -->
@@ -1873,7 +1886,7 @@ function exportMonthToCSV(month,empId){
   let csv='\uFEFF';
   csv+=`NBS GmbH — Monatsbericht Zeiterfassung ${mName}\n`;
   csv+=`Exportiert am;${new Date().toLocaleDateString('de-AT')}\n`;
-  csv+=``;
+  csv+=`Gemäß;§ 26 AZG · Aufbewahrungspflicht § 132 BAO 7 Jahre\n\n`;
   csv+=`Mitarbeiter;Datum;Wochentag;Typ;Kommen;Gehen;Pause (Min);Arbeitsdauer;Soll;Saldo;Überstunden;Notiz;Nachtrag\n`;
   const totals={};
   data.forEach(e=>{
@@ -1905,7 +1918,7 @@ function renderOT(){
   entries.forEach(e=>{if(empF!=='alle'&&e.empId!=empF)return;if(isHoliday(e.date))return;const[y,m]=e.date.split('-');const k=`${e.empId}_${y}-${m}`;if(!groups[k])groups[k]={empId:e.empId,month:`${y}-${m}`,mins:[],solls:[],maxDay:0};const wm=calcWork(e.start,e.end,e.breakMin);groups[k].mins.push(wm);groups[k].solls.push(getSollMin(e.empId,e.date));groups[k].maxDay=Math.max(groups[k].maxDay,wm);});
   const rows=Object.values(groups).map(g=>{const ist=g.mins.reduce((s,m)=>s+m,0);const soll=g.solls.reduce((s,m)=>s+m,0);const ot=g.mins.reduce((s,m)=>s+Math.max(0,m-8*60),0);const mehr=Math.max(0,ist-soll);return{...g,soll,ist,ot,mehr,ok:g.maxDay<=12*60};});
   const totOT=rows.reduce((s,r)=>s+r.ot,0);
-  document.getElementById('ot-stats').innerHTML=`<div class="sc"><div class="sc-l">Überstunden</div><div class="sc-v tmono">${fmt(totOT)}</div><div class="sc-s">gesamt</div></div><div class="sc"><div class="sc-l">Mehrstunden</div><div class="sc-v tmono">${fmt(rows.reduce((s,r)=>s+r.mehr,0))}</div></div><div class="sc"><div class="sc-l">Zu prüfen</div><div class="sc-v" style="color:${rows.filter(r=>!r.ok).length?'var(--rd)':'var(--gr)'}">${rows.filter(r=>!r.ok).length}</div></div><div class="sc"><div class="sc-l">Monate</div><div class="sc-v">${rows.length}</div></div>`;
+  document.getElementById('ot-stats').innerHTML=`<div class="sc"><div class="sc-l">Überstunden</div><div class="sc-v tmono">${fmt(totOT)}</div><div class="sc-s">gesamt</div></div><div class="sc"><div class="sc-l">Mehrstunden</div><div class="sc-v tmono">${fmt(rows.reduce((s,r)=>s+r.mehr,0))}</div></div><div class="sc"><div class="sc-l">AZG-Prüfen</div><div class="sc-v" style="color:${rows.filter(r=>!r.ok).length?'var(--rd)':'var(--gr)'}">${rows.filter(r=>!r.ok).length}</div></div><div class="sc"><div class="sc-l">Monate</div><div class="sc-v">${rows.length}</div></div>`;
   document.getElementById('ot-tbody').innerHTML=rows.map(r=>`<tr><td><b>${empName(r.empId)}</b></td><td>${r.month}</td><td class="tmono">${fmt(r.soll)}</td><td class="tmono">${fmt(r.ist)}</td><td class="tmono" style="color:${r.ot>0?'var(--ac)':'inherit'};font-weight:${r.ot>0?600:400}">${fmt(r.ot)}</td><td class="tmono">${fmt(r.mehr)}</td><td class="tmono">${fmt(r.maxDay)}</td><td>${r.ok?'<span class="badge bg-gr">✓ OK</span>':'<span class="badge bg-rd">⚠️ Prüfen</span>'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px">Keine Daten</td></tr>';
 }
 
@@ -1927,7 +1940,7 @@ function printZettel(){
   const mName=new Date(y,m-1,1).toLocaleDateString('de-AT',{month:'long',year:'numeric'});
   const tl={normal:'Büro',homeoffice:'Homeoffice'};
   document.getElementById('print-body').innerHTML=`<div style="font-family:sans-serif;font-size:13px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><strong style="font-size:18px">Stundenzettel — ${mName}</strong><br><span style="color:#666">NBS GmbH</span></div></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><strong style="font-size:18px">Stundenzettel — ${mName}</strong><br><span style="color:#666">NBS GmbH · gemäß § 26 AZG</span></div></div>
     <div style="background:#f5f5f5;padding:10px 14px;border-radius:6px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px">
       <div><b>Mitarbeiter:</b> ${emp.first} ${emp.last}</div><div><b>E-Mail:</b> ${emp.email}</div>
       <div><b>Funktion:</b> ${emp.role}</div><div><b>Modell:</b> ${emp.model} · ${emp.hours} Std./Woche</div>
@@ -1942,7 +1955,7 @@ function printZettel(){
       <div style="border-top:1px solid #999;padding-top:6px;font-size:11px">Datum, Unterschrift Arbeitgeber:in</div>
       <div style="border-top:1px solid #999;padding-top:6px;font-size:11px">Datum, Unterschrift Arbeitnehmer:in</div>
     </div>
-    <p style="font-size:10px;color:#999;margin-top:16px"></p>
+    <p style="font-size:10px;color:#999;margin-top:16px">Aufbewahrungspflicht: mind. 1 Jahr (§ 26 AZG) · steuerrechtlich 7 Jahre (§ 132 BAO)</p>
   </div>`;
   openM('mo-print');
 }
