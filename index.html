@@ -2222,7 +2222,7 @@ async function initApp() {
   if (!document.getElementById('logout-btn')) {
     const logoutDiv = document.createElement('div');
     logoutDiv.style.cssText = 'padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px';
-    logoutDiv.innerHTML = `<button id="logout-btn" onclick="sbSignOut()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:7px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit">⏻ Abmelden (${matchedUser.first})</button>`;
+    logoutDiv.innerHTML = `<button onclick="openM('mo-pw')" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);border-radius:7px;padding:7px;font-size:11px;cursor:pointer;font-family:inherit;margin-bottom:6px">🔑 Passwort ändern</button><button id="logout-btn" onclick="sbSignOut()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:7px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit">⏻ Abmelden (${matchedUser.first})</button>`;
     const sidebar = document.querySelector('.sidebar') || document.querySelector('nav');
     if (sidebar) sidebar.appendChild(logoutDiv);
   }
@@ -2239,6 +2239,33 @@ async function initApp() {
   }
 })();
 
+
+// ── PASSWORT ÄNDERN ─────────────────────────────────────────────
+async function changePassword() {
+  const pw = document.getElementById('pw-new').value.trim();
+  const pw2 = document.getElementById('pw-confirm').value.trim();
+  const msg = document.getElementById('pw-msg');
+  if (!pw || pw.length < 6) { msg.style.color='#c0431a'; msg.textContent='❌ Mind. 6 Zeichen eingeben.'; return; }
+  if (pw !== pw2) { msg.style.color='#c0431a'; msg.textContent='❌ Passwörter stimmen nicht überein.'; return; }
+  msg.style.color='#888'; msg.textContent='Wird gespeichert…';
+  const { error } = await sb.auth.updateUser({ password: pw });
+  if (error) { msg.style.color='#c0431a'; msg.textContent='❌ Fehler: ' + error.message; }
+  else { msg.style.color='#2a7a2a'; msg.textContent='✅ Passwort erfolgreich geändert!'; setTimeout(()=>closeM('mo-pw'),1500); document.getElementById('pw-new').value=''; document.getElementById('pw-confirm').value=''; }
+}
 </script>
+
+<!-- PASSWORT ÄNDERN MODAL -->
+<div class="mo" id="mo-pw"><div class="md">
+  <div class="mh"><h3>🔑 Passwort ändern</h3><button class="mc" onclick="closeM('mo-pw')">✕</button></div>
+  <div class="mb">
+    <div class="fg"><label>Neues Passwort</label><input type="password" id="pw-new" placeholder="Mind. 6 Zeichen" autocomplete="new-password"></div>
+    <div class="fg"><label>Passwort wiederholen</label><input type="password" id="pw-confirm" placeholder="Passwort bestätigen" autocomplete="new-password"></div>
+    <div id="pw-msg" style="font-size:13px;margin-top:8px;min-height:18px"></div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-s" onclick="closeM('mo-pw')">Abbrechen</button>
+    <button class="btn btn-p" onclick="changePassword()">Passwort speichern</button>
+  </div>
+</div></div>
 </body>
 </html>
