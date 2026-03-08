@@ -149,6 +149,7 @@ tr:hover td{background:#faf8f5}
 .vce-zeitausgleich{background:#bbdefb;color:#0d47a1}
 .vce-sonderurlaub{background:#fff9c4;color:#f57f17}
 .vce-beantragt{background:#ffe0b2;color:#e65100;border:1px dashed #ff9800}
+.vce-urlaub_genossen{background:#a5d6a7;color:#1b5e20;opacity:0.7}
 
 /* VACATION REQUEST (Employee view) */
 .req-status-beantragt{background:#fff3e0;border:1px solid #ffcc02;border-radius:8px;padding:12px 14px;margin-bottom:10px}
@@ -412,6 +413,7 @@ tr:hover td{background:#faf8f5}
     <span class="vce vce-zeitausgleich" style="padding:3px 8px">🔄 Zeitausgleich</span>
     <span class="vce vce-sonderurlaub" style="padding:3px 8px">⭐ Sonderurlaub</span>
     <span class="vce vce-beantragt" style="padding:3px 8px">⏳ Beantragt</span>
+    <span class="vce vce-urlaub_genossen" style="padding:3px 8px">✔️ Urlaub genossen</span>
     <span class="vce" style="background:#ede0f8;color:#5b2c8d;padding:3px 8px">🎉 Feiertag</span>
   </div></div>
 </div>
@@ -570,7 +572,7 @@ tr:hover td{background:#faf8f5}
     </div>
     <div class="fr c2"><div><label>Von *</label><input type="date" id="ab-from"></div><div><label>Bis</label><input type="date" id="ab-to"></div></div>
     <div class="fr c2">
-      <div><label>Status</label><select id="ab-status"><option value="genehmigt">✅ Genehmigt</option><option value="beantragt">⏳ Beantragt</option><option value="abgelehnt">❌ Abgelehnt</option></select></div>
+      <div><label>Status</label><select id="ab-status"><option value="genehmigt">✅ Genehmigt</option><option value="urlaub_genossen">✔️ Urlaub genossen</option><option value="beantragt">⏳ Beantragt</option><option value="abgelehnt">❌ Abgelehnt</option></select></div>
       <div><label>Notiz</label><input id="ab-note" placeholder="Optional…"></div>
     </div>
   </div>
@@ -600,6 +602,7 @@ tr:hover td{background:#faf8f5}
   <div class="mf">
     <button class="btn btn-s" onclick="closeM('mo-approve')">Abbrechen</button>
     <button class="btn btn-d" onclick="decideRequest('abgelehnt')">❌ Ablehnen</button>
+    <button class="btn btn-p" onclick="decideRequest('urlaub_genossen')" style="background:#6a9e6a">✔️ Urlaub genossen</button>
     <button class="btn btn-g" onclick="decideRequest('genehmigt')">✅ Genehmigen</button>
   </div>
 </div></div>
@@ -1341,7 +1344,7 @@ function renderEmpDashboard(){
   document.getElementById('emp-today').innerHTML=todayE.length?`<div class="flex" style="margin-bottom:10px"><div class="dot on"></div><b>${fmt(todayH)} Std. heute erfasst</b></div>${todayE.map(e=>`<div style="font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--bd)">${e.start} – ${e.end} · ${e.breakMin} Min. Pause · <span class="tm">${e.type==='homeoffice'?'🏠 Homeoffice':'Büro'}</span></div>`).join('')}`:`<div class="empty" style="padding:16px">Noch keine Einträge heute</div>`;
   // My requests
   const myReqs=absences.filter(a=>a.empId===emp.id).slice(-5).reverse();
-  const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌'};
+  const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌',urlaub_genossen:'✔️'};
   document.getElementById('emp-requests').innerHTML=myReqs.length?`<table><thead><tr><th>Art</th><th>Von</th><th>Bis</th><th>Status</th></tr></thead><tbody>${myReqs.map(a=>`<tr><td>${absTypeLabel[a.type]||a.type}</td><td>${a.from}</td><td>${a.to}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${a.status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">Keine Ansuchen</div>';
 }
 
@@ -1422,13 +1425,13 @@ async function decideRequest(status){
   if(status==='genehmigt' && a.type==='urlaub'){
     showVacationSurprise(a);
   } else {
-    alert(`${status==='genehmigt'?'✅ Genehmigt!':'❌ Abgelehnt.'}\n\nUrlaub von ${empName(a.empId)} vom ${a.from} bis ${a.to} wurde ${status}.`);
+    const msg={genehmigt:'✅ Genehmigt!',abgelehnt:'❌ Abgelehnt.',urlaub_genossen:'✔️ Als urlaub_genossen markiert.'};alert(`${msg[status]||status}\n\nUrlaub von ${empName(a.empId)} vom ${a.from} bis ${a.to}.`);
   }
 }
 
 // ══ VACATION CALENDAR ══
 const absTypeLabel={urlaub:'🌴 Urlaub',krankenstand:'🤒 Krankenstand',homeoffice:'🏠 Homeoffice',zeitausgleich:'🔄 Zeitausgleich',sonderurlaub:'⭐ Sonderurlaub',feiertag:'🎉 Feiertag'};
-const absBadge={genehmigt:'bg-gr',beantragt:'bg-or',abgelehnt:'bg-rd'};
+const absBadge={genehmigt:'bg-gr',beantragt:'bg-or',abgelehnt:'bg-rd',urlaub_genossen:'bg-gr'};
 
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
@@ -1459,7 +1462,7 @@ function renderCalendar(){
     });
     const ftag=holidayName(dateStr);
     const evtHtml=(ftag?`<div class="vce" style="background:#ede0f8;color:#5b2c8d;font-size:9.5px">🎉 ${ftag}</div>`:'')+evts.map(a=>{
-      const cls=a.status==='beantragt'?'vce-beantragt':`vce-${a.type}`;
+      const cls=a.status==='beantragt'?'vce-beantragt':a.status==='urlaub_genossen'?'vce-urlaub_genossen':`vce-${a.type}`;
       const lbl=a.status==='beantragt'?`⏳ ${empName(a.empId)}`:`${absTypeLabel[a.type]?.split(' ')[0]||''} ${empName(a.empId)}`;
       return`<div class="vce ${cls}" title="${empName(a.empId)} · ${absTypeLabel[a.type]||a.type} · ${a.status}">${lbl}</div>`;
     }).join('');
@@ -1537,12 +1540,12 @@ function renderAbsences(filter){
   else if(timeF==='naechster-monat')list=list.filter(a=>a.from.startsWith(nextMonth)||a.to.startsWith(nextMonth));
   const tbody=document.getElementById('abs-tbody');
   if(!list.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge gefunden</td></tr>';return;}
-  const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌'};
+  const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌',urlaub_genossen:'✔️'};
   tbody.innerHTML=list.map(a=>`<tr>
     <td><b>${empName(a.empId)}</b></td><td>${absTypeLabel[a.type]||a.type}</td>
     <td>${a.from}</td><td>${a.to}</td><td class="tmono">${wDays(a.from,a.to)} AT</td>
     <td>${a.note||'–'}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${a.status}</span></td>
-    <td><div class="flex">${a.status==='beantragt'&&isAdmin()?`<button class="btn btn-g btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button>`:''}<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteAbs(${a.id})">✕</button></div></td>
+    <td><div class="flex">${(a.status==='beantragt'||a.status==='genehmigt')&&isAdmin()?`<button class="btn btn-g btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button>`:''}<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteAbs(${a.id})">✕</button></div></td>
   </tr>`).join('');
   const counts={urlaub:0,krankenstand:0,homeoffice:0,zeitausgleich:0,sonderurlaub:0};
   absences.filter(a=>a.status!=='abgelehnt'&&a.type!=='feiertag').forEach(a=>{if(counts[a.type]!==undefined)counts[a.type]+=wDays(a.from,a.to);});
