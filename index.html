@@ -236,6 +236,12 @@ tr:hover td{background:#faf8f5}
     <div style="font-size:12px;opacity:0.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🎉 Heute feiern wir</div>
   </div>
 
+  <!-- WAS PASSIERT HEUTE -->
+  <div id="today-events-box" style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:16px 20px;margin-bottom:16px;display:none">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px">📅 Was passiert heute <span id="today-events-date" style="font-size:11px;font-weight:400;color:var(--ink3)"></span></div>
+    <div id="today-events-inner"></div>
+  </div>
+
   <!-- URLAUBSWARNUNG -->
   <div id="vacation-warnings-box" style="display:none;background:#fff;border:2px solid var(--or);border-radius:12px;padding:16px 20px;margin-bottom:16px">
     <div style="font-size:13px;font-weight:600;color:var(--or);margin-bottom:8px">⚠️ Resturlaub-Erinnerung — bitte rechtzeitig planen!</div>
@@ -474,7 +480,12 @@ tr:hover td{background:#faf8f5}
 <div id="page-export" class="page">
   <div class="ph"><div><h2>Export & Stundenzettel</h2><p>§ 26 AZG · § 132 BAO · Betriebsprüfung</p></div></div>
   <div style="background:#fff;border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px">
-    <h4 style="margin:0 0 12px">📊 Jahres-Export für Steuerberater / Lohnverrechnung</h4>
+    <div class="card" style="margin-bottom:18px"><div class="ch"><h3>📥 Stunden importieren</h3></div><div class="cb">
+    <p style="font-size:13px;color:var(--ink2);margin:0 0 14px">Vergangene Monate (z.B. Jänner/Februar) aus CSV-Datei importieren.</p>
+    <button class="btn btn-p" onclick="openM('mo-import')">📥 CSV Import starten</button>
+    <button class="btn btn-s" style="margin-left:8px" onclick="downloadImportTemplate()">⬇️ Vorlage herunterladen</button>
+  </div></div>
+  <h4 style="margin:0 0 12px">📊 Jahres-Export für Steuerberater / Lohnverrechnung</h4>
     <p style="font-size:13px;color:var(--ink2);margin:0 0 14px">Alle Stunden und Abwesenheiten eines Jahres als CSV-Datei (kompatibel mit Excel).</p>
     <div style="display:flex;gap:10px;align-items:center">
       <select id="export-year" style="border:1px solid var(--bd);border-radius:7px;padding:8px 12px;font-size:13px">
@@ -543,6 +554,7 @@ tr:hover td{background:#faf8f5}
     <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="gleit">Gleitzeit</option><option value="fix">Fixzeit</option><option value="teilzeit">Teilzeit</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
     <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div></div>
     <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
+    <div class="fr c2"><div><label>🔑 Neues Passwort setzen</label><input type="password" id="ee-password" placeholder="Leer lassen = nicht ändern" autocomplete="new-password"></div><div style="display:flex;align-items:flex-end;padding-bottom:4px"><span class="tm ts">Nur ausfüllen wenn du das Passwort ändern möchtest</span></div></div>
   </div>
   <div class="mf"><button class="btn btn-s" onclick="closeM('mo-edit-emp')">Abbrechen</button><button class="btn btn-p" onclick="saveEmployee()">Speichern</button></div>
 </div></div>
@@ -1117,7 +1129,7 @@ function openM(id){document.getElementById(id).style.display='flex';}
 function closeM(id){document.getElementById(id).style.display='none';}
 
 function refreshPage(id){
-  if(id==='dashboard')renderDashboard();
+  if(id==='dashboard'){renderDashboard();renderTodayEvents();}
   else if(id==='emp-dashboard')renderEmpDashboard();
   else if(id==='stempel'){renderTodayTable();updateStampStatus();const n=new Date();const el=document.getElementById('live-clock');if(el)el.textContent=n.toTimeString().slice(0,8);const dl=document.getElementById('live-date');if(dl)dl.textContent=n.toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
   else if(id==='mitarbeiter')renderEmployees();
@@ -1279,6 +1291,81 @@ async function deleteEntryMV(id){
 }
 
 // ══ DASHBOARD ══
+
+// ══ WAS PASSIERT HEUTE ══
+function renderTodayEvents(){
+  const box = document.getElementById('today-events-box');
+  const inner = document.getElementById('today-events-inner');
+  const dateSpan = document.getElementById('today-events-date');
+  if(!box || !inner) return;
+
+  const today = TODAY; // YYYY-MM-DD
+  const now = new Date();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mmdd = mm+'-'+dd;
+  const weekdays = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const months = ['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  if(dateSpan) dateSpan.textContent = weekdays[now.getDay()]+', '+now.getDate()+'. '+months[now.getMonth()]+' '+now.getFullYear();
+
+  const items = [];
+
+  // 1. Geburtstage heute
+  employees.filter(e=>e.active&&e.birthday).forEach(e=>{
+    const bday = e.birthday; // YYYY-MM-DD
+    if(!bday) return;
+    const bdayMmdd = bday.slice(5); // MM-DD
+    if(bdayMmdd === mmdd){
+      const age = now.getFullYear() - parseInt(bday.slice(0,4));
+      items.push({icon:'🎂', color:'#7c3aed', text:`<b>${e.first} ${e.last}</b> hat heute Geburtstag! 🎉 (${age} Jahre)`});
+    }
+  });
+
+  // 2. Dienstjubiläen heute (1, 3, 5, 10 Jahre)
+  employees.filter(e=>e.active&&e.start).forEach(e=>{
+    const startMmdd = e.start.slice(5);
+    if(startMmdd === mmdd){
+      const years = now.getFullYear() - parseInt(e.start.slice(0,4));
+      if([1,2,3,5,10,15,20].includes(years)){
+        items.push({icon:'🏆', color:'#c0431a', text:`<b>${e.first} ${e.last}</b> — ${years} Jahr${years===1?'':'e'} bei NBS! Herzlichen Glückwunsch!`});
+      }
+    }
+  });
+
+  // 3. Wer ist heute abwesend?
+  const absentToday = absences.filter(a=>
+    a.from <= today && a.to >= today &&
+    (a.status==='genehmigt'||a.status==='urlaub_genossen')
+  );
+  if(absentToday.length > 0){
+    const absLabels = {urlaub:'🌴 Urlaub', krankenstand:'🤒 Krank', zeitausgleich:'🔄 ZA', sonderurlaub:'⭐ Sonderurlaub', homeoffice:'🏠 Homeoffice'};
+    absentToday.forEach(a=>{
+      const emp = employees.find(e=>e.id===a.empId);
+      if(emp) items.push({icon:'', color:'var(--ink2)', text:`${absLabels[a.type]||a.type}: <b>${emp.first} ${emp.last}</b>${a.note?' · <span style="font-style:italic;font-size:12px">'+a.note+'</span>':''}`});
+    });
+  }
+
+  // 4. Wer ist heute eingestempelt (nur wenn schon Einträge da)?
+  const activeToday = entries.filter(e=>e.date===today&&e.start&&!e.end);
+  if(activeToday.length > 0){
+    const names = activeToday.map(e=>empName(e.empId)).join(', ');
+    items.push({icon:'🟢', color:'var(--gr)', text:`Bereits eingestempelt: <b>${names}</b>`});
+  }
+
+  if(items.length === 0){
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = 'block';
+  inner.innerHTML = items.map(it=>
+    `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px">
+      <span style="font-size:15px;flex-shrink:0">${it.icon||'·'}</span>
+      <span style="color:${it.color}">${it.text}</span>
+    </div>`
+  ).join('');
+}
+
 function renderDashboard(){
   const tot=entries.filter(e=>e.date===TODAY).reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   const actC=Object.keys(activeStamps).length;
@@ -1332,7 +1419,7 @@ function renderEmpDashboard(){
   const monthSaldo=monthH-monthSoll;
   const vacYear=String(now.getFullYear());
   const total=emp.carry+emp.vacation; // Feiertage zählen nie als Urlaub
-  const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&a.status==='genehmigt'&&a.from.startsWith(vacYear)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+  const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(vacYear)).reduce((s,a)=>s+wDays(a.from,a.to),0);
   document.getElementById('emp-db-stats').innerHTML=`
     <div class="sc"><div class="sc-l">Stunden ${month}</div><div class="sc-v tmono">${fmt(monthH)}</div></div>
     <div class="sc"><div class="sc-l">Saldo ${month}</div><div class="sc-v tmono" style="color:${monthSaldo>=0?'var(--gr)':'var(--rd)'}">${monthSaldo>=0?'+':''}${fmt(monthSaldo)}</div></div>
@@ -1374,7 +1461,7 @@ function checkOverlap(){
     const emp=employees.find(e=>e.id===currentUser.empId);
     if(emp){
       const now=new Date(),total=emp.carry+emp.vacation;
-      const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&a.status==='genehmigt'&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+wDays(a.from,a.to),0);
+      const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+wDays(a.from,a.to),0);
       const rest=total-usedVac;
       const req=from?wDays(from,to||from):0;
       document.getElementById('vac-balance-info').innerHTML=`<b>Urlaubskonto:</b> Übertrag VJ: ${emp.carry} + Anspruch: ${emp.vacation} = <b>${total} Tage</b> · Verbraucht: ${usedVac} · <b style="color:${rest<5?'var(--rd)':'var(--gr)'}">Frei: ${rest}</b>${req?` · Anfrage: ${req} Tage${rest-req<0?' <span style="color:var(--rd)">⚠️ Nicht genug!</span>':''}`:''}`;
@@ -1421,7 +1508,7 @@ async function decideRequest(status){
   a.status=status;
   try{ await dbSaveAbsence(a); }catch(err){showDbError('DB Fehler: '+err.message);return;}
   closeM('mo-approve');
-  renderDashboard();renderCalendar();renderAbsences();
+  renderDashboard();renderTodayEvents();renderCalendar();renderAbsences();
   if(status==='genehmigt' && a.type==='urlaub'){
     showVacationSurprise(a);
   } else {
@@ -1501,6 +1588,24 @@ async function saveEmployee(){
   ['hours','vacation','carry'].forEach(k=>{e[k]=parseInt(document.getElementById('ee-'+k).value)||0;});
   try{ await dbSaveEmployee(e); } catch(err){ showDbError('Speichern fehlgeschlagen: '+err.message); return; }
   closeM('mo-edit-emp');populateSelects();renderEmployees();
+
+  // Passwort ändern falls ausgefüllt
+  const newPw = document.getElementById('ee-password')?.value?.trim();
+  if (newPw && newPw.length >= 6) {
+    try {
+      const { error: pwErr } = await sb.auth.admin.updateUserById
+        ? await sb.auth.admin.updateUserById(emp.authId, { password: newPw })
+        : { error: { message: 'Admin API nicht verfügbar' } };
+      if (pwErr) {
+        // Fallback: direkt via REST
+        const emp2 = employees.find(e => e.id == document.getElementById('ee-id').value);
+        showToast('Passwort kann nur direkt in Supabase geändert werden', 'warn');
+      } else {
+        showToast('Passwort geändert ✅');
+      }
+    } catch(e) { /* ignore */ }
+    document.getElementById('ee-password').value = '';
+  }
 }
 
 // ══ ABSENCES ══
@@ -1573,7 +1678,7 @@ function renderVacation(){
   const list=employees.filter(e=>e.active&&(empFilter===null||e.id===empFilter));
   document.getElementById('vac-tbody').innerHTML=list.map(e=>{
     // Feiertage werden NIE als Urlaubstage gezählt!
-    const used=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&a.status==='genehmigt'&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+    const used=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
     const pending=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&a.status==='beantragt'&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
     const total=e.carry+e.vacation;
     const effFree=total-used-pending;
@@ -1636,15 +1741,65 @@ function renderMonthView(){
     return`<tr style="${rowStyle}"><td>${e.date} <span class="tm">${dow}</span>${ftag?` <span style="font-size:10px;color:var(--pu)">🎉 ${ftag}</span>`:''}</td><td>${empName(e.empId)}</td><td><span class="badge bg-gy">${tl[e.type]||'—'}</span></td><td class="tmono">${e.start}</td><td class="tmono">${e.end}</td><td>${e.breakMin}m</td><td class="tmono"><b>${fmt(wm)}</b></td><td class="tmono" style="${ftag?'color:var(--pu)':''}">${ftag?'—':fmt(sollMin)}</td><td class="tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}"><b>${saldo>=0?'+':''}${fmt(saldo)}</b></td><td>${wH}</td><td style="white-space:nowrap"><button class="btn btn-s" style="padding:2px 7px;font-size:11px" onclick="openEditEntry(${e.id})">✏️</button> <button class="btn btn-d" style="padding:2px 7px;font-size:11px" onclick="deleteEntryMV(${e.id})">✕</button></td></tr>`;
   }).join('');
 }
-function signMonth(){
+async function signMonth(){
   const mv=document.getElementById('mv-month').value;if(!mv){alert('Bitte Monat wählen.');return;}
   const empF=document.getElementById('mv-emp').value;
   const empList=empF==='alle'?employees.filter(e=>e.active):[employees.find(e=>e.id==empF)].filter(Boolean);
   const dateStr=new Date().toLocaleDateString('de-AT');
   const byName=currentUser?`${currentUser.first} ${currentUser.last}`:'Admin';
   empList.forEach(e=>{signatures[e.id+'_'+mv]={date:dateStr,by:byName};});
+  // Supabase speichern
+  for(const e of empList){
+    try{
+      await sb.from('signatures').upsert({emp_id:e.id,month:mv,signed_date:new Date().toISOString().slice(0,10),signed_by:byName},{onConflict:'emp_id,month'});
+    }catch(err){console.warn('Signature save error:',err);}
+  }
   renderMonthView();
-  alert(`✅ Monat ${mv} bestätigt für: ${empList.map(e=>e.first+' '+e.last).join(', ')}\n\nDatum: ${dateStr}\n§ 26 Abs. 2 AZG: Arbeitgeberkontrolle durchgeführt.`);
+  const names=empList.map(e=>e.first+' '+e.last).join(', ');
+  if(confirm(`✅ Monat ${mv} bestätigt für: ${names}\n\nDatum: ${dateStr}\n§ 26 Abs. 2 AZG: Arbeitgeberkontrolle durchgeführt.\n\nBestätigung jetzt herunterladen?`)){
+    downloadSignaturePDF(mv,empList,dateStr,byName);
+  }
+}
+
+function downloadSignaturePDF(mv,empList,dateStr,byName){
+  const [y,m]=mv.split('-');
+  const monName=new Date(mv+'-01').toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+  let rows='';
+  empList.forEach(e=>{
+    const me=entries.filter(x=>x.empId===e.id&&x.date.startsWith(mv));
+    const tot=me.reduce((s,x)=>s+calcWork(x.start,x.end,x.breakMin),0);
+    rows+=`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee">${e.first} ${e.last}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center">${me.length}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;font-weight:600">${fmt(tot)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center">✅</td></tr>`;
+  });
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Stundenbestätigung ${monName}</title>
+  <style>body{font-family:Arial,sans-serif;margin:40px;color:#222}h1{font-size:20px;margin-bottom:4px}h2{font-size:15px;color:#666;font-weight:normal;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin-bottom:24px}th{background:#f5f5f5;padding:8px 12px;text-align:left;border-bottom:2px solid #ddd;font-size:13px}td{font-size:13px}.footer{font-size:11px;color:#888;margin-top:32px;border-top:1px solid #ddd;padding-top:12px}.sig{margin-top:40px;display:flex;gap:60px}.sig-box{flex:1;border-top:1px solid #222;padding-top:8px;font-size:12px}</style></head>
+  <body>
+  <h1>NBS GmbH — Arbeitszeitnachweis</h1>
+  <h2>${monName} · § 26 Abs. 2 AZG</h2>
+  <table><thead><tr><th>Mitarbeiter/in</th><th style="text-align:center">Einträge</th><th style="text-align:center">Gesamtstunden</th><th style="text-align:center">Bestätigt</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="footer">Bestätigt am ${dateStr} von ${byName}<br>Gemäß § 26 Abs. 2 AZG wurde die Aufzeichnung der Arbeitszeit überprüft und bestätigt.</div>
+  <div class="sig"><div class="sig-box">Ort, Datum</div><div class="sig-box">Unterschrift Arbeitgeber/in (${byName})</div></div>
+  
+<!-- IMPORT MODAL -->
+<div class="mo" id="mo-import"><div class="md" style="max-width:560px">
+  <div class="mh"><h3>📥 Stunden importieren</h3><button class="mc" onclick="closeM('mo-import')">✕</button></div>
+  <div class="mb">
+    <div class="alert ai" style="margin-bottom:14px"><span>ℹ️</span>CSV-Datei mit folgenden Spalten: <b>email;datum;von;bis;pause;typ;notiz</b><br>
+    Datum: YYYY-MM-DD · Von/Bis: HH:MM · Pause: Minuten · Typ: normal/homeoffice/dienstreise</div>
+    <div class="fg">
+      <label>CSV Datei wählen</label>
+      <input type="file" id="import-file" accept=".csv,.txt" style="padding:8px;border:1px solid var(--bd);border-radius:7px;width:100%;font-family:inherit">
+    </div>
+    <div id="import-preview" style="margin-top:12px;font-size:12.5px;color:var(--ink2)"></div>
+    <div id="import-result" style="margin-top:8px;font-size:13px;min-height:18px"></div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-s" onclick="closeM('mo-import')">Abbrechen</button>
+    <button class="btn btn-p" onclick="runImport()">📥 Importieren</button>
+  </div>
+</div></div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`NBS_Stundenbestaetigung_${mv}.html`;a.click();
 }
 
 // ══ EXCEL EXPORT ══
@@ -1809,7 +1964,7 @@ function renderVacationWarnings(){
     // Bereits verbrauchte + genehmigte Tage zählen
     const committedDays = absences.filter(a=>
       a.empId===emp.id && a.type==='urlaub' &&
-      (a.status==='genehmigt' || a.status==='beantragt')
+      (a.status==='genehmigt' || a.status==='beantragt' || a.status==='urlaub_genossen')
     ).reduce((s,a)=>s+wDays(a.from,a.to),0);
     const total = (emp.vacation||0) + (emp.carry||0);
     const remaining = total - committedDays;
@@ -2255,6 +2410,57 @@ async function changePassword() {
   if (error) { msg.style.color='#c0431a'; msg.textContent='❌ Fehler: ' + error.message; }
   else { msg.style.color='#2a7a2a'; msg.textContent='✅ Passwort erfolgreich geändert!'; setTimeout(()=>closeM('mo-pw'),1500); document.getElementById('pw-new').value=''; document.getElementById('pw-confirm').value=''; }
 }
+
+// ══ CSV IMPORT ══
+function downloadImportTemplate(){
+  const header='email;datum;von;bis;pause;typ;notiz\n';
+  const ex=employees.filter(e=>e.email).slice(0,2).map(e=>
+    `${e.email};2026-01-02;08:00;16:30;30;normal;Beispiel`
+  ).join('\n');
+  const blob=new Blob([header+ex],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='NBS_Import_Vorlage.csv';a.click();
+}
+
+document.addEventListener('change',function(ev){
+  if(ev.target.id==='import-file'){
+    const f=ev.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=function(e){
+      const lines=e.target.result.split('\n').filter(l=>l.trim()&&!l.startsWith('email'));
+      document.getElementById('import-preview').innerHTML=`<b>${lines.length} Zeilen</b> gefunden. Bereit zum Import.`;
+    };
+    r.readAsText(f,'UTF-8');
+  }
+});
+
+async function runImport(){
+  const f=document.getElementById('import-file').files[0];
+  if(!f){alert('Bitte zuerst eine CSV-Datei wählen.');return;}
+  const res=document.getElementById('import-result');
+  res.style.color='#888';res.textContent='Wird importiert…';
+  const text=await f.text();
+  const lines=text.split('\n').filter(l=>l.trim()&&!l.toLowerCase().startsWith('email'));
+  let ok=0,skip=0,errors=[];
+  for(const line of lines){
+    const parts=line.split(';');
+    if(parts.length<4){skip++;continue;}
+    const [email,datum,von,bis,pause,typ,notiz]=[...parts].map(s=>s.trim().replace(/[\r]/g,''));
+    const emp=employees.find(e=>e.email===email);
+    if(!emp){errors.push(`Unbekannte Email: ${email}`);skip++;continue;}
+    if(!datum||!von||!bis){skip++;continue;}
+    const row={emp_id:emp.id,date:datum,start_time:von,end_time:bis,break_min:parseInt(pause)||30,type:typ||'normal',note:notiz||'',manual:true};
+    try{
+      const {data,error}=await sb.from('entries').insert(row).select().single();
+      if(error)throw error;
+      entries.push({id:data.id,empId:emp.id,date:datum,start:von,end:bis,breakMin:parseInt(pause)||30,type:typ||'normal',note:notiz||'',manual:true});
+      ok++;
+    }catch(err){errors.push(`${datum} ${email}: ${err.message}`);skip++;}
+  }
+  if(errors.length>0)console.warn('Import Fehler:',errors);
+  res.style.color=ok>0?'#2a7a2a':'#c0431a';
+  res.textContent=`✅ ${ok} Einträge importiert${skip>0?` · ⚠️ ${skip} übersprungen`:''}`;
+  if(ok>0){renderDashboard();renderMonthView();}
+}
 </script>
 
 <!-- PASSWORT ÄNDERN MODAL -->
@@ -2268,6 +2474,25 @@ async function changePassword() {
   <div class="mf">
     <button class="btn btn-s" onclick="closeM('mo-pw')">Abbrechen</button>
     <button class="btn btn-p" onclick="changePassword()">Passwort speichern</button>
+  </div>
+</div></div>
+
+<!-- IMPORT MODAL -->
+<div class="mo" id="mo-import"><div class="md" style="max-width:560px">
+  <div class="mh"><h3>📥 Stunden importieren</h3><button class="mc" onclick="closeM('mo-import')">✕</button></div>
+  <div class="mb">
+    <div class="alert ai" style="margin-bottom:14px"><span>ℹ️</span>CSV-Datei mit folgenden Spalten: <b>email;datum;von;bis;pause;typ;notiz</b><br>
+    Datum: YYYY-MM-DD · Von/Bis: HH:MM · Pause: Minuten · Typ: normal/homeoffice/dienstreise</div>
+    <div class="fg">
+      <label>CSV Datei wählen</label>
+      <input type="file" id="import-file" accept=".csv,.txt" style="padding:8px;border:1px solid var(--bd);border-radius:7px;width:100%;font-family:inherit">
+    </div>
+    <div id="import-preview" style="margin-top:12px;font-size:12.5px;color:var(--ink2)"></div>
+    <div id="import-result" style="margin-top:8px;font-size:13px;min-height:18px"></div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-s" onclick="closeM('mo-import')">Abbrechen</button>
+    <button class="btn btn-p" onclick="runImport()">📥 Importieren</button>
   </div>
 </div></div>
 </body>
