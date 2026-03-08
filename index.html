@@ -626,22 +626,6 @@ tr:hover td{background:#faf8f5}
 </div></div>
 
 <!-- Print -->
-<div class="mo" id="mo-vac-surprise">
-  <div class="md" style="max-width:520px">
-    <div class="mh" style="background:linear-gradient(135deg,#1c6b3a,#2d9e57);color:#fff">
-      <h3 id="vac-surprise-title">🌴 Urlaub genehmigt!</h3>
-      <button class="mc" style="color:#fff;opacity:0.8" onclick="closeM('mo-vac-surprise')">✕</button>
-    </div>
-    <div class="mb">
-      <div id="vac-surprise-emp" style="font-size:13px;color:var(--ink2);margin-bottom:16px"></div>
-      <div id="vac-surprise-content"></div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-s" onclick="toggleSurpriseMode()" id="vac-surprise-toggle">🎒 Zur Packliste wechseln</button>
-      <button class="btn btn-p" style="background:#1c6b3a" onclick="closeM('mo-vac-surprise')">Super, danke! 🎉</button>
-    </div>
-  </div>
-</div>
 
 <div class="mo" id="mo-edit-entry">
   <div class="md" style="max-width:480px">
@@ -846,125 +830,6 @@ const BOOKS_GENERAL = [
   { title: "Eleanor Oliphant ist völlig in Ordnung", author: "Gail Honeyman", note: "Schräg, herzerwärmend, absolut besonders. Nicht weglegen möglich." },
   { title: "Wintersonne", author: "Rosamunde Pilcher", note: "Zeitlos schön — wenn man sich einfach gut fühlen möchte." },
 ];
-
-const PACK_SUMMER = [
-  "🩱 Badekleidung (2–3 Sets)", "🕶️ Sonnenbrille + Ersatz", "🧴 Sonnencreme LSF 50+",
-  "🏖️ Strandtuch / Sarong", "👡 Flip Flops & leichte Sandalen", "🎧 Kopfhörer für die Reise",
-  "📚 Urlaubsbuch (oder 3 😉)", "💊 Reiseapotheke", "🔌 Ladekabel & Adapter",
-  "👒 Sonnenhut", "🌊 Schnorchel-Set optional", "💳 Kreditkarte + etwas Bargeld",
-  "📱 Offline-Karten herunterladen", "🧊 Kühlakku für den Strand",
-];
-const PACK_WINTER = [
-  "🧥 Warme Jacke / Daunenjacke", "🧣 Schal, Mütze, Handschuhe", "🥾 Winterschuhe / Skischuhe",
-  "🎿 Skipass reservieren!", "🧴 Lippenpflege & Feuchtigkeitscreme", "🧦 Wollsocken (mehrere!)",
-  "🍫 Heiße-Schokolade-Vorrat", "📚 Urlaubsbuch für gemütliche Abende", "🔌 Ladekabel & Adapter",
-  "💊 Reiseapotheke + Erkältungsmittel", "🎒 Rucksack für Tagesausflüge",
-  "💳 Kreditkarte + etwas Bargeld", "📸 Kamera für Winterlandschaften",
-];
-
-let surpriseMode = 'books'; // 'books' or 'pack'
-let surpriseAbsData = null;
-
-
-// Bücher-Pool — wird zufällig gemischt, damit jeder Urlaub eine Überraschung ist
-const BOOKS_POOL = [
-  { title: "Eine Frage der Chemie", author: "Bonnie Garmus", note: "Witzig, klug, unwiderstehlich. Christinas Nr. 1! ⭐" },
-  { title: "Der große Trip", author: "Cheryl Strayed", note: "1.700 km zu Fuß — Mut, Wildnis und Neuanfang." },
-  { title: "Big Magic", author: "Elizabeth Gilbert", note: "Über Kreativität ohne Angst. Macht Lust auf alles." },
-  { title: "Eleanor Oliphant ist völlig in Ordnung", author: "Gail Honeyman", note: "Schräg, herzerwärmend, absolut besonders." },
-  { title: "Lillian Boxfish geht aus", author: "Kate Christensen", note: "Eine grande Dame spaziert durch New York — charmant und klug." },
-  { title: "Dein perfektes Jahr", author: "Charlotte Lucas", note: "Ein Notizbuch verändert ein Leben. Wunderschön österreichisch." },
-  { title: "Die Buchhandlung in der Kirchgasse", author: "Penelope Fitzgerald", note: "Kurz, spritzig und unvergesslich." },
-  { title: "Fleischmann & Söhne", author: "Monika Helfer", note: "Österreichische Literatur at its best — berührend und präzise." },
-  { title: "Der Gesang der Flusskrebse", author: "Delia Owens", note: "Natur, Einsamkeit, Sehnsucht — atemberaubend schön geschrieben." },
-  { title: "Montalbano kocht", author: "Andrea Camilleri", note: "Sizilien, Sonne, Essen und ein charmanter Commissario." },
-  { title: "Die Schneiderin von Auschwitz", author: "Lucy Adlington", note: "Bewegend, mutig, unvergesslich — Geschichte, die man nicht vergisst." },
-  { title: "Normal People", author: "Sally Rooney", note: "Leise, präzise und tief — modernes Meisterwerk." },
-  { title: "Hamnet", author: "Maggie O'Farrell", note: "Schönste Sprache, stärkste Gefühle. Absolut außergewöhnlich." },
-  { title: "Die Mittagsfrau", author: "Julia Franck", note: "Deutsche Buchpreis-Gewinnerin — eindringlich und unvergesslich." },
-  { title: "Das Glück des Blinden", author: "John Hull", note: "Eine Reise durch Dunkelheit — voller Licht und Weisheit." },
-  { title: "Alles, was wir geben mussten", author: "Kazuo Ishiguro", note: "Nobel-Literatur, die unter die Haut geht. Stille Meisterschaft." },
-  { title: "Landschaften der Frühgeschichte", author: "Judith Schalansky", note: "Klug, poetisch, außergewöhnlich schön gestaltet." },
-  { title: "Die Möglichkeit einer Insel", author: "Michel Houellebecq", note: "Provokant und berührend — Literatur, die polarisiert und fesselt." },
-  { title: "Abenteuer Philosophie", author: "Roger-Pol Droit", note: "101 kleine Experimente fürs Denken. Perfekt für unterwegs." },
-  { title: "Die Kunst, kein Egoist zu sein", author: "Richard David Precht", note: "Warum wir anderen helfen — klug, lesbar, inspirierend." },
-  { title: "Wackelkontakt", author: "Wolf Haas", note: "Brenner at his besten — österreichischer Krimi-Humor pur. Christinas Liebling! ⭐" },
-  { title: "Das Wetter vor 15 Jahren", author: "Wolf Haas", note: "Wolf Haas mal ganz anders — klug, witzig, außergewöhnlich." },
-  { title: "Das Mädchen mit dem Fingerhut", author: "Michael Köhlmeier", note: "Österreich, berührend und rau — ein kleines Meisterwerk." },
-  { title: "Die Lügnerin", author: "Ayọ̀bámi Adébáyọ̀", note: "Mitreißend, klug, intensiv — eine Stimme die man nicht vergisst." },
-  { title: "Auferstehung der Toten", author: "Wolf Haas", note: "Der erste Brenner — wo alles begann. Süchtig machend." },
-  { title: "Komm, süßer Tod", author: "Wolf Haas", note: "Brenner und die Wiener Rettung — zum Brüllen komisch." },
-  { title: "Der Knochenmann", author: "Wolf Haas", note: "Brenner im Burgenland — Haas auf dem Höhepunkt seiner Kunst." },
-  { title: "Die Freundin meiner Mutter", author: "Heidi Rehn", note: "Österreichische Familiengeschichte — warm, spannend, lesbar." },
-  { title: "Die Traumfabrik", author: "Kerstin Gier", note: "Leicht, witzig, mit Herz — perfekte Urlaubslektüre." },
-];
-function getRandomBooks(n){
-  const shuffled=[...BOOKS_POOL].sort(()=>Math.random()-0.5);
-  return shuffled.slice(0,n);
-}
-function getSeasonBooks(){
-  return getRandomBooks(3);
-}
-function getSeasonPack(){
-  const m = new Date().getMonth();
-  return (m >= 4 && m <= 9) ? PACK_SUMMER : PACK_WINTER;
-}
-function getSeasonLabel(){
-  const m = new Date().getMonth();
-  if(m >= 5 && m <= 8) return '☀️ Sommer';
-  if(m >= 11 || m <= 1) return '❄️ Winter';
-  return '🌸 Frühling/Herbst';
-}
-
-function showVacationSurprise(abs){
-  surpriseAbsData = abs;
-  surpriseMode = 'books';
-  renderSurpriseContent();
-  document.getElementById('vac-surprise-emp').innerHTML =
-    `🎉 <b>${empName(abs.empId)}</b> hat Urlaub vom <b>${abs.from}</b> bis <b>${abs.to}</b> — schön!`;
-  openM('mo-vac-surprise');
-}
-
-function renderSurpriseContent(){
-  const content = document.getElementById('vac-surprise-content');
-  const toggle = document.getElementById('vac-surprise-toggle');
-  if(surpriseMode === 'books'){
-    const books = getSeasonBooks();
-    const season = getSeasonLabel();
-    document.getElementById('vac-surprise-title').textContent = '📚 Buchtipps für den Urlaub';
-    toggle.textContent = '🎒 Zur Packliste wechseln';
-    content.innerHTML = `
-      <div style="font-size:12px;color:var(--ink2);margin-bottom:12px">Christinas persönliche Empfehlungen für einen ${season}-Urlaub — viel Freude beim Lesen! 📖</div>
-      ${books.map((b,i) => `
-        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:${i%2===0?'#faf9f7':'#fff'};border-radius:8px;margin-bottom:8px">
-          <div style="font-size:24px;min-width:36px;text-align:center">${['📖','📗','📘'][i]}</div>
-          <div>
-            <div style="font-weight:600;font-size:14px">${b.title}</div>
-            <div style="font-size:12px;color:var(--ink2)">${b.author}</div>
-            <div style="font-size:12px;color:var(--ink3);font-style:italic;margin-top:2px">${b.note}</div>
-          </div>
-        </div>`).join('')}`;
-  } else {
-    const items = getSeasonPack();
-    const season = getSeasonLabel();
-    document.getElementById('vac-surprise-title').textContent = '🎒 Packliste ' + season;
-    toggle.textContent = '📚 Zu den Buchtipps wechseln';
-    content.innerHTML = `
-      <div style="font-size:12px;color:var(--ink2);margin-bottom:12px">Damit du nichts vergisst:</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        ${items.map(item => `
-          <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f5f3f0;border-radius:7px;font-size:13px">
-            <input type="checkbox" style="accent-color:var(--ac);width:15px;height:15px">
-            <span>${item}</span>
-          </div>`).join('')}
-      </div>`;
-  }
-}
-
-function toggleSurpriseMode(){
-  surpriseMode = surpriseMode === 'books' ? 'pack' : 'books';
-  renderSurpriseContent();
-}
 
 let currentQuoteIndex = -1;
 function newQuote(){
@@ -1534,7 +1399,6 @@ async function decideRequest(status){
   closeM('mo-approve');
   renderDashboard();renderTodayEvents();renderCalendar();renderAbsences();
   if(status==='genehmigt' && a.type==='urlaub'){
-    showVacationSurprise(a);
   } else {
     const msg={genehmigt:'✅ Genehmigt!',abgelehnt:'❌ Abgelehnt.',urlaub_genossen:'✔️ Als Erholt! markiert.'};alert(`${msg[status]||status}\n\nUrlaub von ${empName(a.empId)} vom ${a.from} bis ${a.to}.`);
   }
