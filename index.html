@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://nvhydcykjdifudokhsgs.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aHlkY3lramRpZnVkb2toc2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDY4MDksImV4cCI6MjA4ODQ4MjgwOX0.S9CLFkJNY6Im72BiyI0LcDdIXuGErDs8NDsAMbAlxJ0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeiterfassung — NBS GmbH</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ec;--sf:#fff;--sf2:#ede9e1;--bd:#ddd8cf;--ink:#1c1915;--ink2:#6e6860;--ink3:#a09890;--ac:#c0431a;--acl:#f5dfd8;--gr:#2a6649;--grb:#d6f0e0;--or:#c06a00;--orb:#fdefd8;--rd:#b01530;--rdb:#fde8ee;--bl:#1a5276;--blb:#d6eaf8;--pu:#5b2c8d;--pub:#ead6f8;--si:#1c1915;--r:10px;--sh:0 1px 3px rgba(28,25,21,.07),0 4px 12px rgba(28,25,21,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--si)}
+.login-box{background:var(--sf);border-radius:16px;padding:40px;width:380px;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.login-box h1{font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:4px}
+.login-box h1 span{color:var(--ac)}
+.login-box p{color:var(--ink2);font-size:12.5px;margin-bottom:24px}
+.login-users{display:grid;gap:8px;margin-bottom:20px}
+.lu{border:1.5px solid var(--bd);border-radius:10px;padding:12px 15px;cursor:pointer;transition:all .14s;display:flex;align-items:center;gap:12px}
+.lu:hover{border-color:var(--ac);background:var(--acl)}
+.lu.admin{border-color:rgba(192,67,26,.3);background:rgba(192,67,26,.03)}
+.lu-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0}
+.av-admin{background:var(--acl);color:var(--ac)}
+.av-emp{background:var(--blb);color:var(--bl)}
+.lu-info h4{font-size:13.5px;font-weight:600}
+.lu-info p{font-size:11.5px;color:var(--ink2)}
+.lu-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:12px}
+
+/* APP LAYOUT */
+#app-screen{display:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:230px;background:var(--si);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow-y:auto}
+.logo{padding:20px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.logo h1{font-family:'DM Serif Display',serif;font-size:18px;color:#fff}
+.logo h1 span{color:#e07a52}
+.logo small{display:block;font-size:10px;color:rgba(255,255,255,.3);margin-top:1px;font-family:'DM Mono',monospace}
+.user-pill{margin:10px 14px;background:rgba(255,255,255,.06);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px}
+.up-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.up-name{font-size:12.5px;font-weight:500}
+.up-role{font-size:10px;color:rgba(255,255,255,.35)}
+.logout-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);font-size:12px;padding:2px 5px}
+nav{padding:6px 0;flex:1}
+.ns{padding:10px 18px 3px;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.22)}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 18px;cursor:pointer;color:rgba(255,255,255,.48);font-size:13px;transition:all .12s;border-left:3px solid transparent}
+.ni:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.04)}
+.ni.active{color:#fff;background:rgba(192,67,26,.2);border-left-color:var(--ac);font-weight:500}
+.sidebar-foot{padding:10px 18px;border-top:1px solid rgba(255,255,255,.07);font-size:10px;color:rgba(255,255,255,.18)}
+.main{margin-left:230px;flex:1;padding:26px 30px;min-height:100vh}
+.page{display:none}.page.active{display:block}
+
+/* MOOD */
+.mood-bar{display:flex;gap:10px;align-items:center;background:#fffbf0;border:1.5px solid #fde68a;border-radius:12px;padding:14px 18px;margin-bottom:14px}
+.mood-btn{font-size:28px;cursor:pointer;border:2px solid transparent;border-radius:50%;padding:4px 8px;transition:all .15s;background:none;line-height:1}
+.mood-btn:hover{transform:scale(1.2)}
+.mood-btn.selected{border-color:#c0431a;background:#fff0eb;transform:scale(1.15)}
+.mood-note{flex:1;border:1px solid #e5e0d8;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;resize:none}
+.mood-tag{display:inline-flex;align-items:center;gap:5px;background:#fff0eb;border:1px solid #f5cfc0;border-radius:20px;padding:3px 10px;font-size:12px}
+
+/* TYPOGRAPHY + LAYOUT */
+.ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.ph h2{font-family:'DM Serif Display',serif;font-size:25px;letter-spacing:-.4px}
+.ph p{color:var(--ink2);font-size:12.5px;margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .14s}
+.btn-p{background:var(--ac);color:#fff}.btn-p:hover{background:#a83915;transform:translateY(-1px)}
+.btn-s{background:var(--sf);color:var(--ink);border:1px solid var(--bd)}.btn-s:hover{background:var(--sf2)}
+.btn-d{background:var(--rdb);color:var(--rd);border:1px solid #f5c2cc}
+.btn-g{background:var(--grb);color:var(--gr);border:1px solid #b2dfc4}.btn-g:hover{background:#c2e8d2}
+.btn-sm{padding:5px 10px;font-size:12px}
+.card{background:var(--sf);border-radius:var(--r);border:1px solid var(--bd);box-shadow:var(--sh)}
+.ch{padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.ch h3{font-size:13.5px;font-weight:600}
+.cb{padding:18px}
+.sr{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.sc-l{font-size:11px;color:var(--ink2);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.sc-v{font-family:'DM Mono',monospace;font-size:22px;color:var(--ink)}
+.sc-s{font-size:11px;color:var(--ink3);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11.5px;font-weight:500}
+.bg-gr{background:var(--grb);color:var(--gr)}.bg-or{background:var(--orb);color:var(--or)}.bg-rd{background:var(--rdb);color:var(--rd)}.bg-bl{background:var(--blb);color:var(--bl)}.bg-gy{background:var(--sf2);color:var(--ink2)}.bg-pu{background:var(--pub);color:var(--pu)}.bg-ac{background:var(--acl);color:var(--ac)}
+.fr{display:grid;gap:12px;margin-bottom:12px}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+label{display:block;font-size:11.5px;font-weight:500;color:var(--ink2);margin-bottom:3px}
+input,select,textarea{width:100%;padding:7px 10px;border:1px solid var(--bd);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink);background:var(--sf);transition:border-color .14s}
+input:focus,select:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px rgba(192,67,26,.08)}
+input[type=time]{font-family:'DM Mono',monospace}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;color:var(--ink2);border-bottom:1px solid var(--bd);background:var(--sf2);text-transform:uppercase;letter-spacing:.5px}
+td{padding:10px 12px;border-bottom:1px solid #f0ece4;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#faf8f5}
+.alert{padding:10px 13px;border-radius:7px;font-size:13px;display:flex;gap:8px;align-items:flex-start;margin-bottom:10px}
+.aw{background:var(--orb);color:var(--or);border:1px solid #f5c87a}
+.ad{background:var(--rdb);color:var(--rd);border:1px solid #f5b2c0}
+.ai{background:var(--blb);color:var(--bl);border:1px solid #a8d4f0}
+.as{background:var(--grb);color:var(--gr);border:1px solid #9ed4b4}
+.mo{display:none;position:fixed;inset:0;background:rgba(28,25,21,.45);z-index:500;align-items:center;justify-content:center}
+.mo.open{display:flex}
+.md{background:var(--sf);border-radius:12px;box-shadow:0 20px 60px rgba(28,25,21,.18);width:580px;max-width:96vw;max-height:92vh;overflow-y:auto}
+.md-xl{width:820px}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.mh h3{font-family:'DM Serif Display',serif;font-size:19px}
+.mc{background:none;border:none;cursor:pointer;color:var(--ink2);font-size:18px;padding:3px 7px;border-radius:5px}
+.mb{padding:18px 22px}
+.mf{padding:12px 22px;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end}
+.sbar{background:var(--si);color:#fff;border-radius:var(--r);padding:16px 20px;margin-bottom:18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.scl{font-family:'DM Mono',monospace;font-size:28px;font-weight:300;color:#fff;letter-spacing:2px}
+.dot{width:8px;height:8px;border-radius:50%;background:#666;flex-shrink:0}
+.dot.on{background:#4ade80;box-shadow:0 0 8px #4ade80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.law{background:#fffbf5;border:1px solid #f0d9b0;border-radius:var(--r);padding:12px 15px;margin-bottom:18px}
+.law h4{font-size:11.5px;font-weight:600;color:#8a5c00;margin-bottom:5px}
+.law ul{padding-left:15px;font-size:12px;color:#7a5200;line-height:1.9}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.mt2{margin-top:16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:4px 11px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--bd);background:var(--sf);color:var(--ink2);transition:all .12s}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.flex{display:flex;align-items:center;gap:8px}
+.empty{text-align:center;padding:32px 16px;color:var(--ink2)}
+.tag-azg{background:#fff3e0;color:#b35c00;border:1px solid #ffcc80;border-radius:5px;padding:2px 7px;font-size:10.5px;font-weight:600;font-family:'DM Mono',monospace}
+.vmeter{background:var(--sf2);height:8px;border-radius:4px;overflow:hidden;margin-top:4px}
+.vmfill{height:100%;border-radius:4px}
+.tm{color:var(--ink2)}.ts{font-size:12px}.tmono{font-family:'DM Mono',monospace}
+.divider{border:none;border-top:1px solid var(--bd);margin:14px 0}
+
+/* VACATION CALENDAR */
+.vcal-nav{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.vcal-nav button{background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:6px 12px;cursor:pointer;font-size:13px}
+.vcal-month{font-family:'DM Serif Display',serif;font-size:20px;flex:1}
+.vcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.vcal-header{text-align:center;font-size:11px;font-weight:600;color:var(--ink2);padding:6px;text-transform:uppercase;letter-spacing:.5px}
+.vcal-day{min-height:80px;border:1px solid var(--bd);border-radius:6px;padding:4px 6px;background:var(--sf);position:relative}
+.vcal-day.today{border-color:var(--ac);background:var(--acl)}
+.vcal-day.weekend{background:var(--sf2)}
+.vcal-day.other-month{opacity:.4}
+.vcal-day-num{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:2px}
+.vcal-day.today .vcal-day-num{color:var(--ac)}
+.vce{font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.vce-urlaub{background:#c8e6c9;color:#1b5e20}
+.vce-krankenstand{background:#ffcdd2;color:#b71c1c}
+.vce-homeoffice{background:#e1bee7;color:#4a148c}
+.vce-zeitausgleich{background:#bbdefb;color:#0d47a1}
+.vce-sonderurlaub{background:#fff9c4;color:#f57f17}
+.vce-beantragt{background:#ffe0b2;color:#e65100;border:1px dashed #ff9800}
+
+/* VACATION REQUEST (Employee view) */
+.req-status-beantragt{background:#fff3e0;border:1px solid #ffcc02;border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.req-status-genehmigt{background:var(--grb);border:1px solid #9ed4b4;border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.req-status-abgelehnt{background:var(--rdb);border:1px solid #f5b2c0;border-radius:8px;padding:12px 14px;margin-bottom:10px}
+
+/* OVERLAP WARNING */
+.overlap-warn{background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.overlap-warn h4{color:#e65100;font-size:13.5px;margin-bottom:8px}
+.overlap-item{background:#fff;border-radius:6px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;border-left:3px solid #ff9800}
+
+/* EXCEL EXPORT BUTTON */
+.export-month-btn{background:var(--grb);color:var(--gr);border:1px solid #b2dfc4;border-radius:7px;padding:7px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .12s}
+.export-month-btn:hover{background:#c2e8d2}
+.alert.ag{background:#f0fdf4;border-color:#86efac;color:#166534}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#1c1915;font-family:DM Sans,sans-serif">
+  <div style="background:#fff;border-radius:16px;padding:40px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.4)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:32px;margin-bottom:8px">⏱️</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#1c1915">NBS Zeiterfassung</div>
+      <div style="font-size:13px;color:#888;margin-top:4px">Bitte melde dich an</div>
+    </div>
+    <div id="login-error" style="display:none;background:#fef2f2;color:#c0431a;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px"></div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:13px;font-weight:500;color:#444;display:block;margin-bottom:6px">E-Mail</label>
+      <input id="login-email" type="email" placeholder="deine@email.at"
+        style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 14px;font-size:14px;box-sizing:border-box;font-family:inherit"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:13px;font-weight:500;color:#444;display:block;margin-bottom:6px">Passwort</label>
+      <input id="login-pw" type="password" placeholder="••••••••"
+        style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 14px;font-size:14px;box-sizing:border-box;font-family:inherit"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" id="login-btn"
+      style="width:100%;background:#c0431a;color:#fff;border:none;border-radius:8px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">
+      Anmelden
+    </button>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:#aaa">
+      Passwort vergessen? Bitte Christina kontaktieren.
+    </div>
+  </div>
+</div>
+
+<div id="app-screen">
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo">
+    <h1>Zeit<span>.</span>NBS</h1>
+    <small>§ 26 AZG · NBS GmbH</small>
+  </div>
+  <div class="user-pill">
+    <div class="up-av" id="nav-av"></div>
+    <div><div class="up-name" id="nav-name"></div><div class="up-role" id="nav-role"></div></div>
+    <button class="logout-btn" onclick="logout()" title="Abmelden">⏏</button>
+  </div>
+  <nav id="main-nav"></nav>
+  <div class="sidebar-foot">§ 26 AZG · § 132 BAO · NBS GmbH</div>
+</aside>
+
+<main class="main" id="main-content">
+
+<!-- DASHBOARD (Admin) -->
+<div id="page-dashboard" class="page">
+  <div class="ph">
+    <div><h2>Dashboard</h2><p id="today-sub"></p></div>
+    <button class="btn btn-p" onclick="P('stempel')">⏱ Stempeluhr</button>
+  </div>
+  <div id="motivational-quote" style="display:none;background:linear-gradient(135deg,#1c1915,#2d2924);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-10px;right:12px;font-size:60px;opacity:0.08">💬</div>
+    <div style="font-size:13px;opacity:0.6;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Guten Morgen</div>
+    <div id="quote-text" style="font-size:15px;font-style:italic;line-height:1.5"></div>
+    <div id="quote-author" style="font-size:12px;opacity:0.5;margin-top:6px"></div>
+    <button onclick="newQuote()" style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;font-size:16px;opacity:0.4" title="Neuer Spruch">🔄</button>
+  </div>
+  <!-- CELEBRATIONS -->
+  <div id="celebrations-box" style="display:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px">
+    <div style="font-size:12px;opacity:0.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🎉 Heute feiern wir</div>
+  </div>
+
+  <!-- URLAUBSWARNUNG -->
+  <div id="vacation-warnings-box" style="display:none;background:#fff;border:2px solid var(--or);border-radius:12px;padding:16px 20px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:600;color:var(--or);margin-bottom:8px">⚠️ Resturlaub-Erinnerung — bitte rechtzeitig planen!</div>
+    <div id="vacation-warnings-inner"></div>
+  </div>
+
+  <!-- TEAM-TAGESNOTIZ -->
+  <div style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:16px 20px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📝 Team-Notiz für heute</div>
+    <div id="day-note-box" style="display:flex;gap:8px;align-items:center">
+      <input id="day-note-input" placeholder="z.B. Messe-Tag · Homeoffice · Besprechung mit Kunde..." style="flex:1;border:1px solid var(--bd);border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit">
+      <button class="btn btn-p" style="white-space:nowrap" onclick="saveDayNote()">Speichern</button>
+      <span id="day-note-saved" style="font-size:12px;color:var(--gr);opacity:0;transition:opacity 0.5s">✓ gespeichert</span>
+    </div>
+  </div>
+
+  <div class="law"><h4>⚖️ AZG Österreich</h4>
+    <ul>
+      <li>Max. <b>8 Std./Tag, 40 Std./Woche</b> · absolutes Maximum: 12 Std./Tag, 60 Std./Woche</li>
+      <li>Pflichtpause: <b>nach 6 Std. = mind. 30 Min.</b> · Tägliche Ruhezeit: mind. 11 Std.</li>
+      <li>Überstunden ab 9. Std./Tag oder 41. Std./Woche · 50% Zuschlag oder 1,5× ZA</li>
+    </ul>
+  </div>
+  <div class="sr" id="db-stats"></div>
+  <div class="g2">
+    <div class="card"><div class="ch"><h3>📍 Aktiv eingestempelt</h3></div><div class="cb" id="db-active"></div></div>
+    <div class="card"><div class="ch"><h3>⚠️ AZG-Warnungen heute</h3></div><div class="cb" id="db-warns"></div></div>
+  </div>
+  <div class="card mt2"><div class="ch"><h3>🌴 Offene Urlaubsansuchen</h3><span id="pending-count"></span></div><div class="cb" style="padding:0" id="db-pending"></div></div>
+</div>
+
+<!-- DASHBOARD (Employee) -->
+<div id="page-emp-dashboard" class="page">
+  <div class="ph"><div><h2 id="emp-db-greeting">Hallo!</h2><p>Meine Übersicht</p></div></div>
+  <div class="sr" id="emp-db-stats"></div>
+  <div class="g2">
+    <div class="card"><div class="ch"><h3>⏱ Heute</h3></div><div class="cb" id="emp-today"></div></div>
+    <div class="card"><div class="ch"><h3>🌴 Meine Urlaubsansuchen</h3></div><div class="cb" style="padding:0" id="emp-requests"></div></div>
+  </div>
+  <!-- STIMMUNGSBAROMETER ÜBERSICHT (Admin) -->
+  <div class="card" id="mood-overview-card" style="display:none">
+    <div class="ch"><h3>😊 Stimmungsbarometer — Heute</h3></div>
+    <div class="cb" id="mood-overview-list"></div>
+  </div>
+</div>
+
+<!-- STEMPELUHR -->
+<div id="page-stempel" class="page">
+  <div class="ph"><div><h2>Stempeluhr</h2><p>Kommen · Gehen · Pause</p></div><span class="tag-azg">§ 26 AZG</span></div>
+  <div class="sbar">
+    <div><div class="scl" id="live-clock">00:00:00</div><div style="font-size:11px;color:rgba(255,255,255,.4)" id="live-date"></div></div>
+    <div style="flex:1;min-width:180px" id="stamp-emp-wrap">
+      <label style="color:rgba(255,255,255,.4);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:block">Mitarbeiter</label>
+      <select id="stamp-emp" style="background:#2d2924;border-color:#4a4540;color:#fff" onchange="updateStampStatus()"><option value="">— auswählen —</option></select>
+    </div>
+    <div class="flex"><div class="dot" id="s-dot"></div><span id="s-status" style="font-size:12.5px;color:rgba(255,255,255,.5)">Nicht eingestempelt</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <button class="btn btn-g" style="padding:16px;font-size:15px;justify-content:center;border-radius:10px" onclick="doKommen()">🟢 KOMMEN — Einstempeln</button>
+    <button class="btn btn-d" style="padding:16px;font-size:15px;justify-content:center;border-radius:10px" onclick="doGehen()">🔴 GEHEN — Ausstempeln</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
+    <button class="btn btn-s" style="padding:10px;justify-content:center;border-radius:10px" onclick="doPauseStart()">☕ Pause beginnen</button>
+    <button class="btn btn-s" style="padding:10px;justify-content:center;border-radius:10px" onclick="doPauseEnd()">▶️ Pause beenden</button>
+  </div>
+  <!-- STIMMUNGSBAROMETER -->
+  <div id="mood-bar" class="mood-bar" style="display:none">
+    <div style="font-size:13px;font-weight:600;color:#5c4a2a;white-space:nowrap">Wie war dein Tag?</div>
+    <button class="mood-btn" id="mood-1" onclick="selectMood(1)" title="Schwieriger Tag">😓</button>
+    <button class="mood-btn" id="mood-2" onclick="selectMood(2)" title="So lala">😐</button>
+    <button class="mood-btn" id="mood-3" onclick="selectMood(3)" title="Guter Tag!">😊</button>
+    <textarea class="mood-note" id="mood-note" rows="1" placeholder="Kurze Notiz (optional)…" style="min-width:120px;max-width:220px"></textarea>
+    <button class="btn btn-p" style="padding:7px 14px;font-size:13px;white-space:nowrap" onclick="saveMood()">Speichern</button>
+    <button class="btn btn-s" style="padding:7px 10px;font-size:13px" onclick="closeMood()" title="Überspringen">✕</button>
+  </div>
+    <div id="stamp-warn" class="alert aw" style="display:none"><span>⚠️</span><span id="stamp-warn-txt"></span></div>
+  <div class="card"><div class="ch"><h3>Heutige Einträge</h3></div>
+    <div class="cb" style="padding:0"><table><thead><tr><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Dauer</th><th>Status</th><th>AZG</th><th></th></tr></thead><tbody id="today-tbody"></tbody></table></div>
+  </div>
+  <div class="card mt2">
+    <div class="ch"><h3>✏️ Manuell nachtragen</h3><span class="tm ts">§ 26 AZG erlaubt Nachträge</span></div>
+    <div class="cb">
+      <div class="fr c4">
+        <div id="manual-emp-wrap"><label>Mitarbeiter</label><select id="m-emp"><option value="">—</option></select></div>
+        <div><label>Datum</label><input type="date" id="m-date"></div>
+        <div><label>Kommen</label><input type="time" id="m-start" value="08:00"></div>
+        <div><label>Gehen</label><input type="time" id="m-end" value="17:00"></div>
+      </div>
+      <div class="fr c3">
+        <div><label>Pause (Min)</label><input type="number" id="m-break" value="30" min="0"></div>
+        <div><label>Typ</label><select id="m-type"><option value="normal">Normal</option><option value="homeoffice">🏠 Homeoffice</option></select></div>
+        <div><label>Notiz</label><input id="m-note" placeholder="Grund..."></div>
+      </div>
+      <button class="btn btn-p" onclick="addManual()">Eintragen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MITARBEITER (Admin only) -->
+<div id="page-mitarbeiter" class="page">
+  <div class="ph"><div><h2>Mitarbeiter</h2><p>Stammdaten · Arbeitszeit · Vertrag</p></div>
+    <button class="btn btn-p" onclick="openM('mo-add-emp')">+ Mitarbeiter anlegen</button>
+  </div>
+  <div class="card"><div class="cb" style="padding:0">
+    <table><thead><tr><th>Name & Kontakt</th><th>Funktion</th><th>Arbeitszeit</th><th>Modell</th><th>Eintritt</th><th>Urlaub/J</th><th>Übertrag VJ</th><th>Vertrag</th><th>Status</th><th></th></tr></thead>
+    <tbody id="emp-tbody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- ABWESENHEITEN (Admin only) -->
+<div id="page-abwesenheit" class="page">
+  <div class="ph"><div><h2>Abwesenheiten verwalten</h2><p>Alle Mitarbeiter · Urlaub · Krankenstand · HO · ZA · Sonderurlaub</p></div>
+    <button class="btn btn-p" onclick="openM('mo-abs')">+ Eintragen</button>
+  </div>
+  <div class="flex" style="margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <input type="text" id="abs-search" placeholder="🔍 Mitarbeiter suchen…" oninput="renderAbsences()" style="width:180px">
+    <select id="abs-emp-filter" onchange="renderAbsences()" style="width:180px">
+      <option value="alle">Alle Mitarbeiter</option>
+    </select>
+    <select id="abs-time-filter" onchange="renderAbsences()" style="width:160px">
+      <option value="alle">Alle Zeiträume</option>
+      <option value="zukunft">Zukünftige</option>
+      <option value="aktuell">Laufende</option>
+      <option value="vergangenheit">Vergangene</option>
+      <option value="dieses-jahr">Dieses Jahr</option>
+      <option value="naechster-monat">Nächster Monat</option>
+      <option value="dieser-monat">Dieser Monat</option>
+    </select>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px" id="abs-summary"></div>
+  <div class="card">
+    <div class="ch"><h3>Übersicht</h3>
+      <div class="chips">
+        <span class="chip on" data-filter="alle" onclick="filterAbs('alle',this)">Alle</span>
+        <span class="chip" data-filter="urlaub" onclick="filterAbs('urlaub',this)">🌴 Urlaub</span>
+        <span class="chip" data-filter="krankenstand" onclick="filterAbs('krankenstand',this)">🤒 Krankenstand</span>
+        <span class="chip" data-filter="homeoffice" onclick="filterAbs('homeoffice',this)">🏠 Homeoffice</span>
+        <span class="chip" data-filter="zeitausgleich" onclick="filterAbs('zeitausgleich',this)">🔄 Zeitausgleich</span>
+        <span class="chip" data-filter="sonderurlaub" onclick="filterAbs('sonderurlaub',this)">⭐ Sonderurlaub</span>
+        <span class="chip" data-filter="beantragt" onclick="filterAbs('beantragt',this)">⏳ Beantragt</span>
+      </div>
+    </div>
+    <div class="cb" style="padding:0"><table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th>Status</th><th></th></tr></thead>
+    <tbody id="abs-tbody"></tbody></table></div>
+  </div>
+</div>
+
+<!-- URLAUBSKALENDER (All users) -->
+<div id="page-kalender" class="page">
+  <div class="ph"><div><h2>Urlaubskalender</h2><p>Übersicht aller Abwesenheiten</p></div>
+    <div class="flex">
+      <button class="btn btn-s btn-sm" onclick="openM('mo-vacreq')">🌴 Urlaub beantragen</button>
+    </div>
+  </div>
+  <div class="alert ai" style="margin-bottom:16px"><span>ℹ️</span>Hier siehst du alle genehmigten und beantragten Abwesenheiten. <b>Orange gestrichelt</b> = noch beantragt, <b>grün</b> = genehmigt.</div>
+  <div class="card">
+    <div class="ch">
+      <div class="vcal-nav">
+        <button onclick="calPrev()">‹</button>
+        <span class="vcal-month" id="cal-month-label"></span>
+        <button onclick="calNext()">›</button>
+      </div>
+      <div class="chips" id="cal-filter-chips"></div>
+    </div>
+    <div class="cb">
+      <div class="vcal-grid" id="vcal-grid"></div>
+    </div>
+  </div>
+  <!-- Legend -->
+  <div class="card mt2"><div class="cb" style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;align-items:center">
+    <b style="color:var(--ink2)">Legende:</b>
+    <span class="vce vce-urlaub" style="padding:3px 8px">🌴 Urlaub</span>
+    <span class="vce vce-krankenstand" style="padding:3px 8px">🤒 Krankenstand</span>
+    <span class="vce vce-homeoffice" style="padding:3px 8px">🏠 Homeoffice</span>
+    <span class="vce vce-zeitausgleich" style="padding:3px 8px">🔄 Zeitausgleich</span>
+    <span class="vce vce-sonderurlaub" style="padding:3px 8px">⭐ Sonderurlaub</span>
+    <span class="vce vce-beantragt" style="padding:3px 8px">⏳ Beantragt</span>
+    <span class="vce" style="background:#ede0f8;color:#5b2c8d;padding:3px 8px">🎉 Feiertag</span>
+  </div></div>
+</div>
+
+<!-- URLAUBSKONTO -->
+<div id="page-urlaubskonto" class="page">
+  <div class="ph"><div><h2>Urlaubskonto</h2><p>Anspruch · Verbrauch · Resturlaub</p></div>
+    <select id="vac-year" onchange="renderVacation()" style="width:100px"><option value="2026" selected>2026</option><option value="2025">2025</option></select>
+  </div>
+  <div class="alert ai" style="margin-bottom:16px"><span>ℹ️</span><b>Übertrag Vorjahr</b> (aus dem Excel-Import) + <b>Anspruch laufendes Jahr</b> laut Dienstvertrag. <b>Feiertage und Sonderurlaub (Hochzeit, Umzug, Todesfall etc.) werden nie vom Urlaubskonto abgezogen.</b></div>
+  <div class="card"><div class="cb" style="padding:0">
+    <table><thead><tr><th>Mitarbeiter</th><th>🔄 Übertrag Vorjahr</th><th>📅 Anspruch lfd. Jahr</th><th>∑ Gesamt</th><th>Verbraucht ✅</th><th>Beantragt ⏳</th><th>Effektiv frei</th><th>Auslastung</th></tr></thead>
+    <tbody id="vac-tbody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- MONATSÜBERSICHT -->
+<div id="page-monatsansicht" class="page">
+  <div class="ph"><div><h2>Monatsübersicht</h2><p>Arbeitszeitnachweis · § 26 AZG</p></div>
+    <div class="flex" style="flex-wrap:wrap;gap:8px">
+      <input type="text" id="mv-search" placeholder="🔍 Mitarbeiter suchen…" oninput="renderMonthView()" style="width:180px">
+      <select id="mv-emp" onchange="renderMonthView()" style="width:180px"></select>
+      <input type="month" id="mv-month" onchange="renderMonthView()" style="width:150px">
+      <button class="btn btn-s btn-sm" onclick="signMonth()">✍️ Bestätigen</button>
+      <button class="export-month-btn" onclick="exportMonthExcel()">📊 Excel Export</button>
+    </div>
+  </div>
+  <div id="mv-signed-banner" style="display:none;margin-bottom:14px"></div>
+  <div class="alert ai" style="font-size:12px;margin-bottom:16px"><span>ℹ️</span><b>§ 26 Abs. 2 AZG:</b> Arbeitgeber muss Aufzeichnungen nach Ende der Entgeltzahlungsperiode kontrollieren und bestätigen.</div>
+  <div class="card" id="mv-summary-card" style="margin-bottom:14px;display:none">
+    <div class="cb" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" id="mv-summary"></div>
+  </div>
+  <div class="card"><div class="cb" style="padding:0">
+    <table><thead><tr><th>Datum</th><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Ist</th><th>Soll</th><th>Saldo</th><th>AZG</th><th></th></tr></thead>
+    <tbody id="mv-tbody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- ÜBERSTUNDEN -->
+<div id="page-ueberstunden" class="page">
+  <div class="ph"><div><h2>Überstunden</h2><p>Berechnung nach AZG</p></div>
+    <select id="ot-emp" onchange="renderOT()" style="width:200px"><option value="alle">Alle Mitarbeiter</option></select>
+  </div>
+  <div class="law"><h4>⚖️ AZG</h4>
+    <ul>
+      <li>Überstunden ab <b>9. Std./Tag</b> oder <b>41. Std./Woche</b> · Zuschlag: <b>50%</b> oder 1,5× Zeitausgleich</li>
+      <li>Anja Mayer: Teilzeit <b>25 Std./Woche</b> · Mehrstunden bis 8. Std./Tag ohne Zuschlag · Stundenlohn: € 15,-</li>
+    </ul>
+  </div>
+  <div class="sr" id="ot-stats"></div>
+  <div class="card"><div class="cb" style="padding:0">
+    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>Überstunden</th><th>Mehrstunden</th><th>Max. Tag</th><th>AZG</th></tr></thead>
+    <tbody id="ot-tbody"></tbody></table>
+  </div></div>
+</div>
+
+<!-- EXPORT -->
+<div id="page-export" class="page">
+  <div class="ph"><div><h2>Export & Stundenzettel</h2><p>§ 26 AZG · § 132 BAO · Betriebsprüfung</p></div></div>
+  <div style="background:#fff;border:1px solid var(--bd);border-radius:12px;padding:20px;margin-bottom:16px">
+    <h4 style="margin:0 0 12px">📊 Jahres-Export für Steuerberater / Lohnverrechnung</h4>
+    <p style="font-size:13px;color:var(--ink2);margin:0 0 14px">Alle Stunden und Abwesenheiten eines Jahres als CSV-Datei (kompatibel mit Excel).</p>
+    <div style="display:flex;gap:10px;align-items:center">
+      <select id="export-year" style="border:1px solid var(--bd);border-radius:7px;padding:8px 12px;font-size:13px">
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+      <button class="btn btn-p" onclick="exportYearExcel()">⬇️ Jahres-Export herunterladen</button>
+    </div>
+  </div>
+
+    <div class="alert ai" style="margin-bottom:16px"><span>ℹ️</span>Aufbewahrungspflicht: <b>mind. 1 Jahr</b> (AZG) · steuerrechtlich <b>7 Jahre</b> (§ 132 BAO)</div>
+  <div class="g3">
+    <div class="card"><div class="ch"><h3>📊 Monats-Excel</h3></div><div class="cb">
+      <p class="tm ts" style="margin-bottom:12px">Vollständiger Monatsbericht als Excel für die Betriebsprüfung</p>
+      <div class="fr"><div><label>Mitarbeiter</label><select id="xls-emp"><option value="alle">Alle</option></select></div></div>
+      <div class="fr"><div><label>Monat</label><input type="month" id="xls-month"></div></div>
+      <button class="btn btn-g" style="width:100%;justify-content:center" onclick="exportMonthExcelFull()">📊 Excel herunterladen</button>
+    </div></div>
+    <div class="card"><div class="ch"><h3>📋 CSV Export</h3></div><div class="cb">
+      <div class="fr"><div><label>Mitarbeiter</label><select id="exp-emp"><option value="alle">Alle</option></select></div></div>
+      <div class="fr c2"><div><label>Von</label><input type="date" id="exp-from"></div><div><label>Bis</label><input type="date" id="exp-to"></div></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center" onclick="doExportCSV()">⬇️ CSV herunterladen</button>
+    </div></div>
+    <div class="card"><div class="ch"><h3>📄 Stundenzettel</h3></div><div class="cb">
+      <p class="tm ts" style="margin-bottom:12px">Gesetzlich konformer Nachweis mit Unterschriftsfeld (§ 26 AZG)</p>
+      <div class="fr"><div><label>Mitarbeiter</label><select id="prt-emp"></select></div></div>
+      <div class="fr"><div><label>Monat</label><input type="month" id="prt-month"></div></div>
+      <button class="btn btn-s" style="width:100%;justify-content:center" onclick="printZettel()">🖨️ Stundenzettel drucken</button>
+    </div></div>
+  </div>
+</div>
+
+</main>
+</div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="mo" id="mo-add-emp"><div class="md">
+  <div class="mh"><h3>Mitarbeiter anlegen</h3><button class="mc" onclick="closeM('mo-add-emp')">✕</button></div>
+  <div class="mb">
+    <div class="fr c2"><div><label>Vorname *</label><input id="ne-first"></div><div><label>Nachname *</label><input id="ne-last"></div></div>
+    <div class="fr c2"><div><label>Funktion</label><input id="ne-role"></div><div><label>E-Mail</label><input type="email" id="ne-email"></div></div>
+    <div class="fr c2">
+      <div><label>Eintrittsdatum</label><input type="date" id="ne-start"></div>
+      <div><label>Modell</label><select id="ne-model"><option value="vollzeit">Vollzeit</option><option value="gleit">Gleitzeit</option><option value="fix">Fixzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div>
+    </div>
+    <div class="fr c3">
+      <div><label>Wochenstunden</label><input type="number" id="ne-hours" value="40" min="1" max="60"></div>
+      <div><label>Jahresurlaub (Tage)</label><input type="number" id="ne-vacation" value="25"></div>
+      <div><label>Urlaubsübertrag VJ</label><input type="number" id="ne-carry" value="0"></div>
+    </div>
+    <div class="fr"><div><label>🔗 Arbeitsvertrag (Cloud-Link)</label><input type="url" id="ne-contract" placeholder="https://drive.google.com/…">
+    <p class="tm ts" style="margin-top:4px">⚠️ Link zu passwortgeschütztem Ordner (Google Drive / OneDrive)</p></div></div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('mo-add-emp')">Abbrechen</button><button class="btn btn-p" onclick="addEmployee()">Anlegen</button></div>
+</div></div>
+
+<div class="mo" id="mo-edit-emp"><div class="md">
+  <div class="mh"><h3>Mitarbeiter bearbeiten</h3><button class="mc" onclick="closeM('mo-edit-emp')">✕</button></div>
+  <div class="mb">
+    <input type="hidden" id="ee-id">
+    <div class="fr c2"><div><label>Vorname</label><input id="ee-first"></div><div><label>Nachname</label><input id="ee-last"></div></div>
+    <div class="fr c2"><div><label>Funktion</label><input id="ee-role"></div><div><label>E-Mail</label><input type="email" id="ee-email"></div></div>
+    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="gleit">Gleitzeit</option><option value="fix">Fixzeit</option><option value="teilzeit">Teilzeit</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
+    <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div></div>
+    <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('mo-edit-emp')">Abbrechen</button><button class="btn btn-p" onclick="saveEmployee()">Speichern</button></div>
+</div></div>
+
+<div class="mo" id="mo-abs"><div class="md">
+  <div class="mh"><h3>Abwesenheit eintragen</h3><button class="mc" onclick="closeM('mo-abs')">✕</button></div>
+  <div class="mb">
+    <div class="fr"><div><label>Mitarbeiter *</label><select id="ab-emp"><option value="">— wählen —</option></select></div></div>
+    <div class="fr c2">
+      <div><label>Art *</label><select id="ab-type" onchange="toggleSonder()">
+        <option value="urlaub">🌴 Urlaub</option><option value="krankenstand">🤒 Krankenstand</option>
+        <option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option>
+        <option value="sonderurlaub">⭐ Sonderurlaub</option>
+      </select></div>
+      <div id="sonder-wrap" style="display:none">
+        <label>Sonderurlaub-Grund <span style="font-size:11px;color:var(--gr);font-weight:400">✓ wird NICHT vom Urlaubskonto abgezogen</span></label>
+        <select id="ab-sonder">
+          <option value="Hochzeit (3 Tage)">👰 Hochzeit (3 Tage gesetzlich)</option>
+          <option value="Umzug (2 Tage)">📦 Umzug (2 Tage)</option>
+          <option value="Geburt Kind (2 Tage)">👶 Geburt Kind (2 Tage)</option>
+          <option value="Begräbnis (2 Tage)">🕊 Begräbnis (2 Tage)</option>
+          <option value="Schwere Erkrankung Angehörige">🏥 Schwere Erkrankung Angehörige</option>
+          <option value="Sonstiges">📝 Sonstiges</option>
+        </select>
+        <div class="alert ai" style="margin-top:8px;padding:6px 10px;font-size:12px"><span>ℹ️</span> Sonderurlaub ist ein gesetzlicher Anspruch und wird <b>nicht</b> vom normalen Urlaubskonto abgezogen.</div>
+      </div>
+    </div>
+    <div class="fr c2"><div><label>Von *</label><input type="date" id="ab-from"></div><div><label>Bis</label><input type="date" id="ab-to"></div></div>
+    <div class="fr c2">
+      <div><label>Status</label><select id="ab-status"><option value="genehmigt">✅ Genehmigt</option><option value="beantragt">⏳ Beantragt</option><option value="abgelehnt">❌ Abgelehnt</option></select></div>
+      <div><label>Notiz</label><input id="ab-note" placeholder="Optional…"></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('mo-abs')">Abbrechen</button><button class="btn btn-p" onclick="addAbsence()">Eintragen</button></div>
+</div></div>
+
+<!-- VACATION REQUEST (Employee) -->
+<div class="mo" id="mo-vacreq"><div class="md">
+  <div class="mh"><h3>🌴 Urlaub beantragen</h3><button class="mc" onclick="closeM('mo-vacreq')">✕</button></div>
+  <div class="mb">
+    <div id="overlap-check-result"></div>
+    <div class="fr c2"><div><label>Von *</label><input type="date" id="vr-from" onchange="checkOverlap()"></div><div><label>Bis</label><input type="date" id="vr-to" onchange="checkOverlap()"></div></div>
+    <div class="fr"><div><label>Art</label><select id="vr-type">
+      <option value="urlaub">🌴 Urlaub</option><option value="zeitausgleich">🔄 Zeitausgleich</option>
+      <option value="sonderurlaub">⭐ Sonderurlaub</option>
+    </select></div></div>
+    <div class="fr"><div><label>Notiz / Begründung</label><input id="vr-note" placeholder="Optional…"></div></div>
+    <div id="vac-balance-info" style="background:var(--sf2);border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:8px"></div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('mo-vacreq')">Abbrechen</button><button class="btn btn-p" onclick="submitVacRequest()">Beantragen</button></div>
+</div></div>
+
+<!-- Approve request -->
+<div class="mo" id="mo-approve"><div class="md">
+  <div class="mh"><h3>Urlaubsansuchen bearbeiten</h3><button class="mc" onclick="closeM('mo-approve')">✕</button></div>
+  <div class="mb" id="approve-body"></div>
+  <div class="mf">
+    <button class="btn btn-s" onclick="closeM('mo-approve')">Abbrechen</button>
+    <button class="btn btn-d" onclick="decideRequest('abgelehnt')">❌ Ablehnen</button>
+    <button class="btn btn-g" onclick="decideRequest('genehmigt')">✅ Genehmigen</button>
+  </div>
+</div></div>
+
+<!-- Print -->
+<div class="mo" id="mo-vac-surprise">
+  <div class="md" style="max-width:520px">
+    <div class="mh" style="background:linear-gradient(135deg,#1c6b3a,#2d9e57);color:#fff">
+      <h3 id="vac-surprise-title">🌴 Urlaub genehmigt!</h3>
+      <button class="mc" style="color:#fff;opacity:0.8" onclick="closeM('mo-vac-surprise')">✕</button>
+    </div>
+    <div class="mb">
+      <div id="vac-surprise-emp" style="font-size:13px;color:var(--ink2);margin-bottom:16px"></div>
+      <div id="vac-surprise-content"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="toggleSurpriseMode()" id="vac-surprise-toggle">🎒 Zur Packliste wechseln</button>
+      <button class="btn btn-p" style="background:#1c6b3a" onclick="closeM('mo-vac-surprise')">Super, danke! 🎉</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="mo-edit-entry">
+  <div class="md" style="max-width:480px">
+    <div class="mh"><h3>✏️ Eintrag bearbeiten</h3><button class="mc" onclick="closeM('mo-edit-entry')">✕</button></div>
+    <div class="mb">
+      <div class="fr c2" style="margin-bottom:12px">
+        <div><label>Mitarbeiter</label><input type="text" id="ee-emp-name" disabled style="background:#f5f3f0;color:var(--ink2)"></div>
+        <div><label>Datum</label><input type="date" id="ee-date"></div>
+      </div>
+      <div class="fr c3" style="margin-bottom:12px">
+        <div><label>Kommen *</label><input type="time" id="ee-start" oninput="updateEePreview()"></div>
+        <div><label>Gehen *</label><input type="time" id="ee-end" oninput="updateEePreview()"></div>
+        <div><label>Pause (Min.)</label><input type="number" id="ee-break" min="0" oninput="updateEePreview()" max="120" step="5" value="0"></div>
+      </div>
+      <div class="fr c2" style="margin-bottom:12px">
+        <div><label>Typ</label>
+          <select id="ee-type">
+            <option value="normal">Büro</option>
+            <option value="homeoffice">🏠 Homeoffice</option>
+          </select>
+        </div>
+        <div><label>Notiz</label><input type="text" id="ee-note" placeholder="Optional…"></div>
+      </div>
+      <div id="ee-preview" style="background:#f5f3f0;border-radius:8px;padding:10px;font-size:13px;color:var(--ink2);min-height:36px"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeM('mo-edit-entry')">Abbrechen</button>
+      <button class="btn btn-p" onclick="saveEditEntry()">💾 Änderung speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="mo-print"><div class="md md-xl">
+  <div class="mh"><h3>Stundenzettel</h3><button class="mc" onclick="closeM('mo-print')">✕</button></div>
+  <div class="mb" id="print-body"></div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('mo-print')">Schließen</button><button class="btn btn-p" onclick="window.print()">🖨️ Drucken</button></div>
+</div></div>
+
+<script>
+// ══ STATE ══
+const TODAY = new Date().toISOString().slice(0,10);
+let currentUser = null;
+let currentApproveId = null;
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
+
+const USERS = [
+  { id:1, type:'employee', first:'Anja', last:'Mayer', email:'anja.mayer@nbs.co.at', role:'Mitarbeiterin', empId:1 },
+  { id:0, type:'admin', first:'Christina', last:'Neumeister-Böck', email:'cneumeister@nbs.co.at', role:'Geschäftsführung', empId:null },
+  { id:7, type:'employee', first:'Iris', last:'Olbrich', email:'iris.olbrich@nbs.co.at', role:'Mitarbeiter/in', empId:7 },
+  { id:6, type:'employee', first:'Laura', last:'Miladinovicova', email:'laura.miladinovicova@nbs.co.at', role:'Mitarbeiter/in', empId:6 },
+  { id:5, type:'employee', first:'Lisa', last:'Anand', email:'lisa.anand@nbs.co.at', role:'Mitarbeiter/in', empId:5 },
+  { id:3, type:'employee', first:'Lukas', last:'Huber', email:'lukas.huber@nbs.co.at', role:'Mitarbeiter/in', empId:3 },
+  { id:4, type:'employee', first:'Michael', last:'Gröger', email:'michael.groeger@nbs.co.at', role:'Mitarbeiter/in', empId:4 },
+  { id:2, type:'admin', first:'Thomas', last:'Reischer', email:'thomas.reischer@nbs.co.at', role:'Mitarbeiter/in', empId:2 }
+];
+
+let employees = [
+  { id:1, first:'Anja', last:'Mayer', role:'Mitarbeiterin', email:'anja.mayer@nbs.co.at',
+    start:'2023-11-02', model:'teilzeit', hours:25, vacation:25, carry:0,
+    contract:'', active:true, note:'Eintritt 02.11.2023 · € 15,-/Std.' },
+  { id:8, first:'Diana', last:'Wrobel', role:'Mitarbeiter/in', email:'', start:'2024-01-01', model:'teilzeit', hours:35.0, vacation:25, carry:0, contract:'', active:true, note:'⚠️ Kein eigener Login — Einträge bitte von Admin eingeben', noLogin:true },
+  { id:7, first:'Iris', last:'Olbrich', role:'Mitarbeiter/in', email:'iris.olbrich@nbs.co.at', start:'2024-01-01', model:'vollzeit', hours:38.5, vacation:25, carry:0, contract:'', active:true, note:'' },
+  { id:6, first:'Laura', last:'Miladinovicova', role:'Mitarbeiter/in', email:'laura.miladinovicova@nbs.co.at', start:'2024-01-01', model:'teilzeit', hours:25.0, vacation:25, carry:0, contract:'', active:true, note:'' },
+  { id:5, first:'Lisa', last:'Anand', role:'Mitarbeiter/in', email:'lisa.anand@nbs.co.at', start:'2024-01-01', model:'teilzeit', hours:25.0, vacation:25, carry:20, contract:'', active:true, note:'' },
+  { id:3, first:'Lukas', last:'Huber', role:'Mitarbeiter/in', email:'lukas.huber@nbs.co.at', start:'2024-01-01', model:'teilzeit', hours:30.0, vacation:25, carry:0, contract:'', active:true, note:'' },
+  { id:4, first:'Michael', last:'Gröger', role:'Mitarbeiter/in', email:'michael.groeger@nbs.co.at', start:'2026-03-02', model:'teilzeit', hours:20, vacation:25, carry:0, contract:'', active:true, note:'Anstellung ab 02.03.2026 · 20 Std./Woche' },
+  { id:2, first:'Thomas', last:'Reischer', role:'Mitarbeiter/in', email:'thomas.reischer@nbs.co.at', start:'2024-01-01', model:'allin', hours:38.5, vacation:25, carry:9, contract:'', active:true, note:'' },
+];
+let nextEmpId = 9;
+
+let entries = [{"id":1,"empId":1,"date":"2026-01-19","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":2,"empId":1,"date":"2026-01-20","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":3,"empId":1,"date":"2026-01-21","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":4,"empId":1,"date":"2026-01-22","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":5,"empId":1,"date":"2026-01-23","start":"12:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":6,"empId":1,"date":"2026-01-26","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":7,"empId":1,"date":"2026-01-27","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":8,"empId":1,"date":"2026-01-28","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":9,"empId":1,"date":"2026-01-29","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":10,"empId":1,"date":"2026-01-30","start":"10:00","end":"12:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":11,"empId":1,"date":"2026-02-02","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":12,"empId":1,"date":"2026-02-03","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":13,"empId":1,"date":"2026-02-04","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":14,"empId":1,"date":"2026-02-05","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":15,"empId":1,"date":"2026-02-06","start":"10:00","end":"11:30","breakMin":0,"type":"homeoffice","note":"","manual":false},{"id":16,"empId":1,"date":"2026-02-09","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":17,"empId":1,"date":"2026-02-10","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":18,"empId":1,"date":"2026-02-11","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":19,"empId":1,"date":"2026-02-12","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":20,"empId":1,"date":"2026-02-13","start":"09:00","end":"10:00","breakMin":0,"type":"homeoffice","note":"","manual":false},{"id":21,"empId":1,"date":"2026-02-16","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":22,"empId":1,"date":"2026-02-17","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":23,"empId":1,"date":"2026-02-18","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":24,"empId":1,"date":"2026-02-19","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":25,"empId":1,"date":"2026-02-20","start":"10:00","end":"11:00","breakMin":0,"type":"homeoffice","note":"","manual":false},{"id":26,"empId":1,"date":"2026-02-23","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":27,"empId":1,"date":"2026-02-24","start":"08:00","end":"14:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":28,"empId":1,"date":"2026-02-25","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":29,"empId":1,"date":"2026-02-26","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":30,"empId":1,"date":"2026-02-27","start":"10:00","end":"11:30","breakMin":0,"type":"homeoffice","note":"","manual":false},{"id":31,"empId":1,"date":"2026-03-02","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":32,"empId":1,"date":"2026-03-03","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":33,"empId":1,"date":"2026-03-04","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":34,"empId":1,"date":"2026-03-05","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":35,"empId":1,"date":"2026-03-06","start":"10:00","end":"12:00","breakMin":0,"type":"homeoffice","note":"","manual":false},{"id":36,"empId":1,"date":"2026-03-09","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":37,"empId":1,"date":"2026-03-10","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":38,"empId":1,"date":"2026-03-11","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":39,"empId":1,"date":"2026-03-12","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":40,"empId":1,"date":"2026-03-16","start":"08:00","end":"18:00","breakMin":60,"type":"normal","note":"ODM Messe","manual":false},{"id":41,"empId":1,"date":"2026-03-17","start":"08:00","end":"20:00","breakMin":60,"type":"normal","note":"ODM Messe","manual":false},{"id":42,"empId":1,"date":"2026-03-18","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":43,"empId":1,"date":"2026-03-19","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":44,"empId":1,"date":"2026-03-23","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":45,"empId":1,"date":"2026-03-24","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":46,"empId":1,"date":"2026-03-25","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":47,"empId":1,"date":"2026-03-26","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":48,"empId":1,"date":"2026-03-30","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":49,"empId":1,"date":"2026-03-31","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":50,"empId":2,"date":"2026-01-07","start":"08:00","end":"19:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":51,"empId":2,"date":"2026-01-08","start":"08:30","end":"18:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":52,"empId":2,"date":"2026-01-09","start":"08:00","end":"16:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":53,"empId":2,"date":"2026-01-12","start":"07:30","end":"18:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":54,"empId":2,"date":"2026-01-13","start":"07:30","end":"18:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":55,"empId":2,"date":"2026-01-14","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":56,"empId":2,"date":"2026-01-15","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":57,"empId":2,"date":"2026-01-16","start":"08:00","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":58,"empId":2,"date":"2026-01-19","start":"08:00","end":"21:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":59,"empId":2,"date":"2026-01-20","start":"08:30","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":60,"empId":2,"date":"2026-01-21","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":61,"empId":2,"date":"2026-01-22","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":62,"empId":2,"date":"2026-01-23","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":63,"empId":2,"date":"2026-01-26","start":"07:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":64,"empId":2,"date":"2026-01-27","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":65,"empId":2,"date":"2026-01-28","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":66,"empId":2,"date":"2026-01-29","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":67,"empId":2,"date":"2026-01-30","start":"08:00","end":"18:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":68,"empId":2,"date":"2026-02-02","start":"08:00","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":69,"empId":2,"date":"2026-02-03","start":"08:00","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":70,"empId":2,"date":"2026-02-04","start":"08:00","end":"18:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":71,"empId":2,"date":"2026-02-05","start":"07:30","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":72,"empId":2,"date":"2026-02-06","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":73,"empId":2,"date":"2026-02-09","start":"08:00","end":"18:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":74,"empId":2,"date":"2026-02-10","start":"08:00","end":"19:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":75,"empId":2,"date":"2026-02-11","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":76,"empId":2,"date":"2026-02-12","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":77,"empId":2,"date":"2026-02-13","start":"07:30","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":78,"empId":2,"date":"2026-02-16","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":79,"empId":2,"date":"2026-02-17","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":80,"empId":2,"date":"2026-02-18","start":"07:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":81,"empId":2,"date":"2026-02-19","start":"08:00","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":82,"empId":2,"date":"2026-02-20","start":"07:30","end":"18:00","breakMin":30,"type":"homeoffice","note":"","manual":false},{"id":83,"empId":2,"date":"2026-02-23","start":"08:30","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":84,"empId":2,"date":"2026-02-24","start":"08:00","end":"19:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":85,"empId":2,"date":"2026-02-25","start":"08:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":86,"empId":2,"date":"2026-02-26","start":"07:30","end":"18:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":87,"empId":2,"date":"2026-02-27","start":"08:00","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":88,"empId":3,"date":"2026-01-19","start":"08:00","end":"14:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":89,"empId":3,"date":"2026-01-20","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":90,"empId":3,"date":"2026-01-21","start":"09:15","end":"15:45","breakMin":30,"type":"normal","note":"","manual":false},{"id":91,"empId":3,"date":"2026-01-22","start":"08:45","end":"15:15","breakMin":30,"type":"normal","note":"","manual":false},{"id":92,"empId":3,"date":"2026-01-23","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":93,"empId":3,"date":"2026-01-26","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":94,"empId":3,"date":"2026-01-27","start":"09:00","end":"16:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":95,"empId":3,"date":"2026-01-28","start":"11:00","end":"17:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":96,"empId":3,"date":"2026-01-29","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":97,"empId":3,"date":"2026-01-30","start":"09:00","end":"14:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":98,"empId":3,"date":"2026-02-02","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":99,"empId":3,"date":"2026-02-03","start":"11:00","end":"17:45","breakMin":30,"type":"normal","note":"","manual":false},{"id":100,"empId":3,"date":"2026-02-04","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":101,"empId":3,"date":"2026-02-05","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":102,"empId":3,"date":"2026-02-06","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":103,"empId":3,"date":"2026-02-09","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":104,"empId":3,"date":"2026-02-10","start":"09:00","end":"17:45","breakMin":30,"type":"normal","note":"","manual":false},{"id":105,"empId":3,"date":"2026-02-11","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":106,"empId":3,"date":"2026-02-12","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":107,"empId":3,"date":"2026-02-13","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":108,"empId":3,"date":"2026-02-16","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":109,"empId":3,"date":"2026-02-17","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":110,"empId":3,"date":"2026-02-18","start":"09:00","end":"16:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":111,"empId":3,"date":"2026-02-19","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":112,"empId":3,"date":"2026-02-20","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":113,"empId":3,"date":"2026-02-23","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":114,"empId":3,"date":"2026-02-24","start":"09:00","end":"15:30","breakMin":30,"type":"homeoffice","note":"","manual":false},{"id":115,"empId":3,"date":"2026-02-25","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":116,"empId":3,"date":"2026-02-26","start":"09:00","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":117,"empId":3,"date":"2026-02-27","start":"09:00","end":"15:30","breakMin":30,"type":"homeoffice","note":"","manual":false},{"id":118,"empId":4,"date":"2026-01-07","start":"08:45","end":"14:55","breakMin":30,"type":"normal","note":"","manual":false},{"id":119,"empId":4,"date":"2026-01-14","start":"09:10","end":"15:55","breakMin":30,"type":"normal","note":"","manual":false},{"id":120,"empId":4,"date":"2026-01-21","start":"09:00","end":"15:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":121,"empId":4,"date":"2026-01-28","start":"09:10","end":"15:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":122,"empId":4,"date":"2026-02-02","start":"08:40","end":"17:35","breakMin":30,"type":"normal","note":"","manual":false},{"id":123,"empId":4,"date":"2026-02-04","start":"09:05","end":"17:20","breakMin":30,"type":"normal","note":"","manual":false},{"id":124,"empId":4,"date":"2026-02-09","start":"12:45","end":"16:55","breakMin":30,"type":"normal","note":"","manual":false},{"id":125,"empId":4,"date":"2026-02-18","start":"08:45","end":"17:10","breakMin":30,"type":"normal","note":"","manual":false},{"id":126,"empId":4,"date":"2026-02-19","start":"13:40","end":"17:45","breakMin":30,"type":"normal","note":"","manual":false},{"id":127,"empId":4,"date":"2026-02-24","start":"09:05","end":"14:25","breakMin":30,"type":"normal","note":"","manual":false},{"id":128,"empId":4,"date":"2026-02-26","start":"09:00","end":"15:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":129,"empId":4,"date":"2026-03-03","start":"09:05","end":"15:35","breakMin":30,"type":"normal","note":"","manual":false},{"id":130,"empId":4,"date":"2026-03-04","start":"09:10","end":"15:55","breakMin":30,"type":"normal","note":"","manual":false},{"id":131,"empId":4,"date":"2026-03-05","start":"09:05","end":"16:10","breakMin":30,"type":"normal","note":"","manual":false},{"id":132,"empId":5,"date":"2026-01-07","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":133,"empId":5,"date":"2026-01-08","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":134,"empId":5,"date":"2026-01-09","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":135,"empId":5,"date":"2026-01-12","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":136,"empId":5,"date":"2026-01-13","start":"07:00","end":"22:00","breakMin":0,"type":"normal","note":"HTX Frankfurt","manual":false},{"id":137,"empId":5,"date":"2026-01-14","start":"09:00","end":"20:00","breakMin":0,"type":"normal","note":"HTX Frankfurt","manual":false},{"id":138,"empId":5,"date":"2026-01-15","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":139,"empId":5,"date":"2026-01-19","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":140,"empId":5,"date":"2026-01-20","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":141,"empId":5,"date":"2026-01-21","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":142,"empId":5,"date":"2026-01-22","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":143,"empId":5,"date":"2026-01-23","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":144,"empId":5,"date":"2026-01-26","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":145,"empId":5,"date":"2026-01-27","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":146,"empId":5,"date":"2026-01-28","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":147,"empId":5,"date":"2026-02-02","start":"08:00","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":148,"empId":5,"date":"2026-02-03","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":149,"empId":5,"date":"2026-02-04","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":150,"empId":5,"date":"2026-02-05","start":"08:00","end":"12:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":151,"empId":5,"date":"2026-02-09","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":152,"empId":5,"date":"2026-02-10","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":153,"empId":5,"date":"2026-02-11","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":154,"empId":5,"date":"2026-02-12","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":155,"empId":5,"date":"2026-02-16","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":156,"empId":5,"date":"2026-02-17","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":157,"empId":5,"date":"2026-02-18","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":158,"empId":5,"date":"2026-02-19","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":159,"empId":5,"date":"2026-02-20","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":160,"empId":5,"date":"2026-02-23","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":161,"empId":5,"date":"2026-02-24","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":162,"empId":5,"date":"2026-02-25","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":163,"empId":5,"date":"2026-02-26","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":164,"empId":5,"date":"2026-02-27","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":165,"empId":5,"date":"2026-03-02","start":"09:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":166,"empId":6,"date":"2026-01-07","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":167,"empId":6,"date":"2026-01-08","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":168,"empId":6,"date":"2026-01-09","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":169,"empId":6,"date":"2026-01-12","start":"08:00","end":"13:30","breakMin":0,"type":"normal","note":"","manual":false},{"id":170,"empId":6,"date":"2026-01-13","start":"08:00","end":"13:15","breakMin":0,"type":"normal","note":"","manual":false},{"id":171,"empId":6,"date":"2026-01-14","start":"08:00","end":"13:30","breakMin":0,"type":"normal","note":"","manual":false},{"id":172,"empId":6,"date":"2026-01-15","start":"08:00","end":"14:30","breakMin":0,"type":"normal","note":"","manual":false},{"id":173,"empId":6,"date":"2026-01-16","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":174,"empId":6,"date":"2026-01-19","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":175,"empId":6,"date":"2026-01-20","start":"08:00","end":"14:15","breakMin":0,"type":"normal","note":"","manual":false},{"id":176,"empId":6,"date":"2026-01-21","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":177,"empId":6,"date":"2026-01-22","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":178,"empId":6,"date":"2026-01-23","start":"08:00","end":"13:30","breakMin":0,"type":"normal","note":"","manual":false},{"id":179,"empId":6,"date":"2026-01-26","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":180,"empId":6,"date":"2026-01-27","start":"08:00","end":"15:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":181,"empId":6,"date":"2026-01-28","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":182,"empId":6,"date":"2026-01-29","start":"08:00","end":"14:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":183,"empId":6,"date":"2026-01-30","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":184,"empId":6,"date":"2026-02-02","start":"08:00","end":"17:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":185,"empId":6,"date":"2026-02-03","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":186,"empId":6,"date":"2026-02-04","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":187,"empId":6,"date":"2026-02-05","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":188,"empId":6,"date":"2026-02-06","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":189,"empId":6,"date":"2026-02-09","start":"08:00","end":"13:50","breakMin":30,"type":"normal","note":"","manual":false},{"id":190,"empId":6,"date":"2026-02-10","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":191,"empId":6,"date":"2026-02-11","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":192,"empId":6,"date":"2026-02-12","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":193,"empId":6,"date":"2026-02-13","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":194,"empId":6,"date":"2026-02-16","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":195,"empId":6,"date":"2026-02-17","start":"08:00","end":"13:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":196,"empId":6,"date":"2026-02-18","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":197,"empId":6,"date":"2026-02-19","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":198,"empId":6,"date":"2026-02-20","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":199,"empId":6,"date":"2026-02-23","start":"08:00","end":"13:40","breakMin":30,"type":"normal","note":"","manual":false},{"id":200,"empId":6,"date":"2026-02-24","start":"08:00","end":"14:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":201,"empId":6,"date":"2026-02-25","start":"08:00","end":"13:40","breakMin":30,"type":"normal","note":"","manual":false},{"id":202,"empId":6,"date":"2026-02-26","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":203,"empId":6,"date":"2026-02-27","start":"08:00","end":"13:00","breakMin":0,"type":"normal","note":"","manual":false},{"id":204,"empId":6,"date":"2026-03-02","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":205,"empId":6,"date":"2026-03-03","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":206,"empId":6,"date":"2026-03-04","start":"08:00","end":"13:00","breakMin":30,"type":"normal","note":"","manual":false},{"id":207,"empId":6,"date":"2026-03-05","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":208,"empId":6,"date":"2026-03-06","start":"08:00","end":"13:30","breakMin":30,"type":"normal","note":"","manual":false},{"id":209,"empId":7,"date":"2026-01-08","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":210,"empId":7,"date":"2026-01-09","start":"08:00","end":"16:00","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":211,"empId":7,"date":"2026-01-12","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":212,"empId":7,"date":"2026-01-13","start":"08:00","end":"17:00","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":213,"empId":7,"date":"2026-01-14","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":214,"empId":7,"date":"2026-01-15","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":215,"empId":7,"date":"2026-01-16","start":"08:00","end":"16:00","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":216,"empId":7,"date":"2026-01-19","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":217,"empId":7,"date":"2026-01-20","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":218,"empId":7,"date":"2026-01-21","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":219,"empId":7,"date":"2026-01-22","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":220,"empId":7,"date":"2026-01-23","start":"08:00","end":"15:30","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":221,"empId":7,"date":"2026-01-26","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":222,"empId":7,"date":"2026-01-27","start":"09:30","end":"17:45","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":223,"empId":7,"date":"2026-01-28","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":224,"empId":7,"date":"2026-01-29","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":225,"empId":7,"date":"2026-01-30","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":226,"empId":7,"date":"2026-02-02","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":227,"empId":7,"date":"2026-02-09","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":228,"empId":7,"date":"2026-02-10","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":229,"empId":7,"date":"2026-02-11","start":"08:00","end":"15:30","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":230,"empId":7,"date":"2026-02-12","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":231,"empId":7,"date":"2026-02-13","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":232,"empId":7,"date":"2026-02-16","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":233,"empId":7,"date":"2026-02-17","start":"09:30","end":"17:00","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":234,"empId":7,"date":"2026-02-18","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":235,"empId":7,"date":"2026-02-19","start":"08:00","end":"17:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":236,"empId":7,"date":"2026-02-20","start":"08:00","end":"16:00","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":237,"empId":7,"date":"2026-02-23","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":238,"empId":7,"date":"2026-02-24","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":239,"empId":7,"date":"2026-02-25","start":"08:00","end":"15:30","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":240,"empId":7,"date":"2026-02-26","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":241,"empId":7,"date":"2026-02-27","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":242,"empId":7,"date":"2026-03-02","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":243,"empId":7,"date":"2026-03-03","start":"09:30","end":"17:00","breakMin":60,"type":"homeoffice","note":"","manual":false},{"id":244,"empId":7,"date":"2026-03-04","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":245,"empId":7,"date":"2026-03-05","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":246,"empId":7,"date":"2026-03-06","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":247,"empId":7,"date":"2026-03-09","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":248,"empId":7,"date":"2026-03-10","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":249,"empId":7,"date":"2026-03-11","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":250,"empId":7,"date":"2026-03-12","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":251,"empId":7,"date":"2026-03-13","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":252,"empId":7,"date":"2026-03-16","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":253,"empId":7,"date":"2026-03-17","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":254,"empId":7,"date":"2026-03-18","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":255,"empId":7,"date":"2026-03-19","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":256,"empId":7,"date":"2026-03-20","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":257,"empId":7,"date":"2026-03-23","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":258,"empId":7,"date":"2026-03-24","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":259,"empId":7,"date":"2026-03-25","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":260,"empId":7,"date":"2026-03-26","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":261,"empId":7,"date":"2026-03-27","start":"08:00","end":"15:30","breakMin":60,"type":"normal","note":"","manual":false},{"id":262,"empId":7,"date":"2026-03-30","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false},{"id":263,"empId":7,"date":"2026-03-31","start":"08:00","end":"17:00","breakMin":60,"type":"normal","note":"","manual":false}];
+let nextEntryId = 264;
+let moodLog = {}; // {empId_date: {mood, note, ts}}
+
+let absences = [{"id": 100, "empId": 1, "type": "zeitausgleich", "from": "2026-01-02", "to": "2026-01-02", "note": "Zeitausgleich", "status": "genehmigt"}, {"id": 101, "empId": 1, "type": "zeitausgleich", "from": "2026-01-05", "to": "2026-01-05", "note": "Zeitausgleich", "status": "genehmigt"}, {"id": 102, "empId": 1, "type": "zeitausgleich", "from": "2026-01-07", "to": "2026-01-07", "note": "Zeitausgleich", "status": "genehmigt"}, {"id": 103, "empId": 1, "type": "zeitausgleich", "from": "2026-01-08", "to": "2026-01-08", "note": "Zeitausgleich", "status": "genehmigt"}, {"id": 104, "empId": 1, "type": "zeitausgleich", "from": "2026-01-09", "to": "2026-01-09", "note": "Zeitausgleich", "status": "genehmigt"}, {"id": 105, "empId": 1, "type": "urlaub", "from": "2026-01-12", "to": "2026-01-16", "note": "Urlaub Jänner", "status": "genehmigt"}, {"id": 202, "empId": 2, "type": "urlaub", "from": "2026-01-02", "to": "2026-01-05", "note": "", "status": "genehmigt"}, {"id": 209, "empId": 5, "type": "urlaub", "from": "2026-01-02", "to": "2026-01-05", "note": "", "status": "genehmigt"}, {"id": 210, "empId": 5, "type": "zeitausgleich", "from": "2026-01-16", "to": "2026-01-16", "note": "", "status": "genehmigt"}, {"id": 211, "empId": 5, "type": "zeitausgleich", "from": "2026-01-29", "to": "2026-01-30", "note": "", "status": "genehmigt"}, {"id": 212, "empId": 5, "type": "urlaub", "from": "2026-02-06", "to": "2026-02-06", "note": "", "status": "genehmigt"}, {"id": 213, "empId": 5, "type": "urlaub", "from": "2026-02-13", "to": "2026-02-13", "note": "", "status": "genehmigt"}, {"id": 218, "empId": 7, "type": "urlaub", "from": "2026-01-02", "to": "2026-01-07", "note": "", "status": "genehmigt"}, {"id": 219, "empId": 7, "type": "urlaub", "from": "2026-02-03", "to": "2026-02-06", "note": "", "status": "genehmigt"}];
+let nextAbsId = 222;
+let activeStamps = {};
+let signatures = {}; // key: "empId_YYYY-MM" → {date, by}
+
+
+
+// ══ STIMMUNGSBAROMETER ══
+function selectMood(val){
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('mood-'+val).classList.add('selected');
+  document.getElementById('mood-bar').dataset.mood=val;
+}
+async function saveMood(){
+  const mb=document.getElementById('mood-bar');
+  const mood=parseInt(mb.dataset.mood||0);
+  if(!mood){alert('Bitte einen Smiley auswählen 😊');return;}
+  const empId=parseInt(mb.dataset.empId);
+  const date=mb.dataset.date||TODAY;
+  const note=document.getElementById('mood-note').value.trim();
+  const labels={1:'😓 Schwieriger Tag',2:'😐 So lala',3:'😊 Guter Tag!'};
+  const moodTs=new Date().toTimeString().slice(0,5);
+  moodLog[empId+'_'+date]={empId,date,mood,label:labels[mood],note,ts:moodTs};
+  try{ await dbSaveMood(empId,date,mood,labels[mood],note,moodTs); }catch(err){showDbError('DB Fehler: '+err.message);}
+  mb.style.display='none';
+  // Mini-Bestätigung
+  const w=document.getElementById('stamp-warn');
+  w.style.display='flex';w.className='alert ag';
+  document.getElementById('stamp-warn-txt').textContent=labels[mood]+' — Danke für dein Feedback!';
+  setTimeout(()=>{w.style.display='none';w.className='alert aw';},3000);
+}
+function closeMood(){
+  document.getElementById('mood-bar').style.display='none';
+}
+
+
+// ══ EINTRAG BEARBEITEN ══
+let editEntryId = null;
+
+function openEditEntry(id){
+  const e=entries.find(x=>x.id===id);
+  if(!e){alert('Eintrag nicht gefunden.');return;}
+  editEntryId=id;
+  const emp=employees.find(x=>x.id===e.empId);
+  document.getElementById('ee-emp-name').value=emp?`${emp.first} ${emp.last}`:'?';
+  document.getElementById('ee-date').value=e.date;
+  document.getElementById('ee-start').value=e.start;
+  document.getElementById('ee-end').value=e.end;
+  document.getElementById('ee-break').value=e.breakMin||0;
+  document.getElementById('ee-type').value=e.type||'normal';
+  document.getElementById('ee-note').value=e.note||'';
+  updateEePreview();
+  openM('mo-edit-entry');
+}
+
+function updateEePreview(){
+  const s=document.getElementById('ee-start').value;
+  const e=document.getElementById('ee-end').value;
+  const b=parseInt(document.getElementById('ee-break').value)||0;
+  if(!s||!e){document.getElementById('ee-preview').textContent='';return;}
+  const wm=calcWork(s,e,b);
+  const warns=azgCheck(wm,b);
+  const warnHtml=warns.length?` ⚠️ ${warns.map(w=>w.msg).join(' · ')}`:'✓ AZG ok';
+  document.getElementById('ee-preview').innerHTML=
+    `<b>Nettodauer: ${fmt(wm)}</b> · Pause: ${b} Min.${warnHtml}`;
+}
+
+async function saveEditEntry(){
+  const e=entries.find(x=>x.id===editEntryId);
+  if(!e){alert('Eintrag nicht gefunden.');return;}
+  const s=document.getElementById('ee-start').value;
+  const end=document.getElementById('ee-end').value;
+  const b=parseInt(document.getElementById('ee-break').value)||0;
+  const date=document.getElementById('ee-date').value;
+  const type=document.getElementById('ee-type').value;
+  const note=document.getElementById('ee-note').value;
+  if(!s||!end||!date){alert('Bitte Datum, Kommen und Gehen ausfüllen.');return;}
+  if(s>=end){alert('Gehen muss nach Kommen liegen.');return;}
+  // Apply changes
+  e.start=s; e.end=end; e.breakMin=b; e.date=date; e.type=type; e.note=note; e.manual=true;
+  closeM('mo-edit-entry');
+  try{ await dbSaveEntry(entries.find(x=>x.id===id)); }catch(err){showDbError('DB Fehler: '+err.message);}
+  renderTodayTable();
+  if(document.getElementById('page-monatsansicht').classList.contains('active'))renderMonthView();
+  // Confirmation
+  const w=document.getElementById('stamp-warn');
+  w.style.display='flex';w.className='alert ag';
+  document.getElementById('stamp-warn-txt').textContent='✅ Eintrag wurde aktualisiert.';
+  setTimeout(()=>{w.style.display='none';w.className='alert aw';},3000);
+}
+
+
+// ══ MOTIVIERENDE SPRÜCHE & URLAUBSÜBERRASCHUNG ══
+
+const QUOTES = [
+  { text: "Der beste Weg, die Zukunft vorherzusagen, ist, sie zu gestalten.", author: "— Peter Drucker" },
+  { text: "Erfolg ist die Summe kleiner Anstrengungen, die jeden Tag wiederholt werden.", author: "— Robert Collier" },
+  { text: "Das Geheimnis des Vorwärtskommens ist, anzufangen.", author: "— Mark Twain" },
+  { text: "Große Leistungen entstehen nicht durch Kraft, sondern durch Ausdauer.", author: "— Samuel Johnson" },
+  { text: "Wer aufhört, besser zu werden, hat aufgehört, gut zu sein.", author: "— Philip Rosenthal" },
+  { text: "Jeder Tag ist eine neue Chance, ein besseres Ich zu werden.", author: "" },
+  { text: "Teams, die lachen, erreichen mehr.", author: "— NBS Weisheit" },
+  { text: "Das Wichtigste ist, niemals aufzuhören zu fragen.", author: "— Albert Einstein" },
+  { text: "Qualität ist kein Zufall — sie ist das Ergebnis bewusster Anstrengung.", author: "— John Ruskin" },
+  { text: "Kreativität ist Intelligenz, die Spaß hat.", author: "— Albert Einstein" },
+  { text: "Zusammenkommen ist ein Beginn, zusammenbleiben ist Fortschritt, zusammenarbeiten ist Erfolg.", author: "— Henry Ford" },
+  { text: "Ein zufriedenes Team ist das größte Kapital eines Unternehmens.", author: "— NBS Weisheit" },
+  { text: "Wer viel reist, hat viel zu erzählen.", author: "— Österreichisches Sprichwort" },
+  { text: "Energie und Begeisterung sind ansteckend — zum Glück!", author: "" },
+  { text: "Heute ist ein guter Tag, um einen guten Tag zu haben.", author: "" },
+];
+
+const BOOKS_SUMMER = [
+  { title: "Eine Frage der Chemie", author: "Bonnie Garmus", note: "Witzig, klug, unwiderstehlich — Christinas Nr. 1 für den Strand. ⭐" },
+  { title: "Der große Trip", author: "Cheryl Strayed", note: "1.700 km zu Fuß — eine Frau, eine Reise, ein neues Leben." },
+  { title: "Big Magic", author: "Elizabeth Gilbert", note: "Über Kreativität, Mut und das Leben ohne Angst. Macht Lust auf alles." },
+];
+const BOOKS_WINTER = [
+  { title: "Lillian Boxfish geht aus", author: "Kate Christensen", note: "Eine grande Dame spaziert durch New York — charmant, witzig, klug." },
+  { title: "Die Buchhandlung in der Kirchgasse", author: "Penelope Fitzgerald", note: "Kurz, spritzig und unvergesslich — für gemütliche Winterabende." },
+  { title: "Dein perfektes Jahr", author: "Charlotte Lucas", note: "Ein Notizbuch, ein Plan, ein Leben das sich verändert. Wunderschön." },
+];
+const BOOKS_GENERAL = [
+  { title: "Fleischmann & Söhne", author: "Monika Helfer", note: "Österreichische Literatur at its best — berührend und präzise." },
+  { title: "Eleanor Oliphant ist völlig in Ordnung", author: "Gail Honeyman", note: "Schräg, herzerwärmend, absolut besonders. Nicht weglegen möglich." },
+  { title: "Wintersonne", author: "Rosamunde Pilcher", note: "Zeitlos schön — wenn man sich einfach gut fühlen möchte." },
+];
+
+const PACK_SUMMER = [
+  "🩱 Badekleidung (2–3 Sets)", "🕶️ Sonnenbrille + Ersatz", "🧴 Sonnencreme LSF 50+",
+  "🏖️ Strandtuch / Sarong", "👡 Flip Flops & leichte Sandalen", "🎧 Kopfhörer für die Reise",
+  "📚 Urlaubsbuch (oder 3 😉)", "💊 Reiseapotheke", "🔌 Ladekabel & Adapter",
+  "👒 Sonnenhut", "🌊 Schnorchel-Set optional", "💳 Kreditkarte + etwas Bargeld",
+  "📱 Offline-Karten herunterladen", "🧊 Kühlakku für den Strand",
+];
+const PACK_WINTER = [
+  "🧥 Warme Jacke / Daunenjacke", "🧣 Schal, Mütze, Handschuhe", "🥾 Winterschuhe / Skischuhe",
+  "🎿 Skipass reservieren!", "🧴 Lippenpflege & Feuchtigkeitscreme", "🧦 Wollsocken (mehrere!)",
+  "🍫 Heiße-Schokolade-Vorrat", "📚 Urlaubsbuch für gemütliche Abende", "🔌 Ladekabel & Adapter",
+  "💊 Reiseapotheke + Erkältungsmittel", "🎒 Rucksack für Tagesausflüge",
+  "💳 Kreditkarte + etwas Bargeld", "📸 Kamera für Winterlandschaften",
+];
+
+let surpriseMode = 'books'; // 'books' or 'pack'
+let surpriseAbsData = null;
+
+
+// Bücher-Pool — wird zufällig gemischt, damit jeder Urlaub eine Überraschung ist
+const BOOKS_POOL = [
+  { title: "Eine Frage der Chemie", author: "Bonnie Garmus", note: "Witzig, klug, unwiderstehlich. Christinas Nr. 1! ⭐" },
+  { title: "Der große Trip", author: "Cheryl Strayed", note: "1.700 km zu Fuß — Mut, Wildnis und Neuanfang." },
+  { title: "Big Magic", author: "Elizabeth Gilbert", note: "Über Kreativität ohne Angst. Macht Lust auf alles." },
+  { title: "Eleanor Oliphant ist völlig in Ordnung", author: "Gail Honeyman", note: "Schräg, herzerwärmend, absolut besonders." },
+  { title: "Lillian Boxfish geht aus", author: "Kate Christensen", note: "Eine grande Dame spaziert durch New York — charmant und klug." },
+  { title: "Dein perfektes Jahr", author: "Charlotte Lucas", note: "Ein Notizbuch verändert ein Leben. Wunderschön österreichisch." },
+  { title: "Die Buchhandlung in der Kirchgasse", author: "Penelope Fitzgerald", note: "Kurz, spritzig und unvergesslich." },
+  { title: "Fleischmann & Söhne", author: "Monika Helfer", note: "Österreichische Literatur at its best — berührend und präzise." },
+  { title: "Der Gesang der Flusskrebse", author: "Delia Owens", note: "Natur, Einsamkeit, Sehnsucht — atemberaubend schön geschrieben." },
+  { title: "Montalbano kocht", author: "Andrea Camilleri", note: "Sizilien, Sonne, Essen und ein charmanter Commissario." },
+  { title: "Die Schneiderin von Auschwitz", author: "Lucy Adlington", note: "Bewegend, mutig, unvergesslich — Geschichte, die man nicht vergisst." },
+  { title: "Normal People", author: "Sally Rooney", note: "Leise, präzise und tief — modernes Meisterwerk." },
+  { title: "Hamnet", author: "Maggie O'Farrell", note: "Schönste Sprache, stärkste Gefühle. Absolut außergewöhnlich." },
+  { title: "Die Mittagsfrau", author: "Julia Franck", note: "Deutsche Buchpreis-Gewinnerin — eindringlich und unvergesslich." },
+  { title: "Das Glück des Blinden", author: "John Hull", note: "Eine Reise durch Dunkelheit — voller Licht und Weisheit." },
+  { title: "Alles, was wir geben mussten", author: "Kazuo Ishiguro", note: "Nobel-Literatur, die unter die Haut geht. Stille Meisterschaft." },
+  { title: "Landschaften der Frühgeschichte", author: "Judith Schalansky", note: "Klug, poetisch, außergewöhnlich schön gestaltet." },
+  { title: "Die Möglichkeit einer Insel", author: "Michel Houellebecq", note: "Provokant und berührend — Literatur, die polarisiert und fesselt." },
+  { title: "Abenteuer Philosophie", author: "Roger-Pol Droit", note: "101 kleine Experimente fürs Denken. Perfekt für unterwegs." },
+  { title: "Die Kunst, kein Egoist zu sein", author: "Richard David Precht", note: "Warum wir anderen helfen — klug, lesbar, inspirierend." },
+  { title: "Wackelkontakt", author: "Wolf Haas", note: "Brenner at his besten — österreichischer Krimi-Humor pur. Christinas Liebling! ⭐" },
+  { title: "Das Wetter vor 15 Jahren", author: "Wolf Haas", note: "Wolf Haas mal ganz anders — klug, witzig, außergewöhnlich." },
+  { title: "Das Mädchen mit dem Fingerhut", author: "Michael Köhlmeier", note: "Österreich, berührend und rau — ein kleines Meisterwerk." },
+  { title: "Die Lügnerin", author: "Ayọ̀bámi Adébáyọ̀", note: "Mitreißend, klug, intensiv — eine Stimme die man nicht vergisst." },
+  { title: "Auferstehung der Toten", author: "Wolf Haas", note: "Der erste Brenner — wo alles begann. Süchtig machend." },
+  { title: "Komm, süßer Tod", author: "Wolf Haas", note: "Brenner und die Wiener Rettung — zum Brüllen komisch." },
+  { title: "Der Knochenmann", author: "Wolf Haas", note: "Brenner im Burgenland — Haas auf dem Höhepunkt seiner Kunst." },
+  { title: "Die Freundin meiner Mutter", author: "Heidi Rehn", note: "Österreichische Familiengeschichte — warm, spannend, lesbar." },
+  { title: "Die Traumfabrik", author: "Kerstin Gier", note: "Leicht, witzig, mit Herz — perfekte Urlaubslektüre." },
+];
+function getRandomBooks(n){
+  const shuffled=[...BOOKS_POOL].sort(()=>Math.random()-0.5);
+  return shuffled.slice(0,n);
+}
+function getSeasonBooks(){
+  return getRandomBooks(3);
+}
+function getSeasonPack(){
+  const m = new Date().getMonth();
+  return (m >= 4 && m <= 9) ? PACK_SUMMER : PACK_WINTER;
+}
+function getSeasonLabel(){
+  const m = new Date().getMonth();
+  if(m >= 5 && m <= 8) return '☀️ Sommer';
+  if(m >= 11 || m <= 1) return '❄️ Winter';
+  return '🌸 Frühling/Herbst';
+}
+
+function showVacationSurprise(abs){
+  surpriseAbsData = abs;
+  surpriseMode = 'books';
+  renderSurpriseContent();
+  document.getElementById('vac-surprise-emp').innerHTML =
+    `🎉 <b>${empName(abs.empId)}</b> hat Urlaub vom <b>${abs.from}</b> bis <b>${abs.to}</b> — schön!`;
+  openM('mo-vac-surprise');
+}
+
+function renderSurpriseContent(){
+  const content = document.getElementById('vac-surprise-content');
+  const toggle = document.getElementById('vac-surprise-toggle');
+  if(surpriseMode === 'books'){
+    const books = getSeasonBooks();
+    const season = getSeasonLabel();
+    document.getElementById('vac-surprise-title').textContent = '📚 Buchtipps für den Urlaub';
+    toggle.textContent = '🎒 Zur Packliste wechseln';
+    content.innerHTML = `
+      <div style="font-size:12px;color:var(--ink2);margin-bottom:12px">Christinas persönliche Empfehlungen für einen ${season}-Urlaub — viel Freude beim Lesen! 📖</div>
+      ${books.map((b,i) => `
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:${i%2===0?'#faf9f7':'#fff'};border-radius:8px;margin-bottom:8px">
+          <div style="font-size:24px;min-width:36px;text-align:center">${['📖','📗','📘'][i]}</div>
+          <div>
+            <div style="font-weight:600;font-size:14px">${b.title}</div>
+            <div style="font-size:12px;color:var(--ink2)">${b.author}</div>
+            <div style="font-size:12px;color:var(--ink3);font-style:italic;margin-top:2px">${b.note}</div>
+          </div>
+        </div>`).join('')}`;
+  } else {
+    const items = getSeasonPack();
+    const season = getSeasonLabel();
+    document.getElementById('vac-surprise-title').textContent = '🎒 Packliste ' + season;
+    toggle.textContent = '📚 Zu den Buchtipps wechseln';
+    content.innerHTML = `
+      <div style="font-size:12px;color:var(--ink2);margin-bottom:12px">Damit du nichts vergisst:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${items.map(item => `
+          <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f5f3f0;border-radius:7px;font-size:13px">
+            <input type="checkbox" style="accent-color:var(--ac);width:15px;height:15px">
+            <span>${item}</span>
+          </div>`).join('')}
+      </div>`;
+  }
+}
+
+function toggleSurpriseMode(){
+  surpriseMode = surpriseMode === 'books' ? 'pack' : 'books';
+  renderSurpriseContent();
+}
+
+let currentQuoteIndex = -1;
+function newQuote(){
+  let idx;
+  do { idx = Math.floor(Math.random() * QUOTES.length); } while(idx === currentQuoteIndex);
+  currentQuoteIndex = idx;
+  const q = QUOTES[idx];
+  document.getElementById('quote-text').textContent = `"${q.text}"`;
+  document.getElementById('quote-author').textContent = q.author;
+}
+
+function showDashboardQuote(){
+  const box = document.getElementById('motivational-quote');
+  if(!box) return;
+  // Show quote only ~60% of the time (not every login)
+  if(Math.random() > 0.6) return;
+  newQuote();
+  box.style.display = 'block';
+  // Auto-hide after 12 seconds
+  setTimeout(() => { if(box) box.style.opacity='0.3'; }, 10000);
+}
+
+// ══ ÖSTERREICHISCHE FEIERTAGE ══
+const AT_HOLIDAYS_2026 = {
+  '2026-01-01': 'Neujahr',
+  '2026-01-06': 'Heilige Drei Könige',
+  '2026-04-06': 'Ostermontag',
+  '2026-05-01': 'Staatsfeiertag',
+  '2026-05-14': 'Christi Himmelfahrt',
+  '2026-05-25': 'Pfingstmontag',
+  '2026-06-04': 'Fronleichnam',
+  '2026-08-15': 'Mariä Himmelfahrt',
+  '2026-10-26': 'Nationalfeiertag',
+  '2026-11-01': 'Allerheiligen',
+  '2026-12-08': 'Mariä Empfängnis',
+  '2026-12-25': 'Weihnachten',
+  '2026-12-26': 'Stefanitag',
+  // 2025 für Vorjahresansicht
+  '2025-01-01': 'Neujahr',
+  '2025-01-06': 'Heilige Drei Könige',
+  '2025-04-21': 'Ostermontag',
+  '2025-05-01': 'Staatsfeiertag',
+  '2025-05-29': 'Christi Himmelfahrt',
+  '2025-06-09': 'Pfingstmontag',
+  '2025-06-19': 'Fronleichnam',
+  '2025-08-15': 'Mariä Himmelfahrt',
+  '2025-10-26': 'Nationalfeiertag',
+  '2025-11-01': 'Allerheiligen',
+  '2025-12-08': 'Mariä Empfängnis',
+  '2025-12-25': 'Weihnachten',
+  '2025-12-26': 'Stefanitag',
+};
+const isHoliday = d => !!AT_HOLIDAYS_2026[d];
+const holidayName = d => AT_HOLIDAYS_2026[d] || '';
+
+// ══ HELPERS ══
+
+// Soll-Minuten für einen Tag (0 an Feiertagen, 1/5 der Wochenstunden sonst)
+const getSollMin = (empId, dateStr) => {
+  if(isHoliday(dateStr)) return 0;
+  const d = new Date(dateStr);
+  if(d.getDay()===0||d.getDay()===6) return 0; // Wochenende
+  const emp = employees.find(e=>e.id===empId);
+  if(!emp) return 480; // default 8h
+  return Math.round((emp.hours / 5) * 60);
+};
+
+const empName = id => { const e=employees.find(x=>x.id==id); return e?`${e.first} ${e.last}`:'–'; };
+const pt = t => { if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*60+m; };
+const fmt = m => { const h=Math.floor(Math.abs(m)/60),mm=Math.abs(m)%60; return (m<0?'-':'')+h+':'+String(mm).padStart(2,'0'); };
+const calcWork = (s,e,b) => Math.max(0,pt(e)-pt(s)-b);
+const wDays = (f,t) => { let d=new Date(f),c=0,e=new Date(t); while(d<=e){if(d.getDay()&&d.getDay()<6)c++; d.setDate(d.getDate()+1);} return c; };
+const datesBetween = (f,t) => { let d=new Date(f),res=[],e=new Date(t); while(d<=e){res.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);} return res; };
+const isAdmin = () => currentUser && currentUser.type==='admin';
+
+function azgCheck(workMin,breakMin){
+  const w=[];
+  if(workMin>12*60)w.push({l:'danger',msg:'Tagesarbeitszeit > 12 Std. (AZG-Maximum!)'});
+  else if(workMin>10*60)w.push({l:'warn',msg:'Tagesarbeitszeit > 10 Std.'});
+  if(workMin+breakMin>6*60&&breakMin<30)w.push({l:'danger',msg:'Pflichtpause nach 6h nicht eingehalten (mind. 30 Min.)'});
+  return w;
+}
+
+// ══ LOGIN ══
+function buildLogin(){/* replaced by Supabase auth */}
+function login(uid){
+  currentUser=USERS.find(u=>u.id===uid);
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  buildNav();populateSelects();
+  const initPage=isAdmin()?'dashboard':'emp-dashboard';
+  P(initPage);
+  // Set emp-specific stamp-emp
+  startClock();
+  if(!isAdmin()&&currentUser.empId){
+    const se=document.getElementById('stamp-emp');if(se)se.value=currentUser.empId;
+    document.getElementById('stamp-emp-wrap').style.display='none';
+    document.getElementById('manual-emp-wrap').style.display='none';
+    const me=document.getElementById('m-emp');if(me)me.value=currentUser.empId;
+  }
+}
+
+function logout(){
+  stopClock();
+  currentUser=null;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function buildNav(){
+  const u=currentUser;
+  // User pill
+  document.getElementById('nav-av').textContent=u.first.charAt(0);
+  document.getElementById('nav-av').style.background=u.type==='admin'?'var(--acl)':'var(--blb)';
+  document.getElementById('nav-av').style.color=u.type==='admin'?'var(--ac)':'var(--bl)';
+  document.getElementById('nav-name').textContent=`${u.first} ${u.last}`;
+  document.getElementById('nav-role').textContent=u.type==='admin'?'Administrator':'Mitarbeiterin';
+
+  const adminNav=`
+    <div class="ns">Übersicht</div>
+    <div class="ni" onclick="P('dashboard')">🏠 Dashboard</div>
+    <div class="ni" onclick="P('stempel')">⏱ Stempeluhr</div>
+    <div class="ns">Mitarbeiter</div>
+    <div class="ni" onclick="P('mitarbeiter')">👥 Mitarbeiter</div>
+    <div class="ni" onclick="P('abwesenheit')">📋 Abwesenheiten</div>
+    <div class="ni" onclick="P('kalender')">📅 Urlaubskalender</div>
+    <div class="ni" onclick="P('urlaubskonto')">🌴 Urlaubskonto</div>
+    <div class="ns">Auswertung</div>
+    <div class="ni" onclick="P('monatsansicht')">📊 Monatsübersicht</div>
+    <div class="ni" onclick="P('ueberstunden')">⏰ Überstunden</div>
+    <div class="ns">Daten</div>
+    <div class="ni" onclick="P('export')">⬇️ Export & Stundenzettel</div>`;
+  const empNav=`
+    <div class="ns">Mein Bereich</div>
+    <div class="ni" onclick="P('emp-dashboard')">🏠 Mein Dashboard</div>
+    <div class="ni" onclick="P('stempel')">⏱ Stempeluhr</div>
+    <div class="ni" onclick="P('kalender')">📅 Urlaubskalender</div>
+    <div class="ns">Meine Auswertung</div>
+    <div class="ni" onclick="P('monatsansicht')">📊 Meine Stunden</div>`;
+  document.getElementById('main-nav').innerHTML=isAdmin()?adminNav:empNav;
+}
+
+// ══ PAGE NAVIGATION ══
+function P(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);
+  if(pg){pg.classList.add('active');}
+  document.querySelectorAll('.ni').forEach(n=>{
+    if(n.textContent.includes('Dashboard')&&id==='dashboard')n.classList.add('active');
+    else if(n.textContent.includes('Dashboard')&&id==='emp-dashboard')n.classList.add('active');
+    else if(n.textContent.includes('Stempeluhr')&&id==='stempel')n.classList.add('active');
+    else if(n.textContent.includes('Mitarbeiter')&&id==='mitarbeiter')n.classList.add('active');
+    else if(n.textContent.includes('Abwesenheiten')&&id==='abwesenheit')n.classList.add('active');
+    else if(n.textContent.includes('Urlaubskalender')&&id==='kalender')n.classList.add('active');
+    else if(n.textContent.includes('Urlaubskonto')&&id==='urlaubskonto')n.classList.add('active');
+    else if(n.textContent.includes('Monats')&&id==='monatsansicht')n.classList.add('active');
+    else if(n.textContent.includes('Überstunden')&&id==='ueberstunden')n.classList.add('active');
+    else if(n.textContent.includes('Export')&&id==='export')n.classList.add('active');
+    else if(n.textContent.includes('Stunden')&&id==='monatsansicht')n.classList.add('active');
+  });
+  // Filter month view for employees
+  if(id==='monatsansicht'&&!isAdmin()){
+    const sel=document.getElementById('mv-emp');
+    if(sel&&currentUser.empId)sel.value=currentUser.empId;
+  }
+  refreshPage(id);
+}
+
+function openM(id){document.getElementById(id).style.display='flex';}
+function closeM(id){document.getElementById(id).style.display='none';}
+
+function refreshPage(id){
+  if(id==='dashboard')renderDashboard();
+  else if(id==='emp-dashboard')renderEmpDashboard();
+  else if(id==='stempel'){renderTodayTable();updateStampStatus();const n=new Date();const el=document.getElementById('live-clock');if(el)el.textContent=n.toTimeString().slice(0,8);const dl=document.getElementById('live-date');if(dl)dl.textContent=n.toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+  else if(id==='mitarbeiter')renderEmployees();
+  else if(id==='abwesenheit')renderAbsences();
+  else if(id==='kalender')renderCalendar();
+  else if(id==='urlaubskonto')renderVacation();
+  else if(id==='monatsansicht')renderMonthView();
+  else if(id==='ueberstunden')renderOT();
+}
+
+function populateSelects(){
+  ['stamp-emp','m-emp','ab-emp'].forEach(sid=>{
+    const el=document.getElementById(sid);if(!el)return;
+    const v=el.value;
+    el.innerHTML='<option value="">— auswählen —</option>';
+    employees.filter(e=>e.active).forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=`${e.first} ${e.last}`;el.appendChild(o);});
+    if(v)el.value=v;
+  });
+  ['mv-emp','ot-emp','exp-emp','xls-emp','abs-emp-filter'].forEach(sid=>{
+    const el=document.getElementById(sid);if(!el)return;
+    el.innerHTML='<option value="alle">Alle Mitarbeiter</option>';
+    employees.filter(e=>e.active).forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=`${e.first} ${e.last}`;el.appendChild(o);});
+  });
+  ['prt-emp'].forEach(sid=>{
+    const el=document.getElementById(sid);if(!el)return;
+    el.innerHTML='';
+    employees.filter(e=>e.active).forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=`${e.first} ${e.last}`;el.appendChild(o);});
+  });
+  const now=new Date();const ms=now.toISOString().slice(0,7);
+  ['mv-month','prt-month','xls-month'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=ms;});
+  ['m-date','exp-from'].forEach(id=>{const el=document.getElementById(id);if(el&&!el.value)el.value=TODAY;});
+  const exTo=document.getElementById('exp-to');if(exTo&&!exTo.value)exTo.value=TODAY;
+  document.getElementById('today-sub').textContent='Heutiger Überblick — '+new Date().toLocaleDateString('de-AT');
+}
+
+// CLOCK
+let clockInterval = null;
+function startClock(){
+  if(clockInterval) return;
+  clockInterval=setInterval(()=>{
+    if(!currentUser){stopClock();return;}
+    // Nur aktualisieren wenn Stempeluhr-Seite sichtbar ist
+    const stempelPage=document.getElementById('page-stempel');
+    if(!stempelPage||!stempelPage.classList.contains('active')) return;
+    const n=new Date();
+    const el=document.getElementById('live-clock');if(el)el.textContent=n.toTimeString().slice(0,8);
+    const dl=document.getElementById('live-date');if(dl)dl.textContent=n.toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  },1000);
+}
+function stopClock(){
+  if(clockInterval){clearInterval(clockInterval);clockInterval=null;}
+  const el=document.getElementById('live-clock');if(el)el.textContent='00:00:00';
+  const dl=document.getElementById('live-date');if(dl)dl.textContent='';
+}
+
+// ══ STEMPEL ══
+function updateStampStatus(){
+  const id=isAdmin()?parseInt(document.getElementById('stamp-emp').value):currentUser.empId;
+  const dot=document.getElementById('s-dot'),txt=document.getElementById('s-status');
+  if(id&&activeStamps[id]){dot.classList.add('on');txt.textContent=`Eingestempelt seit ${activeStamps[id].t}`;txt.style.color='#4ade80';}
+  else{dot.classList.remove('on');txt.textContent='Nicht eingestempelt';txt.style.color='rgba(255,255,255,.5)';}
+}
+function getStampId(){
+  if(isAdmin()){const v=parseInt(document.getElementById('stamp-emp').value);if(!v){alert('Bitte Mitarbeiter auswählen.');return null;}return v;}
+  return currentUser.empId;
+}
+function doKommen(){const id=getStampId();if(!id)return;if(activeStamps[id]){alert('Bereits eingestempelt.');return;}activeStamps[id]={t:new Date().toTimeString().slice(0,5),pauseMin:0,pauseStart:null};updateStampStatus();renderTodayTable();}
+async function doGehen(){
+  const id=getStampId();if(!id)return;if(!activeStamps[id]){alert('Nicht eingestempelt.');return;}
+  const end=new Date().toTimeString().slice(0,5),s=activeStamps[id];
+  const wm=calcWork(s.t,end,s.pauseMin||0);const warns=azgCheck(wm,s.pauseMin||0);
+  const newGEntry={id:nextEntryId++,empId:id,date:TODAY,start:s.t,end,breakMin:s.pauseMin||0,type:'normal',note:'',manual:false};
+  entries.push(newGEntry);
+  delete activeStamps[id];
+  try{ const nid=await dbSaveEntry({...newGEntry,_new:true}); newGEntry.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);}
+  if(warns.length){const w=document.getElementById('stamp-warn');w.style.display='flex';document.getElementById('stamp-warn-txt').textContent='AZG: '+warns.map(x=>x.msg).join(' · ');}
+  updateStampStatus();renderTodayTable();
+  // Stimmungsbarometer anzeigen (nur wenn Mitarbeiter für sich selbst ausstempelt)
+  if(!isAdmin() || id === currentUser.empId){
+    const mb=document.getElementById('mood-bar');
+    if(mb){mb.style.display='flex';mb.dataset.empId=id;mb.dataset.date=TODAY;
+    document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('selected'));
+    document.getElementById('mood-note').value='';}
+  }
+}
+function doPauseStart(){const id=getStampId();if(!id||!activeStamps[id])return;activeStamps[id].pauseStart=new Date().toTimeString().slice(0,5);}
+function doPauseEnd(){const id=getStampId();if(!id||!activeStamps[id]||!activeStamps[id].pauseStart)return;activeStamps[id].pauseMin=(activeStamps[id].pauseMin||0)+Math.max(0,pt(new Date().toTimeString().slice(0,5))-pt(activeStamps[id].pauseStart));activeStamps[id].pauseStart=null;}
+
+async function addManual(){
+  const empId=isAdmin()?parseInt(document.getElementById('m-emp').value):currentUser.empId;
+  if(!empId){alert('Mitarbeiter wählen.');return;}
+  const date=document.getElementById('m-date').value;if(!date){alert('Datum fehlt.');return;}
+  const start=document.getElementById('m-start').value,end=document.getElementById('m-end').value;
+  if(!start||!end){alert('Kommen und Gehen ausfüllen.');return;}
+  if(pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
+  // Duplikat-Check: schon ein Eintrag für diesen MA an diesem Tag?
+  const existing=entries.filter(e=>e.empId===empId&&e.date===date);
+  if(existing.length>0){
+    const emp=employees.find(e=>e.id===empId);
+    const name=emp?`${emp.first} ${emp.last}`:'Mitarbeiter';
+    const ok=confirm(`⚠️ ${name} hat am ${date} bereits ${existing.length} Eintrag/Einträge.\nTrotzdem einen weiteren Eintrag hinzufügen?`);
+    if(!ok)return;
+  }
+  entries.push({id:nextEntryId++,empId,date,start,end,breakMin:parseInt(document.getElementById('m-break').value)||0,type:document.getElementById('m-type').value,note:document.getElementById('m-note').value,manual:true});
+  // Formular zurücksetzen
+  document.getElementById('m-note').value='';
+  document.getElementById('m-start').value='';
+  document.getElementById('m-end').value='';
+  document.getElementById('m-break').value='0';
+  renderTodayTable();
+  // Bestätigung anzeigen
+  const emp=employees.find(e=>e.id===empId);
+  const name=emp?`${emp.first} ${emp.last}`:'Mitarbeiter';
+  const w=document.getElementById('stamp-warn');
+  w.style.display='flex';w.className='alert ag';
+  document.getElementById('stamp-warn-txt').textContent=`✅ Eintrag für ${name} am ${date} (${start}–${end}) wurde gespeichert.`;
+  setTimeout(()=>{w.style.display='none';w.className='alert aw';},4000);
+  try{ const newEntry=entries[entries.length-1]; const newId=await dbSaveEntry({...newEntry,_new:true}); newEntry.id=newId; }catch(err){showDbError('DB Fehler: '+err.message);}
+}
+
+function renderTodayTable(){
+  const empFilter=!isAdmin()?currentUser.empId:null;
+  const tbody=document.getElementById('today-tbody');
+  const todayE=entries.filter(e=>e.date===TODAY&&(empFilter===null||e.empId===empFilter));
+  const rows=[];
+  if(isAdmin()||true){Object.entries(activeStamps).forEach(([eid,s])=>{if(empFilter!==null&&parseInt(eid)!==empFilter)return;rows.push({empId:parseInt(eid),start:s.t,end:'–',breakMin:s.pauseMin||0,workMin:null,active:true,warns:[],type:'normal'});});}
+  todayE.forEach(e=>{const wm=calcWork(e.start,e.end,e.breakMin);rows.push({empId:e.empId,start:e.start,end:e.end,breakMin:e.breakMin,workMin:wm,active:false,warns:azgCheck(wm,e.breakMin),type:e.type,manual:e.manual,id:e.id});});
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink2)">Noch keine Einträge heute</td></tr>';return;}
+  const tl={normal:'Büro',homeoffice:'🏠 HO'};
+  tbody.innerHTML=rows.map(r=>{
+    const wh=r.active?'<span class="badge bg-bl">● Aktiv</span>':(r.warns.length?r.warns.map(w=>`<span class="badge bg-${w.l==='danger'?'rd':'or'}" title="${w.msg}">⚠️</span>`).join(''):'<span class="badge bg-gr">✓ OK</span>');
+    const del=(!r.active&&isAdmin())?`<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteEntry(${r.id})">✕</button>`:'';
+    const edit=(!r.active&&(isAdmin()||r.empId===currentUser?.empId))?`<button class="btn btn-s" style="padding:3px 8px;font-size:11px" onclick="openEditEntry(${r.id})">✏️</button>`:'';
+    return`<tr><td><b>${empName(r.empId)}</b></td><td><span class="badge bg-gy">${tl[r.type]||'—'}</span></td><td class="tmono">${r.start}</td><td class="tmono">${r.end}</td><td>${r.breakMin} Min.</td><td class="tmono"><b>${r.workMin!=null?fmt(r.workMin):'–'}</b></td><td>${r.active?'<span class="badge bg-bl">Aktiv</span>':'<span class="badge bg-gr">Fertig</span>'}</td><td>${wh}</td><td style="white-space:nowrap">${edit} ${del}</td></tr>`;
+  }).join('');
+}
+
+async function deleteEntry(id){
+  const e=entries.find(x=>x.id===id);
+  if(!e)return;
+  const emp=employees.find(x=>x.id===e.empId);
+  const name=emp?`${emp.first} ${emp.last}`:'Mitarbeiter';
+  if(confirm(`Eintrag löschen?\n${name} · ${e.date} · ${e.start}–${e.end}`)){
+    entries=entries.filter(x=>x.id!==id);
+    try{ await dbDeleteEntry(id); }catch(err){showDbError('DB Fehler: '+err.message);}
+    renderTodayTable();
+  }
+}
+async function deleteEntryMV(id){
+  const e=entries.find(x=>x.id===id);
+  if(!e)return;
+  const emp=employees.find(x=>x.id===e.empId);
+  const name=emp?`${emp.first} ${emp.last}`:'Mitarbeiter';
+  if(confirm(`Eintrag löschen?\n${name} · ${e.date} · ${e.start}–${e.end}`)){
+    entries=entries.filter(x=>x.id!==id);
+    try{ await dbDeleteEntry(id); }catch(err){showDbError('DB Fehler: '+err.message);}
+    renderMonthView();
+  }
+}
+
+// ══ DASHBOARD ══
+function renderDashboard(){
+  const tot=entries.filter(e=>e.date===TODAY).reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  const actC=Object.keys(activeStamps).length;
+  const wStart=new Date();wStart.setDate(wStart.getDate()-(wStart.getDay()||7)+1);
+  const wH=entries.filter(e=>new Date(e.date)>=wStart).reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  const pending=absences.filter(a=>a.status==='beantragt');
+  document.getElementById('db-stats').innerHTML=`
+    <div class="sc"><div class="sc-l">Aktiv heute</div><div class="sc-v">${actC}</div><div class="sc-s">eingestempelt</div></div>
+    <div class="sc"><div class="sc-l">Stunden heute</div><div class="sc-v tmono">${fmt(tot)}</div></div>
+    <div class="sc"><div class="sc-l">Wochenstunden</div><div class="sc-v tmono">${fmt(wH)}</div></div>
+    <div class="sc"><div class="sc-l">Offene Ansuchen</div><div class="sc-v" style="color:${pending.length?'var(--or)':'var(--gr)'}">${pending.length}</div><div class="sc-s">zu bearbeiten</div></div>`;
+  const aH=Object.entries(activeStamps).map(([id,s])=>`<div class="flex" style="padding:7px 0;border-bottom:1px solid var(--bd)"><div class="dot on"></div><b>${empName(parseInt(id))}</b><span class="tm ts">seit ${s.t}</span></div>`).join('');
+  document.getElementById('db-active').innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
+  const tw=entries.filter(e=>e.date===TODAY).flatMap(e=>{const w=calcWork(e.start,e.end,e.breakMin);return azgCheck(w,e.breakMin).map(x=>({name:empName(e.empId),...x}));});
+  document.getElementById('db-warns').innerHTML=tw.map(w=>`<div class="alert ${w.l==='danger'?'ad':'aw'}" style="margin-bottom:6px"><span>${w.l==='danger'?'🚨':'⚠️'}</span><b>${w.name}:</b> ${w.msg}</div>`).join('')||'<div class="empty">✅ Alles OK</div>';
+  document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
+  document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
+  if(isAdmin())renderMoodOverview();
+  renderCelebrations();
+  if(isAdmin())renderVacationWarnings();
+  renderDayNote();
+  showDashboardQuote();
+}
+
+// render mood overview on admin dashboard
+function renderMoodOverview(){
+  const card=document.getElementById('mood-overview-card');
+  const list=document.getElementById('mood-overview-list');
+  if(!card||!list)return;
+  const todayMoods=Object.values(moodLog).filter(m=>m.date===TODAY);
+  if(todayMoods.length===0){card.style.display='none';return;}
+  card.style.display='block';
+  list.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px;padding:12px">'+
+    todayMoods.map(m=>{
+      const emp=employees.find(e=>e.id===m.empId);
+      const name=emp?`${emp.first} ${emp.last}`:'?';
+      return `<div class="mood-tag">${m.label} <b>${name}</b>${m.note?` · <i>${m.note}</i>`:''}</div>`;
+    }).join('')+'</div>';
+}
+
+// ══ EMPLOYEE DASHBOARD ══
+function renderEmpDashboard(){
+  const emp=employees.find(e=>e.id===currentUser.empId);
+  if(!emp)return;
+  document.getElementById('emp-db-greeting').textContent=`Hallo, ${emp.first}!`;
+  const now=new Date();const month=now.toISOString().slice(0,7);
+  const myEntries=entries.filter(e=>e.empId===emp.id);
+  const monthEntries=myEntries.filter(e=>e.date.startsWith(month));
+  const monthH=monthEntries.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  const monthSoll=monthEntries.length*(emp.hours/5*60);
+  const monthSaldo=monthH-monthSoll;
+  const vacYear=String(now.getFullYear());
+  const total=emp.carry+emp.vacation; // Feiertage zählen nie als Urlaub
+  const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&a.status==='genehmigt'&&a.from.startsWith(vacYear)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+  document.getElementById('emp-db-stats').innerHTML=`
+    <div class="sc"><div class="sc-l">Stunden ${month}</div><div class="sc-v tmono">${fmt(monthH)}</div></div>
+    <div class="sc"><div class="sc-l">Saldo ${month}</div><div class="sc-v tmono" style="color:${monthSaldo>=0?'var(--gr)':'var(--rd)'}">${monthSaldo>=0?'+':''}${fmt(monthSaldo)}</div></div>
+    <div class="sc"><div class="sc-l">Übertrag VJ + Anspruch</div><div class="sc-v tmono" style="font-size:14px">${emp.carry > 0 ? emp.carry+"+"+emp.vacation : emp.vacation} = <b>${total}</b></div><div class="sc-s">Tage gesamt</div></div>
+    <div class="sc"><div class="sc-l">Resturlaub ${vacYear}</div><div class="sc-v" style="color:${total-usedVac<5?'var(--rd)':'var(--gr)'}">${total-usedVac}</div><div class="sc-s">von ${total} · verbraucht: ${usedVac}</div></div>`;
+  // Today
+  const todayE=entries.filter(e=>e.empId===emp.id&&e.date===TODAY);
+  const todayH=todayE.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  document.getElementById('emp-today').innerHTML=todayE.length?`<div class="flex" style="margin-bottom:10px"><div class="dot on"></div><b>${fmt(todayH)} Std. heute erfasst</b></div>${todayE.map(e=>`<div style="font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--bd)">${e.start} – ${e.end} · ${e.breakMin} Min. Pause · <span class="tm">${e.type==='homeoffice'?'🏠 Homeoffice':'Büro'}</span></div>`).join('')}`:`<div class="empty" style="padding:16px">Noch keine Einträge heute</div>`;
+  // My requests
+  const myReqs=absences.filter(a=>a.empId===emp.id).slice(-5).reverse();
+  const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌'};
+  document.getElementById('emp-requests').innerHTML=myReqs.length?`<table><thead><tr><th>Art</th><th>Von</th><th>Bis</th><th>Status</th></tr></thead><tbody>${myReqs.map(a=>`<tr><td>${absTypeLabel[a.type]||a.type}</td><td>${a.from}</td><td>${a.to}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${a.status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">Keine Ansuchen</div>';
+}
+
+// ══ VACATION REQUEST (Employee) ══
+function checkOverlap(){
+  const from=document.getElementById('vr-from').value,to=document.getElementById('vr-to').value||from;
+  if(!from)return;
+  const reqDates=datesBetween(from,to);
+  const overlaps=[];
+  absences.filter(a=>a.status!=='abgelehnt').forEach(a=>{
+    const absDates=datesBetween(a.from,a.to);
+    const hit=reqDates.filter(d=>absDates.includes(d));
+    if(hit.length>0){
+      const who=empName(a.empId);
+      const overlap_who=currentUser.type==='employee'?who:who;
+      overlaps.push({who,from:a.from,to:a.to,type:a.type,days:hit});
+    }
+  });
+  const el=document.getElementById('overlap-check-result');
+  if(overlaps.length){
+    el.innerHTML=`<div class="overlap-warn"><h4>⚠️ Achtung — Überschneidung!</h4>${overlaps.map(o=>`<div class="overlap-item">Hey, geht das? Dein Urlaub überschneidet sich mit dem Urlaub von <b>${o.who}</b>!<br>Der/die ist vom <b>${o.from}</b> bis <b>${o.to}</b> schon weg (${absTypeLabel[o.type]||o.type}).</div>`).join('')}</div>`;
+  } else {
+    el.innerHTML=from&&to?'<div class="alert as" style="margin-bottom:10px"><span>✅</span> Keine Überschneidungen mit anderen Abwesenheiten.</div>':'';
+  }
+  // Show balance
+  if(currentUser.empId){
+    const emp=employees.find(e=>e.id===currentUser.empId);
+    if(emp){
+      const now=new Date(),total=emp.carry+emp.vacation;
+      const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&a.status==='genehmigt'&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+wDays(a.from,a.to),0);
+      const rest=total-usedVac;
+      const req=from?wDays(from,to||from):0;
+      document.getElementById('vac-balance-info').innerHTML=`<b>Urlaubskonto:</b> Übertrag VJ: ${emp.carry} + Anspruch: ${emp.vacation} = <b>${total} Tage</b> · Verbraucht: ${usedVac} · <b style="color:${rest<5?'var(--rd)':'var(--gr)'}">Frei: ${rest}</b>${req?` · Anfrage: ${req} Tage${rest-req<0?' <span style="color:var(--rd)">⚠️ Nicht genug!</span>':''}`:''}`;
+    }
+  }
+}
+
+async function submitVacRequest(){
+  const from=document.getElementById('vr-from').value;if(!from){alert('Von-Datum fehlt.');return;}
+  const to=document.getElementById('vr-to').value||from;
+  const empId=currentUser.empId||(isAdmin()?parseInt(document.getElementById('ab-emp').value):null);
+  if(!empId)return;
+  const type=document.getElementById('vr-type').value;
+  const note=document.getElementById('vr-note').value;
+  const newAbs={id:nextAbsId++,empId,type,from,to,note,status:'beantragt'};
+  absences.push(newAbs);
+  try{ const nid=await dbSaveAbsence({...newAbs,_new:true}); newAbs.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);return;}
+  closeM('mo-vacreq');
+  document.getElementById('vr-from').value='';document.getElementById('vr-to').value='';document.getElementById('vr-note').value='';
+  document.getElementById('overlap-check-result').innerHTML='';
+  renderCalendar();
+  if(!isAdmin())renderEmpDashboard();
+  else renderDashboard();
+  alert(`✅ Urlaubsansuchen eingereicht!\n\nVom ${from} bis ${to} · Art: ${absTypeLabel[type]||type}\n\nDein Ansuchen wurde an die Geschäftsführung übermittelt und wird baldmöglichst bearbeitet.`);
+}
+
+// ══ APPROVE REQUEST ══
+function openApprove(id){
+  currentApproveId=id;
+  const a=absences.find(x=>x.id===id);if(!a)return;
+  document.getElementById('approve-body').innerHTML=`
+    <div class="g2" style="margin-bottom:14px">
+      <div><div class="sc-l">Mitarbeiter</div><div style="font-weight:600;font-size:14px">${empName(a.empId)}</div></div>
+      <div><div class="sc-l">Art</div><div>${absTypeLabel[a.type]||a.type}</div></div>
+      <div><div class="sc-l">Zeitraum</div><div class="tmono">${a.from} – ${a.to}</div></div>
+      <div><div class="sc-l">Arbeitstage</div><div class="tmono"><b>${wDays(a.from,a.to)} Tage</b></div></div>
+    </div>
+    ${a.note?`<div style="background:var(--sf2);padding:10px 12px;border-radius:7px;font-size:13px;margin-bottom:12px"><b>Notiz:</b> ${a.note}</div>`:''}`;
+  openM('mo-approve');
+}
+
+async function decideRequest(status){
+  const a=absences.find(x=>x.id===currentApproveId);if(!a)return;
+  a.status=status;
+  try{ await dbSaveAbsence(a); }catch(err){showDbError('DB Fehler: '+err.message);return;}
+  closeM('mo-approve');
+  renderDashboard();renderCalendar();renderAbsences();
+  if(status==='genehmigt' && a.type==='urlaub'){
+    showVacationSurprise(a);
+  } else {
+    alert(`${status==='genehmigt'?'✅ Genehmigt!':'❌ Abgelehnt.'}\n\nUrlaub von ${empName(a.empId)} vom ${a.from} bis ${a.to} wurde ${status}.`);
+  }
+}
+
+// ══ VACATION CALENDAR ══
+const absTypeLabel={urlaub:'🌴 Urlaub',krankenstand:'🤒 Krankenstand',homeoffice:'🏠 Homeoffice',zeitausgleich:'🔄 Zeitausgleich',sonderurlaub:'⭐ Sonderurlaub',feiertag:'🎉 Feiertag'};
+const absBadge={genehmigt:'bg-gr',beantragt:'bg-or',abgelehnt:'bg-rd'};
+
+function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function renderCalendar(){
+  const mLabel=new Date(calYear,calMonth,1).toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+  document.getElementById('cal-month-label').textContent=mLabel;
+  const grid=document.getElementById('vcal-grid');
+  const days=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  let html=days.map(d=>`<div class="vcal-header">${d}</div>`).join('');
+  const firstDay=new Date(calYear,calMonth,1);
+  const lastDay=new Date(calYear,calMonth+1,0);
+  let startDow=(firstDay.getDay()||7)-1;
+  for(let i=0;i<startDow;i++){
+    const pd=new Date(firstDay);pd.setDate(pd.getDate()-startDow+i);
+    html+=`<div class="vcal-day other-month"><div class="vcal-day-num">${pd.getDate()}</div></div>`;
+  }
+  for(let d=1;d<=lastDay.getDate();d++){
+    const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow=new Date(calYear,calMonth,d).getDay();
+    const isWeekend=dow===0||dow===6;
+    const isTod=dateStr===TODAY;
+    const evts=absences.filter(a=>{
+      if(a.type==='feiertag')return false; // Feiertage separat via AT_HOLIDAYS_2026
+      if(a.status==='abgelehnt')return false;
+      if(!isAdmin()&&a.status==='beantragt'&&a.empId!==currentUser.empId)return false;
+      return datesBetween(a.from,a.to).includes(dateStr);
+    });
+    const ftag=holidayName(dateStr);
+    const evtHtml=(ftag?`<div class="vce" style="background:#ede0f8;color:#5b2c8d;font-size:9.5px">🎉 ${ftag}</div>`:'')+evts.map(a=>{
+      const cls=a.status==='beantragt'?'vce-beantragt':`vce-${a.type}`;
+      const lbl=a.status==='beantragt'?`⏳ ${empName(a.empId)}`:`${absTypeLabel[a.type]?.split(' ')[0]||''} ${empName(a.empId)}`;
+      return`<div class="vce ${cls}" title="${empName(a.empId)} · ${absTypeLabel[a.type]||a.type} · ${a.status}">${lbl}</div>`;
+    }).join('');
+    html+=`<div class="vcal-day ${isTod?'today':''} ${isWeekend?'weekend':''}" style="${ftag?'background:#faf5ff;border-color:#d8b4fe':''}"><div class="vcal-day-num">${d}</div>${evtHtml}</div>`;
+  }
+  const total=startDow+lastDay.getDate();const remaining=(7-total%7)%7;
+  for(let i=1;i<=remaining;i++){html+=`<div class="vcal-day other-month"><div class="vcal-day-num">${i}</div></div>`;}
+  grid.innerHTML=html;
+}
+
+// ══ EMPLOYEES ══
+function renderEmployees(){
+  document.getElementById('emp-tbody').innerHTML=employees.map(e=>`<tr>
+    <td><b>${e.first} ${e.last}</b>${e.noLogin?` <span class="badge bg-gy" title="Kein eigener Login">🔒</span>`:''}<br><span class="tm ts">${e.email||'<i>kein E-Mail / kein Login</i>'}</span></td>
+    <td>${e.role}</td><td class="tmono">${e.hours} Std./Woche</td>
+    <td><span class="badge ${e.model==='allin'?'bg-or':'bg-gy'}">${e.model==='allin'?'All-In ⭐':e.model==='vollzeit'?'Vollzeit':e.model==='teilzeit'?'Teilzeit':e.model==='gleit'?'Gleitzeit':e.model==='fix'?'Fixzeit':e.model}</span></td>
+    <td>${e.start}</td><td>${e.vacation} Tage</td><td>${e.carry} Tage</td>
+    <td>${e.contract?`<a href="${e.contract}" target="_blank" class="btn btn-s" style="padding:3px 8px;font-size:11px">🔗 Öffnen</a>`:'<span class="tm ts">—</span>'}</td>
+    <td><span class="badge ${e.active?'bg-gr':'bg-gy'}">${e.active?'Aktiv':'Inaktiv'}</span></td>
+    <td><button class="btn btn-s btn-sm" onclick="editEmp(${e.id})">✏️</button></td>
+  </tr>`).join('');
+}
+function addEmployee(){
+  const first=document.getElementById('ne-first').value.trim(),last=document.getElementById('ne-last').value.trim();
+  if(!first||!last){alert('Vor- und Nachname sind Pflicht.');return;}
+  const newEmp={id:nextEmpId++,first,last,role:document.getElementById('ne-role').value,email:document.getElementById('ne-email').value,start:document.getElementById('ne-start').value||TODAY,model:document.getElementById('ne-model').value,hours:parseInt(document.getElementById('ne-hours').value)||40,vacation:parseInt(document.getElementById('ne-vacation').value)||25,carry:parseInt(document.getElementById('ne-carry').value)||0,contract:document.getElementById('ne-contract').value,active:true};
+  employees.push(newEmp);
+  USERS.push({id:USERS.length,type:'employee',first,last,email:newEmp.email,role:newEmp.role,empId:newEmp.id});
+  closeM('mo-add-emp');['ne-first','ne-last','ne-role','ne-email','ne-contract'].forEach(id=>document.getElementById(id).value='');
+  populateSelects();renderEmployees();
+}
+function editEmp(id){const e=employees.find(x=>x.id===id);if(!e)return;['id','first','last','role','email','model','hours','vacation','carry','contract','birthday'].forEach(k=>{const el=document.getElementById('ee-'+k);if(el)el.value=e[k]||'';});openM('mo-edit-emp');}
+async function saveEmployee(){
+  const id=parseInt(document.getElementById('ee-id').value);const e=employees.find(x=>x.id===id);if(!e)return;
+  ['first','last','role','email','model','contract','birthday'].forEach(k=>{e[k]=document.getElementById('ee-'+k).value;});
+  ['hours','vacation','carry'].forEach(k=>{e[k]=parseInt(document.getElementById('ee-'+k).value)||0;});
+  try{ await dbSaveEmployee(e); } catch(err){ showDbError('Speichern fehlgeschlagen: '+err.message); return; }
+  closeM('mo-edit-emp');populateSelects();renderEmployees();
+}
+
+// ══ ABSENCES ══
+function toggleSonder(){document.getElementById('sonder-wrap').style.display=document.getElementById('ab-type').value==='sonderurlaub'?'block':'none';}
+function filterAbs(type,el){document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderAbsences(type);}
+
+function renderAbsences(filter){
+  // Read active chip filter
+  const activeChip=document.querySelector('.chips .chip.on');
+  const chipFilter=activeChip?activeChip.getAttribute('data-filter')||'alle':'alle';
+  if(filter!==undefined&&typeof filter==='string'&&['alle','urlaub','krankenstand','homeoffice','zeitausgleich','sonderurlaub','beantragt'].includes(filter)){
+    document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('on'));
+    const el=document.querySelector(`.chips .chip[data-filter="${filter}"]`);if(el)el.classList.add('on');
+  }
+  const cf=document.querySelector('.chips .chip.on')?.getAttribute('data-filter')||'alle';
+  const search=(document.getElementById('abs-search')?.value||'').toLowerCase().trim();
+  const empF=document.getElementById('abs-emp-filter')?.value||'alle';
+  const timeF=document.getElementById('abs-time-filter')?.value||'alle';
+  const now=new Date();const todayStr=now.toISOString().slice(0,10);
+  const thisYear=now.getFullYear();
+  const thisMonth=now.toISOString().slice(0,7);
+  const nextMonth=new Date(now.getFullYear(),now.getMonth()+1,1).toISOString().slice(0,7);
+  let list=absences.filter(a=>a.type!=='feiertag'); // Feiertage nie in der Liste
+  // Chip filter
+  if(cf==='beantragt')list=list.filter(a=>a.status==='beantragt');
+  else if(cf!=='alle')list=list.filter(a=>a.type===cf);
+  // Employee filter
+  if(empF!=='alle')list=list.filter(a=>a.empId==empF);
+  // Search
+  if(search)list=list.filter(a=>empName(a.empId).toLowerCase().includes(search));
+  // Time filter
+  if(timeF==='zukunft')list=list.filter(a=>a.from>todayStr);
+  else if(timeF==='aktuell')list=list.filter(a=>a.from<=todayStr&&a.to>=todayStr);
+  else if(timeF==='vergangenheit')list=list.filter(a=>a.to<todayStr);
+  else if(timeF==='dieses-jahr')list=list.filter(a=>a.from.startsWith(thisYear));
+  else if(timeF==='dieser-monat')list=list.filter(a=>a.from.startsWith(thisMonth)||a.to.startsWith(thisMonth));
+  else if(timeF==='naechster-monat')list=list.filter(a=>a.from.startsWith(nextMonth)||a.to.startsWith(nextMonth));
+  const tbody=document.getElementById('abs-tbody');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge gefunden</td></tr>';return;}
+  const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌'};
+  tbody.innerHTML=list.map(a=>`<tr>
+    <td><b>${empName(a.empId)}</b></td><td>${absTypeLabel[a.type]||a.type}</td>
+    <td>${a.from}</td><td>${a.to}</td><td class="tmono">${wDays(a.from,a.to)} AT</td>
+    <td>${a.note||'–'}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${a.status}</span></td>
+    <td><div class="flex">${a.status==='beantragt'&&isAdmin()?`<button class="btn btn-g btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button>`:''}<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteAbs(${a.id})">✕</button></div></td>
+  </tr>`).join('');
+  const counts={urlaub:0,krankenstand:0,homeoffice:0,zeitausgleich:0,sonderurlaub:0};
+  absences.filter(a=>a.status!=='abgelehnt'&&a.type!=='feiertag').forEach(a=>{if(counts[a.type]!==undefined)counts[a.type]+=wDays(a.from,a.to);});
+  document.getElementById('abs-summary').innerHTML=Object.entries(counts).map(([t,c])=>`<div class="sc"><div class="sc-l">${absTypeLabel[t]}</div><div class="sc-v">${c}</div><div class="sc-s">Arbeitstage</div></div>`).join('');
+}
+async function addAbsence(){
+  const empId=parseInt(document.getElementById('ab-emp').value);if(!empId){alert('Mitarbeiter wählen.');return;}
+  const from=document.getElementById('ab-from').value;if(!from){alert('Von-Datum fehlt.');return;}
+  const to=document.getElementById('ab-to').value||from;
+  const type=document.getElementById('ab-type').value;
+  let note=document.getElementById('ab-note').value;
+  if(type==='sonderurlaub')note=document.getElementById('ab-sonder').value+(note?' — '+note:'');
+  absences.push({id:nextAbsId++,empId,type,from,to,note,status:document.getElementById('ab-status').value});
+  const lastAbs=absences[absences.length-1];
+  try{ const nid=await dbSaveAbsence({...lastAbs,_new:true}); lastAbs.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);return;}
+  closeM('mo-abs');document.getElementById('ab-note').value='';
+  renderAbsences();renderCalendar();
+}
+async function deleteAbs(id){if(confirm('Eintrag löschen?')){absences=absences.filter(a=>a.id!==id);try{await sb.from('absences').delete().eq('id',id);}catch(err){showDbError('DB Fehler: '+err.message);}renderAbsences();renderCalendar();}}
+
+// ══ VACATION ══
+function renderVacation(){
+  const year=parseInt(document.getElementById('vac-year').value)||2026;
+  const empFilter=!isAdmin()?currentUser.empId:null;
+  const list=employees.filter(e=>e.active&&(empFilter===null||e.id===empFilter));
+  document.getElementById('vac-tbody').innerHTML=list.map(e=>{
+    // Feiertage werden NIE als Urlaubstage gezählt!
+    const used=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&a.status==='genehmigt'&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+    const pending=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&a.status==='beantragt'&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+    const total=e.carry+e.vacation;
+    const effFree=total-used-pending;
+    const rest=total-used;
+    const pct=Math.min(100,Math.round(((used+pending)/total)*100))||0;
+    const color=pct>80?'#b01530':pct>50?'#c06a00':'#2a6649';
+    return`<tr>
+      <td><b>${e.first} ${e.last}</b></td>
+      <td class="tmono" style="color:var(--ink2)">${e.carry > 0 ? `<span class="badge bg-bl">${e.carry} Tage</span>` : '—'}</td>
+      <td class="tmono">${e.vacation} Tage</td>
+      <td class="tmono"><b>${total} Tage</b></td>
+      <td class="tmono">${used}</td>
+      <td class="tmono">${pending>0?`<span style="color:var(--or);font-weight:600">⏳ ${pending}</span>`:'—'}</td>
+      <td class="tmono" style="color:${effFree<5?'var(--rd)':'var(--gr)'}"><b>${effFree}</b>${pending>0?`<span style="font-size:10.5px;color:var(--ink3)"> (${rest} ohne ⏳)</span>`:''}</td>
+      <td style="min-width:120px"><div style="font-size:11px;color:var(--ink2);margin-bottom:3px">${pct}%</div><div class="vmeter"><div class="vmfill" style="width:${pct}%;background:${color}"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ MONTH VIEW ══
+function renderMonthView(){
+  const empF=document.getElementById('mv-emp').value;
+  const mv=document.getElementById('mv-month').value;if(!mv)return;
+  const search=(document.getElementById('mv-search')?.value||'').toLowerCase().trim();
+  const[y,m]=mv.split('-').map(Number);
+  let filtered=entries.filter(e=>{const d=new Date(e.date);return d.getFullYear()===y&&d.getMonth()+1===m&&(empF==='alle'||e.empId==empF);});
+  if(!isAdmin()&&currentUser.empId)filtered=filtered.filter(e=>e.empId===currentUser.empId);
+  if(search)filtered=filtered.filter(e=>empName(e.empId).toLowerCase().includes(search));
+  filtered.sort((a,b)=>a.date.localeCompare(b.date));
+  // Show signatures for selected scope
+  const banner=document.getElementById('mv-signed-banner');
+  const sigKeys=Object.keys(signatures).filter(k=>k.endsWith('_'+mv)&&(empF==='alle'||k.startsWith(empF+'_')));
+  if(sigKeys.length){
+    banner.style.display='block';
+    banner.innerHTML=sigKeys.map(k=>{const s=signatures[k];const eid=parseInt(k.split('_')[0]);return`<div class="alert as" style="margin-bottom:6px"><span>✅</span><b>${empName(eid)}</b> — Monat ${mv} bestätigt am <b>${s.date}</b> von <b>${s.by}</b> <span class="tag-azg">§ 26 AZG</span></div>`;}).join('');
+  } else {banner.style.display='none';}
+  const tbody=document.getElementById('mv-tbody');
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge</td></tr>';document.getElementById('mv-summary-card').style.display='none';return;}
+  const tl={normal:'Büro',homeoffice:'🏠 HO'};
+  const totW=filtered.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  const totS=filtered.reduce((s,e)=>s+getSollMin(e.empId,e.date),0);
+  const saldo=totW-totS;
+  const totOT=filtered.reduce((s,e)=>s+Math.max(0,calcWork(e.start,e.end,e.breakMin)-8*60),0);
+  document.getElementById('mv-summary-card').style.display='block';
+  document.getElementById('mv-summary').innerHTML=`
+    <div><div class="sc-l">Arbeitstage</div><div class="sc-v">${filtered.length}</div></div>
+    <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
+    <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
+    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}">${saldo>=0?'+':''}${fmt(saldo)}</div></div>
+    <div><div class="sc-l">Überstunden</div><div class="sc-v tmono" style="color:${totOT>0?'var(--ac)':'inherit'}">${fmt(totOT)}</div></div>`;
+  tbody.innerHTML=filtered.map(e=>{
+    const wm=calcWork(e.start,e.end,e.breakMin);
+    const sollMin=getSollMin(e.empId,e.date);
+    const saldo=wm-sollMin;
+    const warns=azgCheck(wm,e.breakMin);
+    const dow=new Date(e.date).toLocaleDateString('de-AT',{weekday:'short'});
+    const ftag=holidayName(e.date);
+    const wH=ftag?`<span class="badge bg-pu" title="${ftag}">🎉 Feiertag</span>`:(warns.length?warns.map(w=>`<span class="badge bg-${w.l==='danger'?'rd':'or'}" title="${w.msg}">⚠️</span>`).join(''):'<span class="badge bg-gr">✓</span>');
+    const rowStyle=ftag?'background:#faf5ff;':'';
+    return`<tr style="${rowStyle}"><td>${e.date} <span class="tm">${dow}</span>${ftag?` <span style="font-size:10px;color:var(--pu)">🎉 ${ftag}</span>`:''}</td><td>${empName(e.empId)}</td><td><span class="badge bg-gy">${tl[e.type]||'—'}</span></td><td class="tmono">${e.start}</td><td class="tmono">${e.end}</td><td>${e.breakMin}m</td><td class="tmono"><b>${fmt(wm)}</b></td><td class="tmono" style="${ftag?'color:var(--pu)':''}">${ftag?'—':fmt(sollMin)}</td><td class="tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}"><b>${saldo>=0?'+':''}${fmt(saldo)}</b></td><td>${wH}</td><td style="white-space:nowrap"><button class="btn btn-s" style="padding:2px 7px;font-size:11px" onclick="openEditEntry(${e.id})">✏️</button> <button class="btn btn-d" style="padding:2px 7px;font-size:11px" onclick="deleteEntryMV(${e.id})">✕</button></td></tr>`;
+  }).join('');
+}
+function signMonth(){
+  const mv=document.getElementById('mv-month').value;if(!mv){alert('Bitte Monat wählen.');return;}
+  const empF=document.getElementById('mv-emp').value;
+  const empList=empF==='alle'?employees.filter(e=>e.active):[employees.find(e=>e.id==empF)].filter(Boolean);
+  const dateStr=new Date().toLocaleDateString('de-AT');
+  const byName=currentUser?`${currentUser.first} ${currentUser.last}`:'Admin';
+  empList.forEach(e=>{signatures[e.id+'_'+mv]={date:dateStr,by:byName};});
+  renderMonthView();
+  alert(`✅ Monat ${mv} bestätigt für: ${empList.map(e=>e.first+' '+e.last).join(', ')}\n\nDatum: ${dateStr}\n§ 26 Abs. 2 AZG: Arbeitgeberkontrolle durchgeführt.`);
+}
+
+// ══ EXCEL EXPORT ══
+function exportMonthExcel(){
+  const mv=document.getElementById('mv-month').value;
+  if(!mv){alert('Bitte Monat wählen.');return;}
+  const empF=document.getElementById('mv-emp').value;
+  exportMonthToCSV(mv,empF==='alle'?null:parseInt(empF));
+}
+function exportMonthExcelFull(){
+  const mv=document.getElementById('xls-month').value;if(!mv){alert('Bitte Monat wählen.');return;}
+  const empF=document.getElementById('xls-emp').value;
+  exportMonthToCSV(mv,empF==='alle'?null:parseInt(empF));
+}
+
+function exportMonthToCSV(month,empId){
+  const[y,m]=month.split('-').map(Number);
+  let data=entries.filter(e=>{const d=new Date(e.date);return d.getFullYear()===y&&d.getMonth()+1===m&&(empId===null||e.empId===empId);});
+  data.sort((a,b)=>a.date.localeCompare(b.date)||a.empId-b.empId);
+  const mName=new Date(y,m-1,1).toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+  // BOM for Excel UTF-8
+  let csv='\uFEFF';
+  csv+=`NBS GmbH — Monatsbericht Zeiterfassung ${mName}\n`;
+  csv+=`Exportiert am;${new Date().toLocaleDateString('de-AT')}\n`;
+  csv+=`Gemäß;§ 26 AZG · Aufbewahrungspflicht § 132 BAO 7 Jahre\n\n`;
+  csv+=`Mitarbeiter;Datum;Wochentag;Typ;Kommen;Gehen;Pause (Min);Arbeitsdauer;Soll;Saldo;Überstunden;Notiz;Nachtrag\n`;
+  const totals={};
+  data.forEach(e=>{
+    const wm=calcWork(e.start,e.end,e.breakMin);const emp=employees.find(x=>x.id===e.empId);const soll=(emp?emp.hours/5:5)*60;const saldo=wm-soll;const ot=Math.max(0,wm-8*60);
+    const dow=new Date(e.date).toLocaleDateString('de-AT',{weekday:'long'});
+    csv+=`${empName(e.empId)};${e.date};${dow};${e.type==='homeoffice'?'Homeoffice':'Normal'};${e.start};${e.end};${e.breakMin};${fmt(wm)};${fmt(soll)};${saldo>=0?'+':''}${fmt(saldo)};${fmt(ot)};${e.note||''};${e.manual?'Ja':'Nein'}\n`;
+    if(!totals[e.empId])totals[e.empId]={wm:0,soll:0,ot:0,days:0};
+    totals[e.empId].wm+=wm;totals[e.empId].soll+=soll;totals[e.empId].ot+=ot;totals[e.empId].days++;
+  });
+  csv+='\n';
+  csv+=`ZUSAMMENFASSUNG ${mName}\n`;
+  csv+=`Mitarbeiter;Arbeitstage;Ist-Stunden;Soll-Stunden;Saldo;Überstunden\n`;
+  Object.entries(totals).forEach(([id,t])=>{
+    const sal=t.wm-t.soll;
+    csv+=`${empName(parseInt(id))};${t.days};${fmt(t.wm)};${fmt(t.soll)};${sal>=0?'+':''}${fmt(sal)};${fmt(t.ot)}\n`;
+  });
+  csv+=`\nAbwesenheiten ${mName}\n`;
+  csv+=`Mitarbeiter;Art;Von;Bis;Arbeitstage;Status;Notiz\n`;
+  const monthAbs=absences.filter(a=>{const from=new Date(a.from),to=new Date(a.to);const mStart=new Date(y,m-1,1),mEnd=new Date(y,m,0);return from<=mEnd&&to>=mStart&&(empId===null||a.empId===empId);});
+  monthAbs.forEach(a=>{csv+=`${empName(a.empId)};${absTypeLabel[a.type]||a.type};${a.from};${a.to};${wDays(a.from,a.to)};${a.status};${a.note||''}\n`;});
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`NBS_Zeiterfassung_${month}${empId?'_'+empName(empId).replace(' ','_'):''}.csv`;link.click();
+}
+
+// ══ OVERTIME ══
+function renderOT(){
+  const empF=document.getElementById('ot-emp').value;
+  const groups={};
+  entries.forEach(e=>{if(empF!=='alle'&&e.empId!=empF)return;if(isHoliday(e.date))return;const[y,m]=e.date.split('-');const k=`${e.empId}_${y}-${m}`;if(!groups[k])groups[k]={empId:e.empId,month:`${y}-${m}`,mins:[],solls:[],maxDay:0};const wm=calcWork(e.start,e.end,e.breakMin);groups[k].mins.push(wm);groups[k].solls.push(getSollMin(e.empId,e.date));groups[k].maxDay=Math.max(groups[k].maxDay,wm);});
+  const rows=Object.values(groups).map(g=>{const ist=g.mins.reduce((s,m)=>s+m,0);const soll=g.solls.reduce((s,m)=>s+m,0);const ot=g.mins.reduce((s,m)=>s+Math.max(0,m-8*60),0);const mehr=Math.max(0,ist-soll);return{...g,soll,ist,ot,mehr,ok:g.maxDay<=12*60};});
+  const totOT=rows.reduce((s,r)=>s+r.ot,0);
+  document.getElementById('ot-stats').innerHTML=`<div class="sc"><div class="sc-l">Überstunden</div><div class="sc-v tmono">${fmt(totOT)}</div><div class="sc-s">gesamt</div></div><div class="sc"><div class="sc-l">Mehrstunden</div><div class="sc-v tmono">${fmt(rows.reduce((s,r)=>s+r.mehr,0))}</div></div><div class="sc"><div class="sc-l">AZG-Prüfen</div><div class="sc-v" style="color:${rows.filter(r=>!r.ok).length?'var(--rd)':'var(--gr)'}">${rows.filter(r=>!r.ok).length}</div></div><div class="sc"><div class="sc-l">Monate</div><div class="sc-v">${rows.length}</div></div>`;
+  document.getElementById('ot-tbody').innerHTML=rows.map(r=>`<tr><td><b>${empName(r.empId)}</b></td><td>${r.month}</td><td class="tmono">${fmt(r.soll)}</td><td class="tmono">${fmt(r.ist)}</td><td class="tmono" style="color:${r.ot>0?'var(--ac)':'inherit'};font-weight:${r.ot>0?600:400}">${fmt(r.ot)}</td><td class="tmono">${fmt(r.mehr)}</td><td class="tmono">${fmt(r.maxDay)}</td><td>${r.ok?'<span class="badge bg-gr">✓ OK</span>':'<span class="badge bg-rd">⚠️ Prüfen</span>'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px">Keine Daten</td></tr>';
+}
+
+// ══ CSV EXPORT ══
+function doExportCSV(){
+  const empF=document.getElementById('exp-emp').value;const from=document.getElementById('exp-from').value,to=document.getElementById('exp-to').value;
+  let data=entries;if(empF!=='alle')data=data.filter(e=>e.empId==empF);if(from)data=data.filter(e=>e.date>=from);if(to)data=data.filter(e=>e.date<=to);
+  let csv='\uFEFFMitarbeiter;Datum;Typ;Kommen;Gehen;Pause (Min);Arbeitsdauer;Notiz\n';
+  data.forEach(e=>{const wm=calcWork(e.start,e.end,e.breakMin);csv+=`${empName(e.empId)};${e.date};${e.type};${e.start};${e.end};${e.breakMin};${fmt(wm)};${e.note||''}\n`;});
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='NBS_Zeiterfassung_Export.csv';a.click();
+}
+
+// ══ PRINT ══
+function printZettel(){
+  const empId=parseInt(document.getElementById('prt-emp').value),month=document.getElementById('prt-month').value;if(!empId||!month){alert('Mitarbeiter und Monat auswählen.');return;}
+  const emp=employees.find(e=>e.id===empId);const[y,m]=month.split('-').map(Number);
+  const me=entries.filter(e=>e.empId===empId&&e.date.startsWith(month));
+  const totW=me.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);const totOT=me.reduce((s,e)=>s+Math.max(0,calcWork(e.start,e.end,e.breakMin)-8*60),0);
+  const mName=new Date(y,m-1,1).toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+  const tl={normal:'Büro',homeoffice:'Homeoffice'};
+  document.getElementById('print-body').innerHTML=`<div style="font-family:sans-serif;font-size:13px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><strong style="font-size:18px">Stundenzettel — ${mName}</strong><br><span style="color:#666">NBS GmbH · gemäß § 26 AZG</span></div></div>
+    <div style="background:#f5f5f5;padding:10px 14px;border-radius:6px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px">
+      <div><b>Mitarbeiter:</b> ${emp.first} ${emp.last}</div><div><b>E-Mail:</b> ${emp.email}</div>
+      <div><b>Funktion:</b> ${emp.role}</div><div><b>Modell:</b> ${emp.model} · ${emp.hours} Std./Woche</div>
+      <div><b>Eintritt:</b> ${emp.start}</div><div><b>${emp.note||''}</b></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px">
+      <thead><tr style="background:#f0f0f0">${['Datum','Typ','Kommen','Gehen','Pause','Arbeitsdauer'].map(h=>`<th style="padding:6px 8px;text-align:left">${h}</th>`).join('')}</tr></thead>
+      <tbody>${me.map(e=>{const wm=calcWork(e.start,e.end,e.breakMin);const dow=new Date(e.date).toLocaleDateString('de-AT',{weekday:'short'});return`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px">${e.date} (${dow})</td><td style="padding:4px 8px">${tl[e.type]||'–'}</td><td style="padding:4px 8px;font-family:monospace">${e.start}</td><td style="padding:4px 8px;font-family:monospace">${e.end}</td><td style="padding:4px 8px">${e.breakMin} Min.</td><td style="padding:4px 8px;font-family:monospace;font-weight:600">${fmt(wm)}</td></tr>`;}).join('')||'<tr><td colspan="6" style="padding:10px;text-align:center;color:#999">Keine Einträge</td></tr>'}</tbody>
+    </table>
+    <div style="display:flex;gap:20px;background:#f5f5f5;padding:10px 14px;border-radius:6px;margin-bottom:24px;font-size:12.5px"><div><b>Gesamt:</b> ${fmt(totW)} Std.</div><div><b>Überstunden:</b> ${fmt(totOT)}</div><div><b>Tage:</b> ${me.length}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px">
+      <div style="border-top:1px solid #999;padding-top:6px;font-size:11px">Datum, Unterschrift Arbeitgeber:in</div>
+      <div style="border-top:1px solid #999;padding-top:6px;font-size:11px">Datum, Unterschrift Arbeitnehmer:in</div>
+    </div>
+    <p style="font-size:10px;color:#999;margin-top:16px">Aufbewahrungspflicht: mind. 1 Jahr (§ 26 AZG) · steuerrechtlich 7 Jahre (§ 132 BAO)</p>
+  </div>`;
+  openM('mo-print');
+}
+
+
+
+// ══ CELEBRATIONS: GEBURTSTAGE & JUBILÄEN ══
+function getCelebrations(){
+  const today = TODAY; // YYYY-MM-DD
+  const mm_dd = today.slice(5); // MM-DD
+  const thisYear = parseInt(today.slice(0,4));
+  const celebrations = [];
+
+  employees.filter(e=>e.active).forEach(emp=>{
+    // 🎂 Geburtstag
+    if(emp.birthday){
+      const bday_mm_dd = emp.birthday.slice(5);
+      if(bday_mm_dd === mm_dd){
+        const age = thisYear - parseInt(emp.birthday.slice(0,4));
+        celebrations.push({
+          type:'birthday', empId:emp.id,
+          name: emp.first+' '+emp.last,
+          text: `🎂 <b>${emp.first}</b> hat heute Geburtstag! ${age > 0 ? `Herzlichen Glückwunsch zum ${age}. Geburtstag! 🥳` : '🎉'}`
+        });
+      }
+    }
+    // 🎉 Firmenjubiläum
+    if(emp.start){
+      const start_mm_dd = emp.start.slice(5);
+      if(start_mm_dd === mm_dd){
+        const years = thisYear - parseInt(emp.start.slice(0,4));
+        if(years > 0){
+          const emoji = years >= 10 ? '🏆' : years >= 5 ? '⭐' : '🎊';
+          celebrations.push({
+            type:'anniversary', empId:emp.id,
+            name: emp.first+' '+emp.last,
+            text: `${emoji} <b>${emp.first}</b> ist heute seit <b>${years} Jahr${years!==1?'en':''}</b> dabei — danke für alles!`
+          });
+        }
+      }
+    }
+  });
+  return celebrations;
+}
+
+function renderCelebrations(){
+  const cel = getCelebrations();
+  const box = document.getElementById('celebrations-box');
+  if(!box) return;
+  if(cel.length === 0){ box.style.display='none'; return; }
+  box.style.display='block';
+  box.innerHTML = cel.map(c=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.1);line-height:1.5">
+      <span style="font-size:20px">${c.type==='birthday'?'🎂':'🎉'}</span>
+      <span style="font-size:14px">${c.text}</span>
+    </div>`).join('');
+}
+
+// ══ URLAUBSWARNUNG ══
+function renderVacationWarnings(){
+  const box = document.getElementById('vacation-warnings-box');
+  if(!box) return;
+  const month = new Date().getMonth(); // 0-11
+  if(month < 9){ box.style.display='none'; return; } // erst ab Oktober (Monat 9) anzeigen
+
+  const warnings = [];
+  employees.filter(e=>e.active).forEach(emp=>{
+    // Bereits verbrauchte + genehmigte Tage zählen
+    const committedDays = absences.filter(a=>
+      a.empId===emp.id && a.type==='urlaub' &&
+      (a.status==='genehmigt' || a.status==='beantragt')
+    ).reduce((s,a)=>s+wDays(a.from,a.to),0);
+    const total = (emp.vacation||0) + (emp.carry||0);
+    const remaining = total - committedDays;
+    // Nur warnen wenn noch mehr als 5 Tage offen UND kein genehmigter Urlaub in der Zukunft
+    const futureApproved = absences.some(a=>
+      a.empId===emp.id && a.type==='urlaub' &&
+      a.status==='genehmigt' && a.to >= TODAY
+    );
+    if(remaining > 5 && !futureApproved){
+      warnings.push({name:emp.first+' '+emp.last, remaining, total});
+    }
+  });
+
+  if(warnings.length === 0){ box.style.display='none'; return; }
+  box.style.display='block';
+  document.getElementById('vacation-warnings-inner').innerHTML = warnings
+    .sort((a,b)=>b.remaining-a.remaining)
+    .map(w=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bd);font-size:13px">
+      <span>👤 <b>${w.name}</b></span>
+      <span style="color:var(--or);font-weight:600;font-family:monospace">${w.remaining} Tage offen</span>
+    </div>`).join('');
+}
+
+// ══ TEAM-TAGESNOTIZ ══
+function renderDayNote(){
+  const box = document.getElementById('day-note-box');
+  if(!box) return;
+  const saved = (typeof Storage !== 'undefined') ? (localStorage.getItem('nbs_daynote_'+TODAY)||'') : '';
+  document.getElementById('day-note-input').value = saved;
+}
+
+async function saveDayNote(){
+  const val = document.getElementById('day-note-input').value.trim();
+  try{ await dbSaveDayNote(TODAY, val); }catch(err){showDbError('DB Fehler: '+err.message);return;}
+  const fb = document.getElementById('day-note-saved');
+  if(fb){ fb.style.opacity='1'; setTimeout(()=>fb.style.opacity='0',2000); }
+}
+
+// ══ JAHRES-EXPORT FÜR STEUERBERATER ══
+function exportYearExcel(){
+  const year = document.getElementById('export-year')?.value || new Date().getFullYear();
+  let csv = '\uFEFF'; // BOM for Excel
+  csv += `NBS GmbH — Jahresauswertung ${year}\n\n`;
+
+  employees.filter(e=>e.active).forEach(emp=>{
+    const empEntries = entries.filter(e=>e.empId===emp.id && e.date.startsWith(year+''));
+    if(empEntries.length===0) return;
+
+    csv += `\nMitarbeiter: ${emp.first} ${emp.last} | Modell: ${emp.model} | ${emp.hours}h/Woche\n`;
+    csv += `Datum\tTag\tKommen\tGehen\tPause (Min)\tNetto-Stunden\tTyp\tNotiz\n`;
+
+    const months = {};
+    empEntries.forEach(e=>{
+      const d = new Date(e.date);
+      const mKey = e.date.slice(0,7);
+      if(!months[mKey]) months[mKey]=[];
+      months[mKey].push(e);
+    });
+
+    let totalYear = 0;
+    Object.keys(months).sort().forEach(mKey=>{
+      const mLabel = new Date(mKey+'-01').toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+      let mTotal = 0;
+      months[mKey].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+        const h = calcWork(e.start,e.end,e.breakMin);
+        mTotal += h;
+        const dayName = new Date(e.date).toLocaleDateString('de-AT',{weekday:'short'});
+        csv += `${e.date}\t${dayName}\t${e.start||''}\t${e.end||''}\t${e.breakMin||0}\t${(h/60).toFixed(2)}\t${e.type||'normal'}\t${e.note||''}\n`;
+      });
+      csv += `\t\t\t\t\tMonat ${mLabel}:\t${(mTotal/60).toFixed(2)}h\n\n`;
+      totalYear += mTotal;
+    });
+
+    // Vacation summary
+    const vac = absences.filter(a=>a.empId===emp.id && a.date?.startsWith(year+'') || (a.from?.startsWith(year+'')));
+    csv += `\tJahressumme Arbeitszeit:\t\t\t\t${(totalYear/60).toFixed(2)}h\n`;
+    csv += `\tSoll Jahresstunden:\t\t\t\t${(emp.hours * 52).toFixed(0)}h\n\n`;
+  });
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`NBS_Jahresauswertung_${year}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// SUPABASE DATA LAYER — ersetzt localStorage komplett
+// ══════════════════════════════════════════════════════════════
+
+let dbReady = false;
+let currentAuthUser = null;
+
+// ── AUTH ──────────────────────────────────────────────────────
+
+async function sbSignIn(email, password) {
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
+async function sbSignOut() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function sbGetSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  return session;
+}
+
+// ── LOAD ALL DATA ─────────────────────────────────────────────
+
+async async function loadFromSupabase() {
+  showLoadingOverlay('Verbinde mit Datenbank...');
+  try {
+    const [empRes, entRes, absRes, moodRes, noteRes] = await Promise.all([
+      sb.from('employees').select('*').eq('active', true).order('first'),
+      sb.from('entries').select('*').order('date'),
+      sb.from('absences').select('*').order('from_date'),
+      sb.from('mood_log').select('*'),
+      sb.from('day_notes').select('*'),
+    ]);
+
+    if (empRes.error) throw empRes.error;
+    if (entRes.error) throw entRes.error;
+    if (absRes.error) throw absRes.error;
+
+    // Map DB columns to app format
+    employees = empRes.data.map(e => ({
+      id: e.id, first: e.first, last: e.last, role: e.role,
+      email: e.email || '', start: e.start || '',
+      model: e.model, hours: parseFloat(e.hours),
+      vacation: e.vacation, carry: e.carry,
+      contract: e.contract || '', birthday: e.birthday || '',
+      note: e.note || '', noLogin: e.no_login, active: e.active,
+      authUserId: e.auth_user_id
+    }));
+
+    entries = entRes.data.map(e => ({
+      id: e.id, empId: e.emp_id, date: e.date,
+      start: e.start_time || '', end: e.end_time || '',
+      breakMin: e.break_min || 0, type: e.type || 'normal',
+      note: e.note || '', manual: e.manual || false
+    }));
+
+    absences = absRes.data.map(a => ({
+      id: a.id, empId: a.emp_id, type: a.type,
+      from: a.from_date, to: a.to_date,
+      note: a.note || '', status: a.status
+    }));
+
+    if (moodRes.data) {
+      moodLog = {};
+      moodRes.data.forEach(m => {
+        moodLog[m.emp_id + '_' + m.date] = {
+          empId: m.emp_id, date: m.date, mood: m.mood,
+          label: m.label, note: m.note || '', ts: m.ts || ''
+        };
+      });
+    }
+
+    if (noteRes.data) {
+      noteRes.data.forEach(n => {
+        if (n.date === TODAY) {
+          const el = document.getElementById('day-note-input');
+          if (el) el.value = n.note || '';
+        }
+      });
+    }
+
+    // Set IDs for new records
+    nextEntryId = entries.length ? Math.max(...entries.map(e=>e.id)) + 1 : 1;
+    nextAbsId   = absences.length ? Math.max(...absences.map(a=>a.id)) + 1 : 1;
+
+    dbReady = true;
+    hideLoadingOverlay();
+    console.log(`NBS DB: ${employees.length} MA · ${entries.length} Einträge · ${absences.length} Abwesenheiten`);
+  } catch(err) {
+    hideLoadingOverlay();
+    console.error('DB Ladefehler:', err);
+    showDbError('Datenbankverbindung fehlgeschlagen: ' + (err.message || err));
+  }
+}
+
+// ── WRITE HELPERS ─────────────────────────────────────────────
+
+async function dbSaveEntry(entry) {
+  const row = {
+    emp_id: entry.empId, date: entry.date,
+    start_time: entry.start, end_time: entry.end,
+    break_min: entry.breakMin, type: entry.type,
+    note: entry.note, manual: entry.manual,
+    updated_at: new Date().toISOString()
+  };
+  if (entry.id && entry.id > 0 && !entry._new) {
+    const { error } = await sb.from('entries').update(row).eq('id', entry.id);
+    if (error) throw error;
+  } else {
+    const { data, error } = await sb.from('entries').insert(row).select().single();
+    if (error) throw error;
+    return data.id;
+  }
+  return entry.id;
+}
+
+async function dbDeleteEntry(id) {
+  const { error } = await sb.from('entries').delete().eq('id', id);
+  if (error) throw error;
+}
+
+async function dbSaveEmployee(emp) {
+  const row = {
+    first: emp.first, last: emp.last, role: emp.role,
+    email: emp.email || null, start: emp.start || null,
+    model: emp.model, hours: emp.hours,
+    vacation: emp.vacation, carry: emp.carry,
+    contract: emp.contract || null, birthday: emp.birthday || null,
+    note: emp.note || '', no_login: emp.noLogin || false
+  };
+  if (emp.id) {
+    const { error } = await sb.from('employees').update(row).eq('id', emp.id);
+    if (error) throw error;
+  } else {
+    const { data, error } = await sb.from('employees').insert(row).select().single();
+    if (error) throw error;
+    return data.id;
+  }
+  return emp.id;
+}
+
+async function dbSaveAbsence(abs) {
+  const row = {
+    emp_id: abs.empId, type: abs.type,
+    from_date: abs.from, to_date: abs.to,
+    note: abs.note || '', status: abs.status,
+    updated_at: new Date().toISOString()
+  };
+  if (abs.id && !abs._new) {
+    const { error } = await sb.from('absences').update(row).eq('id', abs.id);
+    if (error) throw error;
+  } else {
+    const { data, error } = await sb.from('absences').insert(row).select().single();
+    if (error) throw error;
+    return data.id;
+  }
+  return abs.id;
+}
+
+async function dbSaveMood(empId, date, mood, label, note, ts) {
+  const { error } = await sb.from('mood_log').upsert({
+    emp_id: empId, date, mood, label, note: note || '', ts,
+  }, { onConflict: 'emp_id,date' });
+  if (error) throw error;
+}
+
+async function dbSaveDayNote(date, note) {
+  const { error } = await sb.from('day_notes').upsert(
+    { date, note, updated_at: new Date().toISOString() },
+    { onConflict: 'date' }
+  );
+  if (error) throw error;
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────
+
+function showLoadingOverlay(msg) {
+  let ov = document.getElementById('db-loading-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'db-loading-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(28,25,21,0.85);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:DM Sans,sans-serif;gap:16px';
+    ov.innerHTML = '<div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top-color:#c0431a;border-radius:50%;animation:spin 0.8s linear infinite"></div><div id="db-loading-msg" style="font-size:14px;opacity:0.8"></div>';
+    document.body.appendChild(ov);
+    // add spin animation
+    if (!document.getElementById('spin-style')) {
+      const s = document.createElement('style');
+      s.id = 'spin-style';
+      s.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+      document.head.appendChild(s);
+    }
+  }
+  ov.style.display = 'flex';
+  const msgEl = document.getElementById('db-loading-msg');
+  if (msgEl) msgEl.textContent = msg || 'Laden...';
+}
+
+function hideLoadingOverlay() {
+  const ov = document.getElementById('db-loading-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+function showDbError(msg) {
+  let box = document.getElementById('db-error-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'db-error-box';
+    box.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#c0431a;color:#fff;padding:16px 24px;border-radius:10px;z-index:9998;font-size:14px;max-width:500px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)';
+    document.body.appendChild(box);
+  }
+  box.textContent = '⚠️ ' + msg;
+  box.style.display = 'block';
+}
+
+
+// ══ LOKALE DATENPERSISTENZ (localStorage) ══
+const STORAGE_KEY = 'nbs_zeiterfassung_v1';
+
+function saveData(){
+  try{
+    const data={
+      employees: employees,
+      entries: entries,
+      absences: absences,
+      moodLog: moodLog,
+      nextEntryId: nextEntryId,
+      nextAbsId: nextAbsId
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }catch(e){console.warn('Speichern fehlgeschlagen:',e);}
+}
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const data=JSON.parse(raw);
+    if(data.employees&&data.employees.length) employees=data.employees;
+    if(data.entries&&data.entries.length) entries=data.entries;
+    if(data.absences&&data.absences.length) absences=data.absences;
+    if(data.moodLog) moodLog=data.moodLog;
+    if(data.nextEntryId) nextEntryId=data.nextEntryId;
+    if(data.nextAbsId) nextAbsId=data.nextAbsId;
+    console.log('NBS: Daten geladen. Mitarbeiter:'+employees.length+' Einträge:'+entries.length+' Abwesenheiten:'+absences.length);
+  }catch(e){console.warn('Laden fehlgeschlagen:',e);}
+}
+
+function resetData(){
+  if(confirm('⚠️ ACHTUNG: Alle lokalen Änderungen zurücksetzen auf den Original-Stand?\nDies kann nicht rückgängig gemacht werden!')){
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+}
+
+// ══ INIT ══
+document.querySelectorAll('.mo').forEach(el=>el.addEventListener('click',function(e){if(e.target===this)closeM(this.id);}));
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const errBox = document.getElementById('login-error');
+  const btn    = document.getElementById('login-btn');
+  if (!email || !pw) { errBox.textContent='Bitte E-Mail und Passwort eingeben.'; errBox.style.display='block'; return; }
+  btn.textContent = 'Anmelden...'; btn.disabled = true;
+  errBox.style.display = 'none';
+  try {
+    await sbSignIn(email, pw);
+    await initApp();
+  } catch(err) {
+    errBox.textContent = 'Anmeldung fehlgeschlagen: ' + (err.message || 'Bitte Zugangsdaten prüfen.');
+    errBox.style.display = 'block';
+    btn.textContent = 'Anmelden'; btn.disabled = false;
+  }
+}
+
+async function initApp() {
+  showLoadingOverlay('Daten werden geladen...');
+  await loadFromSupabase();
+
+  const session = await sbGetSession();
+  if (!session) { hideLoadingOverlay(); return; }
+
+  const authEmail = session.user.email;
+  // Match auth user to employee or admin
+  const ADMINS = ['cneumeister@nbs.co.at', 'thomas.reischer@nbs.co.at'];
+  let matchedUser = null;
+
+  if (ADMINS.includes(authEmail)) {
+    const emp = employees.find(e => e.email === authEmail);
+    matchedUser = { id: 0, type: 'admin', first: emp?.first || 'Admin',
+      last: emp?.last || '', email: authEmail, role: 'Admin',
+      empId: emp?.id || null };
+  } else {
+    const emp = employees.find(e => e.email === authEmail);
+    if (emp) {
+      matchedUser = { id: emp.id, type: 'employee', first: emp.first,
+        last: emp.last, email: emp.email, role: emp.role, empId: emp.id };
+    }
+  }
+
+  if (!matchedUser) {
+    hideLoadingOverlay();
+    showDbError('Kein Mitarbeiter-Profil für ' + authEmail + ' gefunden. Bitte Christina kontaktieren.');
+    return;
+  }
+
+  currentUser = matchedUser;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  buildNav(); populateSelects();
+  const initPage = isAdmin() ? 'dashboard' : 'emp-dashboard';
+  P(initPage);
+  startClock();
+  if (!isAdmin() && currentUser.empId) {
+    const se = document.getElementById('stamp-emp'); if(se) se.value = currentUser.empId;
+    document.getElementById('stamp-emp-wrap').style.display = 'none';
+    document.getElementById('manual-emp-wrap').style.display = 'none';
+    const me = document.getElementById('m-emp'); if(me) me.value = currentUser.empId;
+  }
+  // Add logout button to nav
+  const nav = document.getElementById('nav-bottom') || document.querySelector('.nav-footer');
+  if (!document.getElementById('logout-btn')) {
+    const logoutDiv = document.createElement('div');
+    logoutDiv.style.cssText = 'padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px';
+    logoutDiv.innerHTML = `<button id="logout-btn" onclick="sbSignOut()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:7px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit">⏻ Abmelden (${matchedUser.first})</button>`;
+    const sidebar = document.querySelector('.sidebar') || document.querySelector('nav');
+    if (sidebar) sidebar.appendChild(logoutDiv);
+  }
+  hideLoadingOverlay();
+}
+
+// Auto-login if session exists
+(async () => {
+  const session = await sbGetSession();
+  if (session) {
+    await initApp();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+  }
+})();
+
+</script>
+</body>
+</html>
