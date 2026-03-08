@@ -224,13 +224,17 @@ tr:hover td{background:#faf8f5}
     <div><h2>Dashboard</h2><p id="today-sub"></p></div>
     <button class="btn btn-p" onclick="P('stempel')">⏱ Stempeluhr</button>
   </div>
-  <div id="motivational-quote" style="display:none;background:linear-gradient(135deg,#1c1915,#2d2924);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;position:relative;overflow:hidden">
-    <div style="position:absolute;top:-10px;right:12px;font-size:60px;opacity:0.08">💬</div>
-    <div style="font-size:13px;opacity:0.6;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Guten Morgen</div>
-    <div id="quote-text" style="font-size:15px;font-style:italic;line-height:1.5"></div>
-    <div id="quote-author" style="font-size:12px;opacity:0.5;margin-top:6px"></div>
-    <button onclick="newQuote()" style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;font-size:16px;opacity:0.4" title="Neuer Spruch">🔄</button>
-  </div>
+  <div id="motivational-quote" style="display:none;background:#fff;border:1px solid #e8e4df;border-left:4px solid #4a9e6a;border-radius:10px;padding:14px 16px;margin-bottom:16px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div id="quote-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a9e6a,#2d7a52);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌿</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:#4a9e6a;margin-bottom:4px">NBS Gedanke des Tages</div>
+        <div id="quote-text" style="font-size:14px;color:#1a1714;line-height:1.55"></div>
+        <div id="quote-author" style="font-size:11.5px;color:#9e9690;margin-top:5px"></div>
+      </div>
+      <button onclick="newQuote()" style="background:none;border:none;cursor:pointer;font-size:14px;color:#b0a89e;padding:2px 4px;border-radius:4px;flex-shrink:0" title="Neuer Spruch">↻</button>
+    </div>
+  </div>  </div>
   <!-- CELEBRATIONS -->
   <div id="celebrations-box" style="display:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px">
     <div style="font-size:12px;opacity:0.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🎉 Heute feiern wir</div>
@@ -807,21 +811,24 @@ async function saveEditEntry(){
 // ══ MOTIVIERENDE SPRÜCHE & URLAUBSÜBERRASCHUNG ══
 
 const QUOTES = [
-  { text: "Der beste Weg, die Zukunft vorherzusagen, ist, sie zu gestalten.", author: "— Peter Drucker" },
-  { text: "Erfolg ist die Summe kleiner Anstrengungen, die jeden Tag wiederholt werden.", author: "— Robert Collier" },
-  { text: "Das Geheimnis des Vorwärtskommens ist, anzufangen.", author: "— Mark Twain" },
-  { text: "Große Leistungen entstehen nicht durch Kraft, sondern durch Ausdauer.", author: "— Samuel Johnson" },
-  { text: "Wer aufhört, besser zu werden, hat aufgehört, gut zu sein.", author: "— Philip Rosenthal" },
-  { text: "Jeder Tag ist eine neue Chance, ein besseres Ich zu werden.", author: "" },
-  { text: "Teams, die lachen, erreichen mehr.", author: "— NBS Weisheit" },
-  { text: "Das Wichtigste ist, niemals aufzuhören zu fragen.", author: "— Albert Einstein" },
-  { text: "Qualität ist kein Zufall — sie ist das Ergebnis bewusster Anstrengung.", author: "— John Ruskin" },
-  { text: "Kreativität ist Intelligenz, die Spaß hat.", author: "— Albert Einstein" },
-  { text: "Zusammenkommen ist ein Beginn, zusammenbleiben ist Fortschritt, zusammenarbeiten ist Erfolg.", author: "— Henry Ford" },
-  { text: "Ein zufriedenes Team ist das größte Kapital eines Unternehmens.", author: "— NBS Weisheit" },
-  { text: "Wer viel reist, hat viel zu erzählen.", author: "— Österreichisches Sprichwort" },
-  { text: "Energie und Begeisterung sind ansteckend — zum Glück!", author: "" },
-  { text: "Heute ist ein guter Tag, um einen guten Tag zu haben.", author: "" },
+  { text: "Ein guter Tag beginnt mit einem guten Team. Schön, dass ihr da seid! 🌟", author: "— NBS GmbH", avatar: "🌿" },
+  { text: "Heute ist ein guter Tag, um etwas Großartiges zu tun.", author: "— NBS GmbH", avatar: "☀️" },
+  { text: "Kleine Schritte jeden Tag führen zu großen Veränderungen.", author: "— NBS Weisheit", avatar: "🚶" },
+  { text: "Teams, die füreinander da sind, erreichen das Unmögliche.", author: "— NBS GmbH", avatar: "🤝" },
+  { text: "Das Geheimnis eines guten Tages? Einfach anfangen. 😊", author: "— Mark Twain (leicht abgewandelt)", avatar: "✨" },
+  { text: "Jede Aufgabe, die du heute erledigst, ist ein Geschenk an dein zukünftiges Ich.", author: "— NBS Weisheit", avatar: "🎁" },
+  { text: "Zusammen sind wir nicht nur ein Team — wir sind NBS. 💚", author: "— NBS GmbH", avatar: "💚" },
+  { text: "Kreativität ist Intelligenz, die Spaß hat.", author: "— Albert Einstein", avatar: "💡" },
+  { text: "Das Wichtigste ist, niemals aufzuhören zu fragen.", author: "— Albert Einstein", avatar: "🔍" },
+  { text: "Qualität ist kein Zufall — sie ist das Ergebnis bewusster Anstrengung.", author: "— John Ruskin", avatar: "⭐" },
+  { text: "Energie und Begeisterung sind ansteckend — zum Glück!", author: "— NBS Weisheit", avatar: "⚡" },
+  { text: "Wer viel lacht, arbeitet besser. Das ist wissenschaftlich bewiesen. 😄", author: "— NBS GmbH", avatar: "😄" },
+  { text: "Erfolg fühlt sich am schönsten an, wenn man ihn teilt.", author: "— NBS Weisheit", avatar: "🎉" },
+  { text: "Heute neue Möglichkeiten entdecken — gestern war Übung. 💪", author: "— NBS GmbH", avatar: "💪" },
+  { text: "Ein freundliches Wort kostet nichts und kann den ganzen Tag verändern.", author: "— NBS Weisheit", avatar: "🌸" },
+  { text: "Wir arbeiten nicht nur zusammen — wir wachsen zusammen.", author: "— NBS GmbH", avatar: "🌱" },
+  { text: "Der beste Zeitpunkt war gestern. Der zweitbeste ist jetzt.", author: "— Chinesisches Sprichwort", avatar: "⏰" },
+  { text: "Gute Laune ist die beste Grundlage für gute Arbeit.", author: "— NBS Weisheit", avatar: "😊" },
 ];
 
 const BOOKS_SUMMER = [
@@ -965,8 +972,10 @@ function newQuote(){
   do { idx = Math.floor(Math.random() * QUOTES.length); } while(idx === currentQuoteIndex);
   currentQuoteIndex = idx;
   const q = QUOTES[idx];
-  document.getElementById('quote-text').textContent = `"${q.text}"`;
+  document.getElementById('quote-text').textContent = q.text;
   document.getElementById('quote-author').textContent = q.author;
+  const av = document.getElementById('quote-avatar');
+  if(av && q.avatar) av.textContent = q.avatar;
 }
 
 function showDashboardQuote(){
