@@ -419,7 +419,7 @@ tr:hover td{background:#faf8f5}
     <span class="vce vce-zeitausgleich" style="padding:3px 8px">🔄 Zeitausgleich</span>
     <span class="vce vce-sonderurlaub" style="padding:3px 8px">⭐ Sonderurlaub</span>
     <span class="vce vce-beantragt" style="padding:3px 8px">⏳ Beantragt</span>
-    <span class="vce vce-urlaub_genossen" style="padding:3px 8px">✔️ Urlaub genossen</span>
+    <span class="vce vce-urlaub_genossen" style="padding:3px 8px">✔️ Erholt!</span>
     <span class="vce" style="background:#ede0f8;color:#5b2c8d;padding:3px 8px">🎉 Feiertag</span>
   </div></div>
 </div>
@@ -586,7 +586,7 @@ tr:hover td{background:#faf8f5}
     </div>
     <div class="fr c2"><div><label>Von *</label><input type="date" id="ab-from"></div><div><label>Bis</label><input type="date" id="ab-to"></div></div>
     <div class="fr c2">
-      <div><label>Status</label><select id="ab-status"><option value="genehmigt">✅ Genehmigt</option><option value="urlaub_genossen">✔️ Urlaub genossen</option><option value="beantragt">⏳ Beantragt</option><option value="abgelehnt">❌ Abgelehnt</option></select></div>
+      <div><label>Status</label><select id="ab-status"><option value="genehmigt">✅ Genehmigt</option><option value="urlaub_genossen">✔️ Erholt!</option><option value="beantragt">⏳ Beantragt</option><option value="abgelehnt">❌ Abgelehnt</option></select></div>
       <div><label>Notiz</label><input id="ab-note" placeholder="Optional…"></div>
     </div>
   </div>
@@ -616,7 +616,7 @@ tr:hover td{background:#faf8f5}
   <div class="mf">
     <button class="btn btn-s" onclick="closeM('mo-approve')">Abbrechen</button>
     <button class="btn btn-d" onclick="decideRequest('abgelehnt')">❌ Ablehnen</button>
-    <button class="btn btn-p" onclick="decideRequest('urlaub_genossen')" style="background:#6a9e6a">✔️ Urlaub genossen</button>
+    <button class="btn btn-p" onclick="decideRequest('urlaub_genossen')" style="background:#6a9e6a">✔️ Erholt!</button>
     <button class="btn btn-g" onclick="decideRequest('genehmigt')">✅ Genehmigen</button>
   </div>
 </div></div>
@@ -1527,7 +1527,7 @@ async function decideRequest(status){
   if(status==='genehmigt' && a.type==='urlaub'){
     showVacationSurprise(a);
   } else {
-    const msg={genehmigt:'✅ Genehmigt!',abgelehnt:'❌ Abgelehnt.',urlaub_genossen:'✔️ Als urlaub_genossen markiert.'};alert(`${msg[status]||status}\n\nUrlaub von ${empName(a.empId)} vom ${a.from} bis ${a.to}.`);
+    const msg={genehmigt:'✅ Genehmigt!',abgelehnt:'❌ Abgelehnt.',urlaub_genossen:'✔️ Als Erholt! markiert.'};alert(`${msg[status]||status}\n\nUrlaub von ${empName(a.empId)} vom ${a.from} bis ${a.to}.`);
   }
 }
 
@@ -2236,12 +2236,17 @@ async function dbSaveEmployee(emp) {
     model: emp.model, hours: emp.hours,
     vacation: emp.vacation, carry: emp.carry,
     contract: emp.contract || null, birthday: emp.birthday || null,
-    note: emp.note || '', no_login: emp.noLogin || false,
-    exit: emp.exit || null
+    note: emp.note || '', no_login: emp.noLogin || false
   };
   if (emp.id) {
     const { error } = await sb.from('employees').update(row).eq('id', emp.id);
     if (error) throw error;
+    // Austrittsdatum separat speichern (Spalte muss existieren)
+    if (emp.exit !== undefined) {
+      try {
+        await sb.from('employees').update({exit: emp.exit||null}).eq('id', emp.id);
+      } catch(e) { /* Spalte existiert noch nicht — bitte SQL ausführen */ }
+    }
   } else {
     const { data, error } = await sb.from('employees').insert(row).select().single();
     if (error) throw error;
