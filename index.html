@@ -1921,7 +1921,7 @@ async function sbGetSession() {
 
 // ── LOAD ALL DATA ─────────────────────────────────────────────
 
-async async function loadFromSupabase() {
+async function loadFromSupabase() {
   showLoadingOverlay('Verbinde mit Datenbank...');
   try {
     const [empRes, entRes, absRes, moodRes, noteRes] = await Promise.all([
