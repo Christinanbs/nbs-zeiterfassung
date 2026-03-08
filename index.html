@@ -1430,7 +1430,7 @@ function renderEmpDashboard(){
   // My requests
   const myReqs=absences.filter(a=>a.empId===emp.id).slice(-5).reverse();
   const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌',urlaub_genossen:'✔️'};
-  document.getElementById('emp-requests').innerHTML=myReqs.length?`<table><thead><tr><th>Art</th><th>Von</th><th>Bis</th><th>Status</th></tr></thead><tbody>${myReqs.map(a=>`<tr><td>${absTypeLabel[a.type]||a.type}</td><td>${a.from}</td><td>${a.to}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${a.status}</span></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">Keine Ansuchen</div>';
+  document.getElementById('emp-requests').innerHTML=myReqs.length?`<table><thead><tr><th>Art</th><th>Von</th><th>Bis</th><th>Status</th></tr></thead><tbody>${myReqs.map(a=>`<tr><td>${absTypeLabel[a.type]||a.type}</td><td>${a.from}</td><td>${a.to}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${absStatusLabel[a.status]||a.status}</span>;
 }
 
 // ══ VACATION REQUEST (Employee) ══
@@ -1529,6 +1529,7 @@ async function decideRequest(status){
 
 // ══ VACATION CALENDAR ══
 const absTypeLabel={urlaub:'🌴 Urlaub',krankenstand:'🤒 Krankenstand',homeoffice:'🏠 Homeoffice',zeitausgleich:'🔄 Zeitausgleich',sonderurlaub:'⭐ Sonderurlaub',feiertag:'🎉 Feiertag'};
+const absStatusLabel={genehmigt:'Genehmigt',beantragt:'Beantragt',abgelehnt:'Abgelehnt',urlaub_genossen:'Erholt!'};
 const absBadge={genehmigt:'bg-gr',beantragt:'bg-or',abgelehnt:'bg-rd',urlaub_genossen:'bg-gr'};
 
 function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
@@ -1697,7 +1698,7 @@ function renderAbsences(filter){
   tbody.innerHTML=list.map(a=>`<tr>
     <td><b>${empName(a.empId)}</b></td><td>${absTypeLabel[a.type]||a.type}</td>
     <td>${a.from}</td><td>${a.to}</td><td class="tmono">${wDays(a.from,a.to)} AT</td>
-    <td>${a.note||'–'}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${a.status}</span></td>
+    <td>${a.note||'–'}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${absStatusLabel[a.status]||a.status}</span></td>
     <td><div class="flex">${(a.status==='beantragt'||a.status==='genehmigt')&&isAdmin()?`<button class="btn btn-g btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button>`:''}<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteAbs(${a.id})">✕</button></div></td>
   </tr>`).join('');
   const counts={urlaub:0,krankenstand:0,homeoffice:0,zeitausgleich:0,sonderurlaub:0};
@@ -1892,7 +1893,7 @@ function exportMonthToCSV(month,empId){
   csv+=`\nAbwesenheiten ${mName}\n`;
   csv+=`Mitarbeiter;Art;Von;Bis;Arbeitstage;Status;Notiz\n`;
   const monthAbs=absences.filter(a=>{const from=new Date(a.from),to=new Date(a.to);const mStart=new Date(y,m-1,1),mEnd=new Date(y,m,0);return from<=mEnd&&to>=mStart&&(empId===null||a.empId===empId);});
-  monthAbs.forEach(a=>{csv+=`${empName(a.empId)};${absTypeLabel[a.type]||a.type};${a.from};${a.to};${wDays(a.from,a.to)};${a.status};${a.note||''}\n`;});
+  monthAbs.forEach(a=>{csv+=`${empName(a.empId)};${absTypeLabel[a.type]||a.type};${a.from};${a.to};${wDays(a.from,a.to)};${absStatusLabel[a.status]||a.status};${a.note||''}\n`;});
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`NBS_Zeiterfassung_${month}${empId?'_'+empName(empId).replace(' ','_'):''}.csv`;link.click();
 }
