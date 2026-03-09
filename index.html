@@ -279,7 +279,7 @@ tr:hover td{background:#faf8f5}
   <div class="g2">
     <div class="card" style="display:none"><div class="ch"><h3>⚠️ AZG-Warnungen heute</h3></div><div class="cb" id="db-warns"></div></div>
   </div>
-  <div class="card mt2"><div class="ch"><h3>🌴 Offene Urlaubsansuchen</h3><span id="pending-count"></span></div><div class="cb" style="padding:0" id="db-pending"></div></div>
+  <div class="card mt2"><div class="ch"><h3>📋 Offene Ansuchen</h3><span id="pending-count"></span></div><div class="cb" style="padding:0" id="db-pending"></div></div>
 </div>
 
 <!-- DASHBOARD (Employee) -->
@@ -436,6 +436,7 @@ tr:hover td{background:#faf8f5}
   <div class="ph"><div><h2>Urlaubskalender</h2><p>Übersicht aller Abwesenheiten</p></div>
     <div class="flex">
       <button class="btn btn-s btn-sm" onclick="openM('mo-vacreq')">🌴 Urlaub beantragen</button>
+      <button class="btn btn-s btn-sm" style="background:#7b1fa2;color:#fff" onclick="openHoReq()">🏠 Homeoffice beantragen</button>
     </div>
   </div>
   <div class="alert ai" style="margin-bottom:16px"><span>ℹ️</span>Hier siehst du alle genehmigten und beantragten Abwesenheiten. <b>Orange gestrichelt</b> = noch beantragt, <b>grün</b> = genehmigt.</div>
@@ -651,6 +652,21 @@ tr:hover td{background:#faf8f5}
     <div id="vac-balance-info" style="background:var(--sf2);border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:8px"></div>
   </div>
   <div class="mf"><button class="btn btn-s" onclick="closeM('mo-vacreq')">Abbrechen</button><button class="btn btn-p" onclick="submitVacRequest()">Beantragen</button></div>
+</div></div>
+<!-- HOMEOFFICE REQUEST MODAL -->
+<div class="mo" id="mo-horeq"><div class="md">
+  <div class="mh"><h3>🏠 Homeoffice beantragen</h3><button class="mc" onclick="closeM('mo-horeq')">✕</button></div>
+  <div class="mb">
+    <div class="alert ai" style="margin-bottom:12px"><span>ℹ️</span>Bitte nur ab <b>3 Tagen am Stück</b> beantragen. Für einzelne Homeoffice-Tage einfach beim Stundeneintrag <b>'🏠 Homeoffice'</b> als Typ wählen.</div>
+    <div id="ho-overlap-result"></div>
+    <div class="fr c2">
+      <div><label>Von *</label><input type="date" id="ho-from" onchange="checkHoOverlap()"></div>
+      <div><label>Bis *</label><input type="date" id="ho-to" onchange="checkHoOverlap()"></div>
+    </div>
+    <div class="fr"><div><label>Notiz / Begründung</label><input id="ho-note" placeholder="Optional…"></div></div>
+    <div id="ho-days-info" style="font-size:12.5px;color:var(--ink2);margin-top:8px;padding:8px 12px;background:var(--sf2);border-radius:8px;display:none"></div>
+  </div>
+  <div class="mf"><button class="btn btn-s" onclick="closeM('mo-horeq')">Abbrechen</button><button class="btn btn-p" style="background:#7b1fa2" onclick="submitHoRequest()">Beantragen</button></div>
 </div></div>
 
 <!-- Approve request -->
@@ -1450,7 +1466,7 @@ function renderDashboard(){
   const tw=entries.filter(e=>e.date===TODAY).flatMap(e=>{const w=calcWork(e.start,e.end,e.breakMin);return azgCheck(w,e.breakMin).map(x=>({name:empName(e.empId),...x}));});
   document.getElementById('db-warns').innerHTML=tw.map(w=>`<div class="alert ${w.l==='danger'?'ad':'aw'}" style="margin-bottom:6px"><span>${w.l==='danger'?'🚨':'⚠️'}</span><b>${w.name}:</b> ${w.msg}</div>`).join('')||'<div class="empty">✅ Alles OK</div>';
   document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
-  document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
+  document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.type==='homeoffice'?'<span class="badge" style="background:#e1bee7;color:#4a148c">🏠 Homeoffice</span>':a.type==='urlaub'?'<span class="badge bg-gr">🌴 Urlaub</span>':a.type==='zeitausgleich'?'<span class="badge bg-bl">🔄 ZA</span>':'<span class="badge bg-gy">'+(absTypeLabel[a.type]||a.type)+'</span>'}</td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
   if(isAdmin())renderMoodOverview();
   renderCelebrations();
   if(isAdmin())renderVacationWarnings();
@@ -1573,6 +1589,68 @@ async function submitVacRequest(){
 }
 
 // ══ APPROVE REQUEST ══
+
+// ══ HOMEOFFICE REQUEST ══
+function openHoReq(){
+  document.getElementById('ho-from').value='';
+  document.getElementById('ho-to').value='';
+  document.getElementById('ho-note').value='';
+  document.getElementById('ho-overlap-result').innerHTML='';
+  document.getElementById('ho-days-info').style.display='none';
+  openM('mo-horeq');
+}
+
+function checkHoOverlap(){
+  const from=document.getElementById('ho-from').value;
+  const to=document.getElementById('ho-to').value||from;
+  if(!from) return;
+  const days=wDays(from,to);
+  const info=document.getElementById('ho-days-info');
+  // Tage anzeigen
+  if(days>0){
+    info.style.display='block';
+    if(days<3){
+      info.innerHTML=`⚠️ <b>${days} Arbeitstag${days===1?'':'e'}</b> — Homeoffice-Ansuchen bitte erst ab 3 Tagen. Für ${days===1?'diesen Tag':'diese Tage'} bitte direkt beim Stundeneintrag '🏠 Homeoffice' wählen.`;
+      info.style.color='#b45309';info.style.background='#fef9c3';
+    } else {
+      info.innerHTML=`✅ <b>${days} Arbeitstage</b> Homeoffice (${from} bis ${to})`;
+      info.style.color='#166534';info.style.background='#f0fdf4';
+    }
+  } else {
+    info.style.display='none';
+  }
+  // Überschneidungen prüfen
+  const empId=currentUser.empId;
+  if(!empId) return;
+  const overlaps=absences.filter(a=>a.empId===empId&&a.status!=='abgelehnt'&&!(a.to<from||a.from>to));
+  const res=document.getElementById('ho-overlap-result');
+  if(overlaps.length){
+    res.innerHTML='<div class="alert aw" style="margin-bottom:8px"><span>⚠️</span>Überschneidung mit: '+overlaps.map(a=>(absTypeLabel[a.type]||a.type)+' ('+a.from+'–'+a.to+')').join(', ')+'</div>';
+  } else {
+    res.innerHTML='';
+  }
+}
+
+async function submitHoRequest(){
+  const from=document.getElementById('ho-from').value;
+  if(!from){alert('Von-Datum fehlt.');return;}
+  const to=document.getElementById('ho-to').value||from;
+  const days=wDays(from,to);
+  if(days<3){
+    alert('⚠️ Homeoffice-Ansuchen bitte erst ab 3 Tagen.\nFür einzelne Tage einfach beim Stundeneintrag \u{1F3E0} Homeoffice als Typ w\u00E4hlen.');
+    return;
+  }
+  const note=document.getElementById('ho-note').value;
+  const empId=currentUser.empId;
+  if(!empId)return;
+  const newAbs={id:nextAbsId++,empId,type:'homeoffice',from,to,note,status:'beantragt'};
+  absences.push(newAbs);
+  try{ const nid=await dbSaveAbsence({...newAbs,_new:true}); newAbs.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);return;}
+  closeM('mo-horeq');
+  renderCalendar();renderEmpDashboard();
+  alert(`✅ Homeoffice-Ansuchen eingereicht!\n\nVom ${from} bis ${to} (${days} Tage)\n\nDein Ansuchen wurde an die Geschäftsführung übermittelt.`);
+}
+
 function openApprove(id){
   currentApproveId=id;
   const a=absences.find(x=>x.id===id);if(!a)return;
