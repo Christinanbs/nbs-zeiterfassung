@@ -2649,9 +2649,11 @@ async function initApp() {
   if (!document.getElementById('logout-btn')) {
     const logoutDiv = document.createElement('div');
     logoutDiv.style.cssText = 'padding:12px 16px;border-top:1px solid rgba(255,255,255,0.1);margin-top:8px';
-    logoutDiv.innerHTML = `<button onclick="openM('mo-pw')" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);border-radius:7px;padding:7px;font-size:11px;cursor:pointer;font-family:inherit;margin-bottom:6px">🔑 Passwort ändern</button><button id="logout-btn" onclick="sbSignOut()" style="width:100%;background:none;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:7px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit">⏻ Abmelden (${matchedUser.first})</button>`;
+    logoutDiv.innerHTML = `<button onclick="openM('mo-pw')" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);border-radius:7px;padding:7px;font-size:11px;cursor:pointer;font-family:inherit;margin-bottom:6px">🔑 Passwort ändern</button><button id="logout-btn" onclick="sbSignOut()" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.85);border-radius:7px;padding:8px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500">⏻ Abmelden (${matchedUser.first})</button>`;
+    const sidebarFoot = document.querySelector('.sidebar-foot');
     const sidebar = document.querySelector('.sidebar') || document.querySelector('nav');
-    if (sidebar) sidebar.appendChild(logoutDiv);
+    if (sidebarFoot) sidebarFoot.parentNode.insertBefore(logoutDiv, sidebarFoot);
+    else if (sidebar) sidebar.appendChild(logoutDiv);
   }
   hideLoadingOverlay();
 }
