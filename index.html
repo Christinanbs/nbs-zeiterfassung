@@ -222,17 +222,16 @@ tr:hover td{background:#faf8f5}
 <div id="page-dashboard" class="page">
   <div class="ph">
     <div><h2>Dashboard</h2><p id="today-sub"></p></div>
-    <button class="btn btn-p" onclick="P('stempel')">⏱ Stempeluhr</button>
   </div>
-  <div id="motivational-quote" style="display:none;background:#fff;border:1px solid #e8e4df;border-left:4px solid #4a9e6a;border-radius:10px;padding:14px 16px;margin-bottom:16px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+  <div id="motivational-quote" style="display:none;background:linear-gradient(135deg,#f0faf4,#e6f7ed);border:1px solid #4a9e6a;border-left:5px solid #2d7a52;border-radius:10px;padding:16px 18px;margin-bottom:16px;position:relative;box-shadow:0 2px 10px rgba(74,158,106,0.15)">
     <div style="display:flex;align-items:flex-start;gap:12px">
-      <div id="quote-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a9e6a,#2d7a52);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌿</div>
+      <div id="quote-avatar" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#2d7a52,#1c5c3a);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,0.15)">🌿</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:#4a9e6a;margin-bottom:4px">NBS Gedanke des Tages</div>
-        <div id="quote-text" style="font-size:14px;color:#1a1714;line-height:1.55"></div>
-        <div id="quote-author" style="font-size:11.5px;color:#9e9690;margin-top:5px"></div>
+        <div style="font-size:12px;font-weight:700;color:#2d7a52;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px">NBS Gedanke des Tages</div>
+        <div id="quote-text" style="font-size:14.5px;color:#1a1714;line-height:1.6;font-weight:500"></div>
+        <div id="quote-author" style="font-size:12px;color:#4a9e6a;margin-top:6px;font-weight:600"></div>
       </div>
-      <button onclick="newQuote()" style="background:none;border:none;cursor:pointer;font-size:14px;color:#b0a89e;padding:2px 4px;border-radius:4px;flex-shrink:0" title="Neuer Spruch">↻</button>
+      <button onclick="newQuote()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#4a9e6a;padding:2px 4px;border-radius:4px;flex-shrink:0" title="Neuer Spruch">↻</button>
     </div>
   </div>
   <!-- CELEBRATIONS -->
@@ -280,6 +279,20 @@ tr:hover td{background:#faf8f5}
 <!-- DASHBOARD (Employee) -->
 <div id="page-emp-dashboard" class="page">
   <div class="ph"><div><h2 id="emp-db-greeting">Hallo!</h2><p>Meine Übersicht</p></div></div>
+  <div id="motivational-quote-emp" style="display:none;background:#fff;border:1px solid #e8e4df;border-left:4px solid #4a9e6a;border-radius:10px;padding:14px 16px;margin-bottom:16px;position:relative;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div id="quote-avatar-emp" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4a9e6a,#2d7a52);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌿</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:#4a9e6a;margin-bottom:4px">NBS Gedanke des Tages</div>
+        <div id="quote-text-emp" style="font-size:14px;color:#1a1714;line-height:1.55"></div>
+        <div id="quote-author-emp" style="font-size:11.5px;color:#9e9690;margin-top:5px"></div>
+      </div>
+    </div>
+  </div>
+  <div id="today-events-box-emp" style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:16px 20px;margin-bottom:16px;display:none">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px">📅 Was passiert heute <span id="today-events-date-emp" style="font-size:11px;font-weight:400;color:var(--ink3)"></span></div>
+    <div id="today-events-inner-emp"></div>
+  </div>
   <div class="sr" id="emp-db-stats"></div>
   <div class="g2">
     <div class="card"><div class="ch"><h3>⏱ Heute</h3></div><div class="cb" id="emp-today"></div></div>
@@ -447,10 +460,12 @@ tr:hover td{background:#faf8f5}
       <input type="text" id="mv-search" placeholder="🔍 Mitarbeiter suchen…" oninput="renderMonthView()" style="width:180px">
       <select id="mv-emp" onchange="renderMonthView()" style="width:180px"></select>
       <input type="month" id="mv-month" onchange="renderMonthView()" style="width:150px">
-      <button class="btn btn-s btn-sm" onclick="signMonth()">✍️ Bestätigen</button>
-      <button class="export-month-btn" onclick="exportMonthExcel()">📊 Excel Export</button>
+      <button class="btn btn-p" id="mv-submit-btn" onclick="submitMonth()" style="display:none">📨 Monat einreichen</button>
+      <button class="btn btn-p" id="mv-approve-btn" onclick="approveMonth()" style="display:none">✅ Freigeben</button>
+      <button class="export-month-btn" id="mv-excel-btn" onclick="exportMonthExcel()" style="display:none">📊 Excel herunterladen</button>
     </div>
   </div>
+  <div id="mv-approval-banner" style="display:none;margin-bottom:14px"></div>
   <div id="mv-signed-banner" style="display:none;margin-bottom:14px"></div>
   
   <div class="card" id="mv-summary-card" style="margin-bottom:14px;display:none">
@@ -704,6 +719,7 @@ let absences = [{"id": 100, "empId": 1, "type": "zeitausgleich", "from": "2026-0
 let nextAbsId = 222;
 let activeStamps = {};
 let signatures = {}; // key: "empId_YYYY-MM" → {date, by}
+let monthApprovals = {}; // key: "empId_YYYY-MM" → {status, submitted_at, approved_at, id}
 
 
 
@@ -953,7 +969,6 @@ function buildNav(){
   const adminNav=`
     <div class="ns">Übersicht</div>
     <div class="ni" onclick="P('dashboard')">🏠 Dashboard</div>
-    <div class="ni" onclick="P('stempel')">⏱ Stempeluhr</div>
     <div class="ns">Mitarbeiter</div>
     <div class="ni" onclick="P('mitarbeiter')">👥 Mitarbeiter</div>
     <div class="ni" onclick="P('abwesenheit')">📋 Abwesenheiten</div>
@@ -967,7 +982,6 @@ function buildNav(){
   const empNav=`
     <div class="ns">Mein Bereich</div>
     <div class="ni" onclick="P('emp-dashboard')">🏠 Mein Dashboard</div>
-    <div class="ni" onclick="P('stempel')">⏱ Stempeluhr</div>
     <div class="ni" onclick="P('kalender')">📅 Urlaubskalender</div>
     <div class="ns">Meine Auswertung</div>
     <div class="ni" onclick="P('monatsansicht')">📊 Meine Stunden</div>`;
@@ -1006,7 +1020,7 @@ function closeM(id){document.getElementById(id).style.display='none';}
 
 function refreshPage(id){
   if(id==='dashboard'){renderDashboard();renderTodayEvents();}
-  else if(id==='emp-dashboard')renderEmpDashboard();
+  else if(id==='emp-dashboard'){renderEmpDashboard();renderTodayEventsEmp();}
   else if(id==='stempel'){renderTodayTable();updateStampStatus();const n=new Date();const el=document.getElementById('live-clock');if(el)el.textContent=n.toTimeString().slice(0,8);const dl=document.getElementById('live-date');if(dl)dl.textContent=n.toLocaleDateString('de-AT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
   else if(id==='mitarbeiter')renderEmployees();
   else if(id==='abwesenheit')renderAbsences();
@@ -1233,6 +1247,62 @@ function renderTodayEvents(){
     return;
   }
 
+  box.style.display = 'block';
+  inner.innerHTML = items.map(it=>
+    `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px">
+      <span style="font-size:15px;flex-shrink:0">${it.icon||'·'}</span>
+      <span style="color:${it.color}">${it.text}</span>
+    </div>`
+  ).join('');
+}
+
+function renderTodayEventsEmp(){
+  // Spruch des Tages für Mitarbeiter
+  const qbox = document.getElementById('motivational-quote-emp');
+  if(qbox && Math.random() > 0.4){
+    const q = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+    document.getElementById('quote-text-emp').textContent = q.text;
+    document.getElementById('quote-author-emp').textContent = q.author;
+    const av = document.getElementById('quote-avatar-emp');
+    if(av && q.avatar) av.textContent = q.avatar;
+    qbox.style.display = 'block';
+  }
+  // Was passiert heute für Mitarbeiter
+  const box = document.getElementById('today-events-box-emp');
+  const inner = document.getElementById('today-events-inner-emp');
+  const dateSpan = document.getElementById('today-events-date-emp');
+  if(!box || !inner) return;
+  const today = TODAY;
+  const now = new Date();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const mmdd = mm+'-'+dd;
+  const weekdays = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const months = ['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  if(dateSpan) dateSpan.textContent = weekdays[now.getDay()]+', '+now.getDate()+'. '+months[now.getMonth()]+' '+now.getFullYear();
+  const items = [];
+  employees.filter(e=>e.active&&e.birthday).forEach(e=>{
+    const bday = e.birthday;
+    if(!bday) return;
+    if(bday.slice(5) === mmdd){
+      const age = now.getFullYear() - parseInt(bday.slice(0,4));
+      items.push({icon:'🎂', color:'#7c3aed', text:`<b>${e.first} ${e.last}</b> hat heute Geburtstag! 🎉 (${age} Jahre)`});
+    }
+  });
+  employees.filter(e=>e.active&&e.start).forEach(e=>{
+    if(e.start.slice(5) === mmdd){
+      const years = now.getFullYear() - parseInt(e.start.slice(0,4));
+      if([1,2,3,5,10,15,20].includes(years))
+        items.push({icon:'🏆', color:'#c0431a', text:`<b>${e.first} ${e.last}</b> — ${years} Jahr${years===1?'':'e'} bei NBS! 🎉`});
+    }
+  });
+  const absentToday = absences.filter(a=>a.from<=today&&a.to>=today&&(a.status==='genehmigt'||a.status==='urlaub_genossen'));
+  const absLabels = {urlaub:'🌴 Urlaub', krankenstand:'🤒 Krank', zeitausgleich:'🔄 ZA', sonderurlaub:'⭐ Sonderurlaub', homeoffice:'🏠 Homeoffice'};
+  absentToday.forEach(a=>{
+    const emp = employees.find(e=>e.id===a.empId);
+    if(emp) items.push({icon:'', color:'var(--ink2)', text:`${absLabels[a.type]||a.type}: <b>${emp.first} ${emp.last}</b>`});
+  });
+  if(items.length === 0){ box.style.display='none'; return; }
   box.style.display = 'block';
   inner.innerHTML = items.map(it=>
     `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px">
@@ -1634,13 +1704,64 @@ function renderMonthView(){
   if(!isAdmin()&&currentUser.empId)filtered=filtered.filter(e=>e.empId===currentUser.empId);
   if(search)filtered=filtered.filter(e=>empName(e.empId).toLowerCase().includes(search));
   filtered.sort((a,b)=>a.date.localeCompare(b.date));
-  // Show signatures for selected scope
-  const banner=document.getElementById('mv-signed-banner');
+
+  // Approval status
+  const singleEmp=(!isAdmin()&&currentUser.empId)?currentUser.empId:(empF!=='alle'?parseInt(empF):null);
+  const approvalKey=singleEmp?singleEmp+'_'+mv:null;
+  const approval=approvalKey?monthApprovals[approvalKey]:null;
+  const status=approval?approval.status:'offen';
+
+  const apBanner=document.getElementById('mv-approval-banner');
+  const submitBtn=document.getElementById('mv-submit-btn');
+  const approveBtn=document.getElementById('mv-approve-btn');
+  const excelBtn=document.getElementById('mv-excel-btn');
+
+  if(singleEmp){
+    if(status==='offen'){
+      apBanner.style.display='none';
+      submitBtn.style.display=!isAdmin()?'inline-flex':'none';
+      approveBtn.style.display='none';
+      excelBtn.style.display='none';
+    } else if(status==='eingereicht'){
+      const subDate=approval.submitted_at?new Date(approval.submitted_at).toLocaleDateString('de-AT'):'';
+      apBanner.style.display='block';
+      apBanner.innerHTML=`<div class="alert aw" style="margin-bottom:6px"><span>⏳</span><b>${empName(singleEmp)}</b> hat ${mv} eingereicht am <b>${subDate}</b> — wartet auf Admin-Freigabe</div>`;
+      submitBtn.style.display='none';
+      approveBtn.style.display=isAdmin()?'inline-flex':'none';
+      excelBtn.style.display='none';
+    } else if(status==='freigegeben'){
+      const appDate=approval.approved_at?new Date(approval.approved_at).toLocaleDateString('de-AT'):'';
+      apBanner.style.display='block';
+      apBanner.innerHTML=`<div class="alert as" style="margin-bottom:6px"><span>✅</span><b>${empName(singleEmp)}</b> — Monat <b>${mv}</b> freigegeben am <b>${appDate}</b></div>`;
+      submitBtn.style.display='none';
+      approveBtn.style.display='none';
+      excelBtn.style.display='inline-flex';
+    }
+  } else {
+    apBanner.style.display='none';
+    submitBtn.style.display='none';
+    approveBtn.style.display='none';
+    excelBtn.style.display='inline-flex';
+    const activeEmps=employees.filter(e=>e.active&&!e.noLogin);
+    const statusRows=activeEmps.map(e=>{
+      const k=e.id+'_'+mv;
+      const ap=monthApprovals[k];
+      const st=ap?ap.status:'offen';
+      const stLabel=st==='freigegeben'?'<span class="badge bg-gr">✅ Freigegeben</span>':st==='eingereicht'?'<span class="badge bg-or">⏳ Eingereicht</span>':'<span class="badge bg-gy">○ Offen</span>';
+      const exBtn=st==='freigegeben'?`<button class="btn btn-s" style="padding:2px 7px;font-size:11px" onclick="exportMonthExcelFor(${e.id},'${mv}')">📊 Excel</button>`:'';
+      const apBtn=st==='eingereicht'?`<button class="btn btn-p" style="padding:2px 7px;font-size:11px" onclick="approveMonthFor(${e.id},'${mv}')">✅ Freigeben</button>`:'';
+      return `<tr><td><b>${e.first} ${e.last}</b></td><td>${stLabel}</td><td style="white-space:nowrap">${apBtn} ${exBtn}</td></tr>`;
+    }).join('');
+    if(activeEmps.length){
+      apBanner.style.display='block';
+      apBanner.innerHTML=`<div class="card" style="margin-bottom:0"><div class="ch" style="padding:10px 16px"><h3 style="font-size:13px">📋 Freigabe-Status ${mv}</h3></div><div class="cb" style="padding:0"><table><thead><tr><th>Mitarbeiter</th><th>Status</th><th></th></tr></thead><tbody>${statusRows}</tbody></table></div></div>`;
+    }
+  }
+
+  const sigBanner=document.getElementById('mv-signed-banner');
   const sigKeys=Object.keys(signatures).filter(k=>k.endsWith('_'+mv)&&(empF==='alle'||k.startsWith(empF+'_')));
-  if(sigKeys.length){
-    banner.style.display='block';
-    banner.innerHTML=sigKeys.map(k=>{const s=signatures[k];const eid=parseInt(k.split('_')[0]);return`<div class="alert as" style="margin-bottom:6px"><span>✅</span><b>${empName(eid)}</b> — Monat ${mv} bestätigt am <b>${s.date}</b> von <b>${s.by}</b> </div>`;}).join('');
-  } else {banner.style.display='none';}
+  if(sigKeys.length){sigBanner.style.display='block';sigBanner.innerHTML=sigKeys.map(k=>{const s=signatures[k];const eid=parseInt(k.split('_')[0]);return`<div class="alert as" style="margin-bottom:6px"><span>✅</span><b>${empName(eid)}</b> — Monat ${mv} bestätigt am <b>${s.date}</b> von <b>${s.by}</b></div>`;}).join('');}else{sigBanner.style.display='none';}
+
   const tbody=document.getElementById('mv-tbody');
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge</td></tr>';document.getElementById('mv-summary-card').style.display='none';return;}
   const tl={normal:'Büro',homeoffice:'🏠 HO'};
@@ -1653,20 +1774,76 @@ function renderMonthView(){
     <div><div class="sc-l">Arbeitstage</div><div class="sc-v">${filtered.length}</div></div>
     <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
     <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
-    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}">${saldo>=0?'+':''}${fmt(saldo)}</div></div>
-    <div><div class="sc-l">Überstunden</div><div class="sc-v tmono" style="color:${totOT>0?'var(--ac)':'inherit'}">${fmt(totOT)}</div></div>`;
+    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)'  :'var(--rd)'}">${saldo>=0?'+':''  }${fmt(saldo)}</div></div>
+    <div><div class="sc-l">Überstunden</div><div class="sc-v tmono" style="color:${totOT>0?'var(--ac)'  :'inherit'}">${fmt(totOT)}</div></div>`;
   tbody.innerHTML=filtered.map(e=>{
     const wm=calcWork(e.start,e.end,e.breakMin);
     const sollMin=getSollMin(e.empId,e.date);
-    const saldo=wm-sollMin;
+    const sal=wm-sollMin;
     const warns=azgCheck(wm,e.breakMin);
     const dow=new Date(e.date).toLocaleDateString('de-AT',{weekday:'short'});
     const ftag=holidayName(e.date);
     const wH=ftag?`<span class="badge bg-pu" title="${ftag}">🎉 Feiertag</span>`:(warns.length?warns.map(w=>`<span class="badge bg-${w.l==='danger'?'rd':'or'}" title="${w.msg}">⚠️</span>`).join(''):'<span class="badge bg-gr">✓</span>');
-    const rowStyle=ftag?'background:#faf5ff;':'';
-    return`<tr style="${rowStyle}"><td>${e.date} <span class="tm">${dow}</span>${ftag?` <span style="font-size:10px;color:var(--pu)">🎉 ${ftag}</span>`:''}</td><td>${empName(e.empId)}</td><td><span class="badge bg-gy">${tl[e.type]||'—'}</span></td><td class="tmono">${e.start}</td><td class="tmono">${e.end}</td><td>${e.breakMin}m</td><td class="tmono"><b>${fmt(wm)}</b></td><td class="tmono" style="${ftag?'color:var(--pu)':''}">${ftag?'—':fmt(sollMin)}</td><td class="tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}"><b>${saldo>=0?'+':''}${fmt(saldo)}</b></td><td>${wH}</td><td style="white-space:nowrap"><button class="btn btn-s" style="padding:2px 7px;font-size:11px" onclick="openEditEntry(${e.id})">✏️</button> <button class="btn btn-d" style="padding:2px 7px;font-size:11px" onclick="deleteEntryMV(${e.id})">✕</button></td></tr>`;
+    const rowStyle=ftag?'background:#faf5ff;':''  ;
+    const eKey=e.empId+'_'+mv;
+    const eStatus=monthApprovals[eKey]?monthApprovals[eKey].status:'offen'  ;
+    const locked=eStatus==='eingereicht'||eStatus==='freigegeben'  ;
+    const actionBtns=locked?'<span style="font-size:11px;color:var(--ink3)">🔒</span>':`<button class="btn btn-s" style="padding:2px 7px;font-size:11px" onclick="openEditEntry(${e.id})">✏️</button> <button class="btn btn-d" style="padding:2px 7px;font-size:11px" onclick="deleteEntryMV(${e.id})">✕</button>`;
+    return`<tr style="${rowStyle}"><td>${e.date} <span class="tm">${dow}</span>${ftag?` <span style="font-size:10px;color:var(--pu)">🎉 ${ftag}</span>`:''}</td><td>${empName(e.empId)}</td><td><span class="badge bg-gy">${tl[e.type]||'—'}</span></td><td class="tmono">${e.start}</td><td class="tmono">${e.end}</td><td>${e.breakMin}m</td><td class="tmono"><b>${fmt(wm)}</b></td><td class="tmono" style="${ftag?'color:var(--pu)':''}">${ftag?'—':fmt(sollMin)}</td><td class="tmono" style="color:${sal>=0?'var(--gr)':'var(--rd)'  }"><b>${sal>=0?'+':''  }${fmt(sal)}</b></td><td>${wH}</td><td style="white-space:nowrap">${actionBtns}</td></tr>`;
   }).join('');
 }
+
+// ══ FREIGABE WORKFLOW ══
+async function submitMonth(){
+  const mv=document.getElementById('mv-month').value;
+  if(!mv){alert('Bitte Monat wählen.');return;}
+  const empId=currentUser.empId;
+  if(!empId){alert('Kein Mitarbeiter-Konto.');return;}
+  const [y,m]=mv.split('-').map(Number);
+  if(!confirm(`Monat ${mv} einreichen?\n\nNach dem Einreichen können keine Änderungen mehr vorgenommen werden.`))return;
+  try{
+    const {data,error}=await sb.from('month_approvals').upsert({
+      emp_id:empId,year:y,month:m,status:'eingereicht',
+      submitted_at:new Date().toISOString()
+    },{onConflict:'emp_id,year,month'}).select().single();
+    if(error)throw error;
+    const key=empId+'_'+mv;
+    monthApprovals[key]={id:data.id,empId,year:y,month:m,status:'eingereicht',submitted_at:data.submitted_at,approved_at:null};
+    renderMonthView();
+    alert('✅ Monat '+mv+' wurde eingereicht!\nDu wirst benachrichtigt sobald freigegeben.');
+  }catch(err){alert('Fehler: '+(err.message||err));}
+}
+
+async function approveMonth(){
+  const mv=document.getElementById('mv-month').value;
+  const empF=document.getElementById('mv-emp').value;
+  const empId=empF!=='alle'?parseInt(empF):null;
+  if(!empId){alert('Bitte einen Mitarbeiter auswählen.');return;}
+  await approveMonthFor(empId,mv);
+}
+
+async function approveMonthFor(empId,mv){
+  if(!confirm(`Monat ${mv} für ${empName(empId)} freigeben?\n\nDanach kann der Excel-Download gestartet werden.`))return;
+  const [y,m]=mv.split('-').map(Number);
+  try{
+    const {data,error}=await sb.from('month_approvals').upsert({
+      emp_id:empId,year:y,month:m,status:'freigegeben',
+      approved_at:new Date().toISOString()
+    },{onConflict:'emp_id,year,month'}).select().single();
+    if(error)throw error;
+    const key=empId+'_'+mv;
+    if(monthApprovals[key])monthApprovals[key].status='freigegeben';
+    monthApprovals[key]={...monthApprovals[key],status:'freigegeben',approved_at:data.approved_at};
+    renderMonthView();
+    if(confirm('✅ Freigegeben! Jetzt Excel herunterladen?'))exportMonthExcelFor(empId,mv);
+  }catch(err){alert('Fehler: '+(err.message||err));}
+}
+
+function exportMonthExcelFor(empId,mv){
+  exportMonthToCSV(mv,empId);
+}
+
+
 async function signMonth(){
   const mv=document.getElementById('mv-month').value;if(!mv){alert('Bitte Monat wählen.');return;}
   const empF=document.getElementById('mv-emp').value;
@@ -2008,12 +2185,13 @@ async function sbGetSession() {
 async function loadFromSupabase() {
   showLoadingOverlay('Verbinde mit Datenbank...');
   try {
-    const [empRes, entRes, absRes, moodRes, noteRes] = await Promise.all([
+    const [empRes, entRes, absRes, moodRes, noteRes, approvalRes] = await Promise.all([
       sb.from('employees').select('*').eq('active', true).order('first'),
       sb.from('entries').select('*').order('date'),
       sb.from('absences').select('*').order('from_date'),
       sb.from('mood_log').select('*'),
       sb.from('day_notes').select('*'),
+      sb.from('month_approvals').select('*'),
     ]);
 
     if (empRes.error) throw empRes.error;
@@ -2066,6 +2244,20 @@ async function loadFromSupabase() {
     // Set IDs for new records
     nextEntryId = entries.length ? Math.max(...entries.map(e=>e.id)) + 1 : 1;
     nextAbsId   = absences.length ? Math.max(...absences.map(a=>a.id)) + 1 : 1;
+
+    // Load month approvals
+    monthApprovals = {};
+    if (approvalRes.data) {
+      approvalRes.data.forEach(a => {
+        const key = a.emp_id + '_' + a.year + '-' + String(a.month).padStart(2,'0');
+        monthApprovals[key] = {
+          id: a.id, empId: a.emp_id, year: a.year, month: a.month,
+          status: a.status,
+          submitted_at: a.submitted_at,
+          approved_at: a.approved_at
+        };
+      });
+    }
 
     dbReady = true;
     hideLoadingOverlay();
