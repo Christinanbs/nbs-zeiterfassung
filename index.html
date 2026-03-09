@@ -239,12 +239,6 @@ tr:hover td{background:#faf8f5}
     <div style="font-size:12px;opacity:0.7;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🎉 Heute feiern wir</div>
   </div>
 
-  <!-- WAS PASSIERT HEUTE -->
-  <div id="today-events-box" style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:16px 20px;margin-bottom:16px;display:none">
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px">📅 Was passiert heute <span id="today-events-date" style="font-size:11px;font-weight:400;color:var(--ink3)"></span></div>
-    <div id="today-events-inner"></div>
-  </div>
-
   <!-- URLAUBSWARNUNG -->
   <div id="vacation-warnings-box" style="display:none;background:#fff;border:2px solid var(--or);border-radius:12px;padding:16px 20px;margin-bottom:16px">
     <div style="font-size:13px;font-weight:600;color:var(--or);margin-bottom:8px">⚠️ Resturlaub-Erinnerung — bitte rechtzeitig planen!</div>
@@ -291,7 +285,6 @@ tr:hover td{background:#faf8f5}
     </div>
   </div>
   <div class="g2">
-    <div class="card"><div class="ch"><h3>📍 Aktiv eingestempelt</h3></div><div class="cb" id="db-active"></div></div>
     <div class="card" style="display:none"><div class="ch"><h3>⚠️ AZG-Warnungen heute</h3></div><div class="cb" id="db-warns"></div></div>
   </div>
   <div class="card mt2"><div class="ch"><h3>🌴 Offene Urlaubsansuchen</h3><span id="pending-count"></span></div><div class="cb" style="padding:0" id="db-pending"></div></div>
@@ -310,10 +303,7 @@ tr:hover td{background:#faf8f5}
       </div>
     </div>
   </div>
-  <div id="today-events-box-emp" style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:16px 20px;margin-bottom:16px;display:none">
-    <div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px">📅 Was passiert heute <span id="today-events-date-emp" style="font-size:11px;font-weight:400;color:var(--ink3)"></span></div>
-    <div id="today-events-inner-emp"></div>
-  </div>
+
   <div class="sr" id="emp-db-stats"></div>
   <!-- STUNDEN EINTRAGEN -->
   <div class="card" style="margin-bottom:14px">
@@ -731,7 +721,7 @@ let calYear = new Date().getFullYear(), calMonth = new Date().getMonth();
 
 const USERS = [
   { id:1, type:'employee', first:'Anja', last:'Mayer', email:'anja.mayer@nbs.co.at', role:'Mitarbeiterin', empId:1 },
-  { id:0, type:'admin', first:'Christina', last:'Neumeister-Böck', email:'cneumeister@nbs.co.at', role:'Geschäftsführung', empId:null },
+  { id:0, type:'admin', first:'Christina', last:'Neumeister-Böck', email:'cneumeister@nbs.co.at', role:'Geschäftsführung', empId:9 },
   { id:7, type:'employee', first:'Iris', last:'Olbrich', email:'iris.olbrich@nbs.co.at', role:'Mitarbeiter/in', empId:7 },
   { id:6, type:'employee', first:'Laura', last:'Miladinovicova', email:'laura.miladinovicova@nbs.co.at', role:'Mitarbeiter/in', empId:6 },
   { id:5, type:'employee', first:'Lisa', last:'Anand', email:'lisa.anand@nbs.co.at', role:'Mitarbeiter/in', empId:5 },
@@ -1582,7 +1572,7 @@ async function submitVacRequest(){
   if(!empId)return;
   const type=document.getElementById('vr-type').value;
   const note=document.getElementById('vr-note').value;
-  const newAbs={id:nextAbsId++,empId,type,from,to,note,status:'beantragt'};
+  const newAbs={id:nextAbsId++,empId,type,from,to,note,status:(isAdmin()&&empId===9)?'genehmigt':'beantragt'};
   absences.push(newAbs);
   try{ const nid=await dbSaveAbsence({...newAbs,_new:true}); newAbs.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);return;}
   closeM('mo-vacreq');
