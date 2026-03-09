@@ -245,15 +245,7 @@ tr:hover td{background:#faf8f5}
     <div id="vacation-warnings-inner"></div>
   </div>
 
-  <!-- TEAM-TAGESNOTIZ -->
-  <div style="background:#fff;border-radius:12px;border:1px solid var(--bd);padding:16px 20px;margin-bottom:16px">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📝 Team-Notiz für heute</div>
-    <div id="day-note-box" style="display:flex;gap:8px;align-items:center">
-      <input id="day-note-input" placeholder="z.B. Messe-Tag · Homeoffice · Besprechung mit Kunde..." style="flex:1;border:1px solid var(--bd);border-radius:7px;padding:8px 12px;font-size:13px;font-family:inherit">
-      <button class="btn btn-p" style="white-space:nowrap" onclick="saveDayNote()">Speichern</button>
-      <span id="day-note-saved" style="font-size:12px;color:var(--gr);opacity:0;transition:opacity 0.5s">✓ gespeichert</span>
-    </div>
-  </div>
+
 
   <div class="law" style="display:none"><h4>⚖️ AZG Österreich</h4>
     <ul>
@@ -584,7 +576,7 @@ tr:hover td{background:#faf8f5}
     <div class="fr c2"><div><label>Funktion</label><input id="ne-role"></div><div><label>E-Mail</label><input type="email" id="ne-email"></div></div>
     <div class="fr c2">
       <div><label>Eintrittsdatum</label><input type="date" id="ne-start"></div>
-      <div><label>Modell</label><select id="ne-model"><option value="vollzeit">Vollzeit</option><option value="gleit">Gleitzeit</option><option value="fix">Fixzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div>
+      <div><label>Modell</label><select id="ne-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div>
     </div>
     <div class="fr c3">
       <div><label>Wochenstunden</label><input type="number" id="ne-hours" value="40" min="1" max="60"></div>
@@ -603,7 +595,7 @@ tr:hover td{background:#faf8f5}
     <input type="hidden" id="ee-id">
     <div class="fr c2"><div><label>Vorname</label><input id="ee-first"></div><div><label>Nachname</label><input id="ee-last"></div></div>
     <div class="fr c2"><div><label>Funktion</label><input id="ee-role"></div><div><label>E-Mail</label><input type="email" id="ee-email"></div></div>
-    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="gleit">Gleitzeit</option><option value="fix">Fixzeit</option><option value="teilzeit">Teilzeit</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
+    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
     <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div></div>
     <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
     <div class="fr c2"><div><label>📅 Eintrittsdatum</label><input type="date" id="ee-start2"></div><div><label>🚪 Austrittsdatum <span style="font-weight:400;color:var(--ink3)">(optional)</span></label><input type="date" id="ee-exit" onchange="updateAliquotInfo()"></div></div>
@@ -895,12 +887,8 @@ function newQuote(){
 function showDashboardQuote(){
   const box = document.getElementById('motivational-quote');
   if(!box) return;
-  // Show quote only ~60% of the time (not every login)
-  if(Math.random() > 0.6) return;
   newQuote();
   box.style.display = 'block';
-  // Auto-hide after 12 seconds
-  setTimeout(() => { if(box) box.style.opacity='0.3'; }, 10000);
 }
 
 // ══ ÖSTERREICHISCHE FEIERTAGE ══
@@ -1661,7 +1649,7 @@ function renderEmployees(){
   document.getElementById('emp-tbody').innerHTML=employees.map(e=>`<tr>
     <td><b>${e.first} ${e.last}</b>${e.noLogin?` <span class="badge bg-gy" title="Kein eigener Login">🔒</span>`:''}<br><span class="tm ts">${e.email||'<i>kein E-Mail / kein Login</i>'}</span></td>
     <td>${e.role}</td><td class="tmono">${e.hours} Std./Woche</td>
-    <td><span class="badge ${e.model==='allin'?'bg-or':'bg-gy'}">${e.model==='allin'?'All-In ⭐':e.model==='vollzeit'?'Vollzeit':e.model==='teilzeit'?'Teilzeit':e.model==='gleit'?'Gleitzeit':e.model==='fix'?'Fixzeit':e.model}</span></td>
+    <td><span class="badge ${e.model==='allin'?'bg-or':'bg-gy'}">${e.model==='allin'?'All-In ⭐':e.model==='vollzeit'?'Vollzeit':e.model==='teilzeit'?'Teilzeit':e.model}</span></td>
     <td>${e.start}</td><td>${e.vacation} Tage</td><td>${e.carry} Tage</td>
     <td>${e.contract?`<a href="${e.contract}" target="_blank" class="btn btn-s" style="padding:3px 8px;font-size:11px">🔗 Öffnen</a>`:'<span class="tm ts">—</span>'}</td>
     <td><span class="badge ${e.active?'bg-gr':'bg-gy'}">${e.active?'Aktiv':'Inaktiv'}</span></td>
