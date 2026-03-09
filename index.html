@@ -269,6 +269,27 @@ tr:hover td{background:#faf8f5}
     </ul>
   </div>
   <div class="sr" id="db-stats"></div>
+  <!-- STUNDEN EINTRAGEN (Admin) -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><h3>✏️ Stunden eintragen</h3></div>
+    <div class="cb">
+      <div class="fr c4">
+        <div id="manual-emp-wrap-db"><label>Mitarbeiter</label><select id="m-emp-db"><option value="">—</option></select></div>
+        <div><label>Datum</label><input type="date" id="m-date-db"></div>
+        <div><label>Kommen</label><input type="time" id="m-start-db" value="08:00"></div>
+        <div><label>Gehen</label><input type="time" id="m-end-db" value="17:00"></div>
+      </div>
+      <div class="fr c3" style="margin-top:8px">
+        <div><label>Pause (Min)</label><input type="number" id="m-break-db" value="30" min="0"></div>
+        <div><label>Typ</label><select id="m-type-db"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option></select></div>
+        <div><label>Notiz</label><input id="m-note-db" placeholder="optional…"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+        <button class="btn btn-p" onclick="addManualAdmin()">✅ Eintragen</button>
+        <span id="m-db-feedback" style="font-size:13px;color:var(--gr);min-height:18px"></span>
+      </div>
+    </div>
+  </div>
   <div class="g2">
     <div class="card"><div class="ch"><h3>📍 Aktiv eingestempelt</h3></div><div class="cb" id="db-active"></div></div>
     <div class="card" style="display:none"><div class="ch"><h3>⚠️ AZG-Warnungen heute</h3></div><div class="cb" id="db-warns"></div></div>
@@ -294,6 +315,28 @@ tr:hover td{background:#faf8f5}
     <div id="today-events-inner-emp"></div>
   </div>
   <div class="sr" id="emp-db-stats"></div>
+  <!-- STUNDEN EINTRAGEN -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="ch"><h3>✏️ Stunden eintragen</h3></div>
+    <div class="cb">
+      <div class="fr c4">
+        <div><label>Datum</label><input type="date" id="emp-m-date"></div>
+        <div><label>Kommen</label><input type="time" id="emp-m-start" value="08:00"></div>
+        <div><label>Gehen</label><input type="time" id="emp-m-end" value="17:00"></div>
+        <div><label>Pause (Min)</label><input type="number" id="emp-m-break" value="30" min="0"></div>
+      </div>
+      <div class="fr c3" style="margin-top:8px">
+        <div><label>Typ</label><select id="emp-m-type"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option></select></div>
+        <div><label>Notiz</label><input id="emp-m-note" placeholder="optional…"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn btn-p" style="width:100%" onclick="addManualEmp()">✅ Eintragen</button></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+        <div id="emp-m-feedback" style="font-size:13px;color:var(--gr);min-height:18px;flex:1"></div>
+        <button class="btn btn-s" id="emp-m-repeat-btn" onclick="repeatLastEntryEmp()" style="display:none;white-space:nowrap;font-size:12px">🔁 Letzten Eintrag wiederholen</button>
+      </div>
+    </div>
+  </div>
+
   <div class="g2">
     <div class="card"><div class="ch"><h3>⏱ Heute</h3></div><div class="cb" id="emp-today"></div></div>
     <div class="card"><div class="ch"><h3>🌴 Meine Urlaubsansuchen</h3></div><div class="cb" style="padding:0" id="emp-requests"></div></div>
@@ -1031,7 +1074,7 @@ function refreshPage(id){
 }
 
 function populateSelects(){
-  ['stamp-emp','m-emp','ab-emp'].forEach(sid=>{
+  ['stamp-emp','m-emp','ab-emp','m-emp-db'].forEach(sid=>{
     const el=document.getElementById(sid);if(!el)return;
     const v=el.value;
     el.innerHTML='<option value="">— auswählen —</option>';
@@ -1115,7 +1158,6 @@ async function addManual(){
   const start=document.getElementById('m-start').value,end=document.getElementById('m-end').value;
   if(!start||!end){alert('Kommen und Gehen ausfüllen.');return;}
   if(pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
-  // Duplikat-Check: schon ein Eintrag für diesen MA an diesem Tag?
   const existing=entries.filter(e=>e.empId===empId&&e.date===date);
   if(existing.length>0){
     const emp=employees.find(e=>e.id===empId);
@@ -1124,13 +1166,11 @@ async function addManual(){
     if(!ok)return;
   }
   entries.push({id:nextEntryId++,empId,date,start,end,breakMin:parseInt(document.getElementById('m-break').value)||0,type:document.getElementById('m-type').value,note:document.getElementById('m-note').value,manual:true});
-  // Formular zurücksetzen
   document.getElementById('m-note').value='';
   document.getElementById('m-start').value='';
   document.getElementById('m-end').value='';
   document.getElementById('m-break').value='0';
   renderTodayTable();
-  // Bestätigung anzeigen
   const emp=employees.find(e=>e.id===empId);
   const name=emp?`${emp.first} ${emp.last}`:'Mitarbeiter';
   const w=document.getElementById('stamp-warn');
@@ -1138,6 +1178,107 @@ async function addManual(){
   document.getElementById('stamp-warn-txt').textContent=`✅ Eintrag für ${name} am ${date} (${start}–${end}) wurde gespeichert.`;
   setTimeout(()=>{w.style.display='none';w.className='alert aw';},4000);
   try{ const newEntry=entries[entries.length-1]; const newId=await dbSaveEntry({...newEntry,_new:true}); newEntry.id=newId; }catch(err){showDbError('DB Fehler: '+err.message);}
+}
+
+async function addManualAdmin(){
+  const empId=parseInt(document.getElementById('m-emp-db').value);
+  if(!empId){alert('Bitte Mitarbeiter wählen.');return;}
+  const date=document.getElementById('m-date-db').value;
+  if(!date){alert('Bitte Datum auswählen.');return;}
+  const start=document.getElementById('m-start-db').value;
+  const end=document.getElementById('m-end-db').value;
+  if(!start||!end){alert('Kommen und Gehen ausfüllen.');return;}
+  if(pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
+  const existing=entries.filter(e=>e.empId===empId&&e.date===date);
+  if(existing.length>0){
+    const emp=employees.find(e=>e.id===empId);
+    const ok=confirm(`⚠️ ${emp?emp.first+' '+emp.last:'MA'} hat am ${date} bereits ${existing.length} Eintrag/Einträge.\nTrotzdem hinzufügen?`);
+    if(!ok)return;
+  }
+  const breakMin=parseInt(document.getElementById('m-break-db').value)||0;
+  const type=document.getElementById('m-type-db').value;
+  const note=document.getElementById('m-note-db').value;
+  const entry={id:nextEntryId++,empId,date,start,end,breakMin,type,note,manual:true};
+  entries.push(entry);
+  document.getElementById('m-start-db').value='08:00';
+  document.getElementById('m-end-db').value='17:00';
+  document.getElementById('m-break-db').value='30';
+  document.getElementById('m-note-db').value='';
+  const emp=employees.find(e=>e.id===empId);
+  const fb=document.getElementById('m-db-feedback');
+  fb.textContent=`✅ ${emp?emp.first+' '+emp.last:''} · ${date} · ${start}–${end} gespeichert!`;
+  setTimeout(()=>{fb.textContent='';},4000);
+  try{ const newId=await dbSaveEntry({...entry,_new:true}); entry.id=newId; }catch(err){showDbError('DB Fehler: '+err.message);}
+}
+
+async function addManualEmp(){
+  const empId = currentUser.empId;
+  if(!empId){alert('Kein Mitarbeiter-Konto.');return;}
+  const date = document.getElementById('emp-m-date').value;
+  if(!date){alert('Bitte Datum auswählen.');return;}
+  const start = document.getElementById('emp-m-start').value;
+  const end = document.getElementById('emp-m-end').value;
+  if(!start||!end){alert('Kommen und Gehen ausfüllen.');return;}
+  if(pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
+  // Monat gesperrt?
+  const mv = date.slice(0,7);
+  const key = empId+'_'+mv;
+  if(monthApprovals[key]&&(monthApprovals[key].status==='eingereicht'||monthApprovals[key].status==='freigegeben')){
+    alert('⚠️ Dieser Monat wurde bereits eingereicht und kann nicht mehr bearbeitet werden.');return;
+  }
+  const existing = entries.filter(e=>e.empId===empId&&e.date===date);
+  if(existing.length>0){
+    const ok=confirm(`Du hast am ${date} bereits ${existing.length} Eintrag/Einträge.\nTrotzdem einen weiteren Eintrag hinzufügen?`);
+    if(!ok)return;
+  }
+  const breakMin = parseInt(document.getElementById('emp-m-break').value)||0;
+  const type = document.getElementById('emp-m-type').value;
+  const note = document.getElementById('emp-m-note').value;
+  const entry = {id:nextEntryId++,empId,date,start,end,breakMin,type,note,manual:true};
+  entries.push(entry);
+  // Formular zurücksetzen (Datum bleibt für schnelles Mehrfacheintragen)
+  document.getElementById('emp-m-start').value='08:00';
+  document.getElementById('emp-m-end').value='17:00';
+  document.getElementById('emp-m-break').value='30';
+  document.getElementById('emp-m-note').value='';
+  // Feedback anzeigen
+  const fb = document.getElementById('emp-m-feedback');
+  fb.textContent=`✅ ${date} · ${start}–${end} gespeichert!`;
+  setTimeout(()=>{fb.textContent='';},4000);
+  renderEmpDashboard();
+  // Wiederholen-Button anzeigen nach erstem Eintrag
+  const repeatBtn = document.getElementById('emp-m-repeat-btn');
+  if(repeatBtn) repeatBtn.style.display = 'inline-flex';
+  try{ const newId=await dbSaveEntry({...entry,_new:true}); entry.id=newId; }catch(err){showDbError('DB Fehler: '+err.message);}
+}
+
+function repeatLastEntryEmp(){
+  // Letzten eigenen Eintrag holen und auf nächsten Werktag kopieren
+  const empId = currentUser.empId;
+  const myEntries = entries.filter(e=>e.empId===empId).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!myEntries.length){ alert('Noch kein Eintrag zum Wiederholen vorhanden.'); return; }
+  const last = myEntries[0];
+  // Nächsten Werktag nach dem letzten Eintrag berechnen
+  const lastDate = new Date(last.date + 'T12:00:00');
+  lastDate.setDate(lastDate.getDate() + 1);
+  // Wochenende überspringen
+  while(lastDate.getDay() === 0 || lastDate.getDay() === 6){
+    lastDate.setDate(lastDate.getDate() + 1);
+  }
+  const nextDate = lastDate.toISOString().slice(0,10);
+  // Felder befüllen
+  document.getElementById('emp-m-date').value = nextDate;
+  document.getElementById('emp-m-start').value = last.start;
+  document.getElementById('emp-m-end').value = last.end;
+  document.getElementById('emp-m-break').value = last.breakMin;
+  document.getElementById('emp-m-type').value = last.type;
+  document.getElementById('emp-m-note').value = '';
+  // Feedback
+  const fb = document.getElementById('emp-m-feedback');
+  const dow = new Date(nextDate).toLocaleDateString('de-AT', {weekday:'long'});
+  fb.textContent = `📋 Kopiert auf ${dow}, ${nextDate} — bitte prüfen und auf ✅ Eintragen klicken`;
+  fb.style.color = 'var(--ac)';
+  setTimeout(()=>{ fb.textContent=''; fb.style.color='var(--gr)'; }, 8000);
 }
 
 function renderTodayTable(){
@@ -1313,6 +1454,9 @@ function renderTodayEventsEmp(){
 }
 
 function renderDashboard(){
+  // Datum im Eintragen-Formular auf heute setzen falls noch leer
+  const dbDate=document.getElementById('m-date-db');
+  if(dbDate&&!dbDate.value)dbDate.value=TODAY;
   const tot=entries.filter(e=>e.date===TODAY).reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   const actC=Object.keys(activeStamps).length;
   const wStart=new Date();wStart.setDate(wStart.getDate()-(wStart.getDay()||7)+1);
@@ -1357,6 +1501,9 @@ function renderEmpDashboard(){
   const emp=employees.find(e=>e.id===currentUser.empId);
   if(!emp)return;
   document.getElementById('emp-db-greeting').textContent=`Hallo, ${emp.first}!`;
+  // Datum im Eintragen-Formular auf heute setzen falls noch leer
+  const dateField=document.getElementById('emp-m-date');
+  if(dateField&&!dateField.value)dateField.value=TODAY;
   const now=new Date();const month=now.toISOString().slice(0,7);
   const myEntries=entries.filter(e=>e.empId===emp.id);
   const monthEntries=myEntries.filter(e=>e.date.startsWith(month));
