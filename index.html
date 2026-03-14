@@ -961,18 +961,29 @@ const getSollMin = (empId, dateStr) => {
 // (nicht nur Tage mit Einträgen)
 function getMonthSoll(empId, monthKey){
   const[y,m]=monthKey.split('-').map(Number);
-  const firstDayOfMonth=new Date(y,m-1,1);
-  const lastDayOfMonth=new Date(y,m,0);
+  // Strings statt Date-Objekte verwenden um Timezone-Probleme zu vermeiden
+  const firstOfMonth=monthKey+'-01';
+  // Letzter Tag des Monats als String
+  const lastOfMonthDate=new Date(y,m,0); // new Date(y,m,0) = letzter Tag des Monats
+  const lastOfMonth=y+'-'+String(m).padStart(2,'0')+'-'+String(lastOfMonthDate.getDate()).padStart(2,'0');
+
   const emp=employees.find(e=>e.id===empId);
-  // Eintrittsdatum
-  const startDate=emp&&emp.start?new Date(emp.start):firstDayOfMonth;
-  const exitDate=emp&&emp.exit?new Date(emp.exit):null;
-  const firstDay=startDate>firstDayOfMonth?startDate:firstDayOfMonth;
-  // Laufender Monat: nur bis heute
-  const today=new Date(TODAY);
-  const isCurrentMonth=(y===today.getFullYear()&&m===today.getMonth()+1);
-  let lastDay=isCurrentMonth?today:lastDayOfMonth;
-  if(exitDate&&exitDate<lastDay)lastDay=exitDate;
+
+  // Eintrittsdatum als String (kein Date-Objekt!)
+  const empStart=emp&&emp.start?emp.start:'';
+  const empExit=emp&&emp.exit?emp.exit:'';
+
+  // firstDay: später von Monatsanfang und Eintrittsdatum
+  const firstDay=(empStart&&empStart>firstOfMonth)?empStart:firstOfMonth;
+
+  // lastDay: laufender Monat nur bis heute
+  const todayStr=TODAY; // YYYY-MM-DD String
+  const isCurrentMonth=monthKey===todayStr.slice(0,7);
+  let lastDay=isCurrentMonth?todayStr:lastOfMonth;
+
+  // Austrittsdatum
+  if(empExit&&empExit<lastDay)lastDay=empExit;
+
   // Abwesenheiten: nur Urlaub/KS reduzieren das Soll, ZA nicht!
   const SOLL_REDUZIERT=['urlaub','krankenstand','sonderurlaub','urlaub_genossen'];
   const absentDays=new Set();
@@ -981,15 +992,18 @@ function getMonthSoll(empId, monthKey){
     if(a.status==='abgelehnt')return;
     if(!SOLL_REDUZIERT.includes(a.type))return;
     datesBetween(a.from,a.to).forEach(d=>{
-      if(d>=firstDay.toISOString().slice(0,10)&&d<=lastDay.toISOString().slice(0,10))absentDays.add(d);
+      if(d>=firstDay&&d<=lastDay)absentDays.add(d);
     });
   });
+
+  // Soll aufaddieren — rein String-basiert
   let soll=0;
-  let d=new Date(firstDay);
-  while(d<=lastDay){
-    const ds=d.toISOString().slice(0,10);
+  let cur=new Date(firstDay+'T12:00:00'); // mittags um Timezone-Bugs zu vermeiden
+  const endDate=new Date(lastDay+'T12:00:00');
+  while(cur<=endDate){
+    const ds=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
     if(!absentDays.has(ds))soll+=getSollMin(empId,ds);
-    d.setDate(d.getDate()+1);
+    cur.setDate(cur.getDate()+1);
   }
   return soll;
 }
@@ -1651,22 +1665,7 @@ function renderOTWarningDashboard(){
     groups[k].mins.push(calcWork(e.start,e.end,e.breakMin));
   });
 
-  // ZA als IST addieren
-  absences.forEach(a=>{
-    if(ALLIN_IDS.includes(a.empId))return;
-    if(a.type!=='zeitausgleich')return;
-    if(a.status==='abgelehnt')return;
-    datesBetween(a.from,a.to).forEach(d=>{
-      if(isHoliday(d))return;
-      const[y,mn]=d.split('-');
-      const monthKey=y+'-'+mn;
-      if(monthKey<cutoffStr)return;
-      const k=a.empId+'_'+monthKey;
-      if(!groups[k])return;
-      groups[k].mins.push(getSollMin(a.empId,d));
-    });
-  });
-
+  // ZA: kein IST-Zusatz — Verrechnung via za_carry
   // Saldo pro Mitarbeiter
   const saldoMap={};
   Object.values(groups).forEach(g=>{
@@ -2333,23 +2332,7 @@ function renderOT(){
     return{...g,soll,ist,mehr};
   }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
 
-  // ZA-Stunden als IST addieren (ZA = bereits geleistete Arbeit die konsumiert wird)
-  absences.forEach(a=>{
-    if(ALLIN_IDS.includes(a.empId))return;
-    if(a.type!=='zeitausgleich')return;
-    if(a.status==='abgelehnt')return;
-    if(empF!=='alle'&&a.empId!=empF)return;
-    datesBetween(a.from,a.to).forEach(d=>{
-      if(isHoliday(d))return;
-      const[y,mn]=d.split('-');
-      const monthKey=y+'-'+mn;
-      if(monthKey<cutoffStr)return;
-      const k=a.empId+'_'+monthKey;
-      if(!groups[k])return;
-      groups[k].mins.push(getSollMin(a.empId,d));
-    });
-  });
-
+  // ZA: kein IST-Zusatz — ZA verrechnet sich gegen den Arbeitssaldo via za_carry
   // Kumulierter Saldo pro Mitarbeiter (za_carry als Startwert)
   const saldoMap={};
   rows.forEach(r=>{
