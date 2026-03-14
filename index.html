@@ -2336,16 +2336,31 @@ function renderOT(){
     '<div class="sc"><div class="sc-l">Warnungen</div><div class="sc-v" style="color:'+(warns.length?'var(--rd)':'var(--gr)')+'">'+warns.length+'</div></div>'+
     '<div class="sc"><div class="sc-l">Zeitraum</div><div class="sc-v" style="font-size:13px;font-weight:600">Letzte 3 Monate</div></div>';
 
+  // Laufenden kumulierten Saldo pro Mitarbeiter berechnen (chronologisch)
+  const runningMap={}; // empId → laufender Saldo bis zum aktuellen Monat
   document.getElementById('ot-tbody').innerHTML=rows.map(r=>{
-    const saldo=saldoMap[r.empId]||0;
+    if(!runningMap[r.empId])runningMap[r.empId]=0;
+    runningMap[r.empId]+=r.mehr; // Monatssaldo aufaddieren
+    // ZA für diesen Monat abziehen
+    absences.forEach(a=>{
+      if(a.empId!==r.empId||a.type!=='zeitausgleich'||a.status==='abgelehnt')return;
+      datesBetween(a.from,a.to).forEach(d=>{
+        if(isHoliday(d))return;
+        const[y,m]=d.split('-');
+        if((y+'-'+m)===r.month){
+          runningMap[r.empId]-=getSollMin(r.empId,d);
+        }
+      });
+    });
+    const laufend=runningMap[r.empId];
     return '<tr>'+
       '<td><b>'+empName(r.empId)+'</b></td>'+
       '<td>'+r.month+'</td>'+
       '<td class="tmono">'+fmt(r.soll)+'</td>'+
       '<td class="tmono">'+fmt(r.ist)+'</td>'+
       '<td class="tmono" style="color:'+(r.mehr<0?'var(--rd)':r.mehr>=OT_WARN_MIN?'var(--or)':'inherit')+';font-weight:'+(r.mehr!==0?600:400)+'">'+(r.mehr>0?'+':'')+fmt(r.mehr)+'</td>'+
-      '<td class="tmono" style="color:'+((saldoMap[r.empId]||0)<0?'var(--rd)':(saldoMap[r.empId]||0)>=OT_WARN_MIN?'var(--or)':'var(--gr)')+';font-weight:600">'+((saldoMap[r.empId]||0)>0?'+':'')+fmt(saldoMap[r.empId]||0)+'</td>'+
-                '</tr>';
+      '<td class="tmono" style="color:'+(laufend<0?'var(--rd)':laufend>=OT_WARN_MIN?'var(--or)':'var(--gr)')+';font-weight:600">'+(laufend>0?'+':'')+fmt(laufend)+'</td>'+
+    '</tr>';
   }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">✅ Kein offener Saldo in den letzten 3 Monaten</td></tr>';
 }
 
