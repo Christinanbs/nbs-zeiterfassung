@@ -1610,16 +1610,16 @@ function renderOTWarningDashboard(){
     const[y,m]=e.date.split('-');
     if((y+'-'+m)<cutoffStr)return;
     const k=e.empId+'_'+(y+'-'+m);
-    if(!groups[k])groups[k]={empId:e.empId,ist:0,soll:0};
+    if(!groups[k])groups[k]={empId:e.empId,month:(y+'-'+m),ist:0};
     groups[k].ist+=calcWork(e.start,e.end,e.breakMin);
-    groups[k].soll+=getSollMin(e.empId,e.date);
   });
 
-  // Saldo pro Mitarbeiter aus Monatssalden aufaddieren
+  // Monatssoll über ALLE Arbeitstage berechnen (nicht nur Eintrags-Tage)
   const saldoMap={};
   Object.values(groups).forEach(g=>{
+    const soll=getMonthSoll(g.empId,g.month);
     if(!saldoMap[g.empId])saldoMap[g.empId]=0;
-    saldoMap[g.empId]+=(g.ist-g.soll); // kann negativ sein
+    saldoMap[g.empId]+=(g.ist-soll); // kann negativ sein
   });
 
   // ZA-Tage vom Saldo abziehen
@@ -2283,16 +2283,47 @@ function renderOT(){
     const monthKey=y+'-'+m;
     if(monthKey<cutoffStr)return; // älter als 3 Monate ignorieren
     const k=e.empId+'_'+monthKey;
-    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],solls:[],maxDay:0};
+    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],maxDay:0};
     const wm=calcWork(e.start,e.end,e.breakMin);
     groups[k].mins.push(wm);
-    groups[k].solls.push(getSollMin(e.empId,e.date));
     groups[k].maxDay=Math.max(groups[k].maxDay,wm);
   });
 
+  // Monatssoll: über ALLE Arbeitstage des Monats berechnen (nicht nur Tage mit Einträgen!)
+  function getMonthSoll(empId, monthKey){
+    const[y,m]=monthKey.split('-').map(Number);
+    const firstDay=new Date(y,m-1,1);
+    const lastDay=new Date(y,m,0);
+
+    // Sammle alle genehmigten Abwesenheitstage für diesen Mitarbeiter in diesem Monat
+    // (Urlaub, Krankenstand, Zeitausgleich, Sonderurlaub etc.)
+    const absentDays=new Set();
+    absences.forEach(a=>{
+      if(a.empId!==empId)return;
+      if(a.status==='abgelehnt')return; // abgelehnte zählen nicht
+      if(a.type==='homeoffice')return;  // Homeoffice = normaler Arbeitstag, kein Soll-Abzug
+      // Alle Tage der Abwesenheit durchgehen
+      datesBetween(a.from,a.to).forEach(d=>{
+        if(d>=monthKey+'-01' && d<=monthKey+'-31') absentDays.add(d);
+      });
+    });
+
+    let soll=0;
+    let d=new Date(firstDay);
+    while(d<=lastDay){
+      const ds=d.toISOString().slice(0,10);
+      if(!absentDays.has(ds)){
+        soll+=getSollMin(empId,ds); // gibt 0 für Feiertage und Wochenenden
+      }
+      // An Abwesenheitstagen: kein Soll (Urlaub, KS, ZA etc.)
+      d.setDate(d.getDate()+1);
+    }
+    return soll;
+  }
+
   const rows=Object.values(groups).map(g=>{
     const ist=g.mins.reduce((s,m)=>s+m,0);
-    const soll=g.solls.reduce((s,m)=>s+m,0);
+    const soll=getMonthSoll(g.empId,g.month); // Soll über ALLE Arbeitstage des Monats
     const mehr=ist-soll; // kann negativ sein (Minusstunden)
     return{...g,soll,ist,mehr};
   }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
