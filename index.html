@@ -572,7 +572,7 @@ tr:hover td{background:#faf8f5}
     <div class="fr c3">
       <div><label>Wochenstunden</label><input type="number" id="ne-hours" value="40" min="1" max="60"></div>
       <div><label>Jahresurlaub (Tage)</label><input type="number" id="ne-vacation" value="25"></div>
-      <div><label>Urlaubsübertrag VJ</label><input type="number" id="ne-carry" value="0"></div><div><label>⏱️ ZA-Übertrag VJ (Std)</label><input type="number" id="ne-za-carry" value="0" step="0.5"></div>
+      <div><label>Urlaubsübertrag VJ</label><input type="number" id="ne-carry" value="0"></div>
     </div>
     <div class="fr"><div><label>🔗 Arbeitsvertrag (Cloud-Link)</label><input type="url" id="ne-contract" placeholder="https://drive.google.com/…">
     <p class="tm ts" style="margin-top:4px">⚠️ Link zu passwortgeschütztem Ordner (Google Drive / OneDrive)</p></div></div>
@@ -587,13 +587,12 @@ tr:hover td{background:#faf8f5}
     <div class="fr c2"><div><label>Vorname</label><input id="ee-first"></div><div><label>Nachname</label><input id="ee-last"></div></div>
     <div class="fr c2"><div><label>Funktion</label><input id="ee-role"></div><div><label>E-Mail</label><input type="email" id="ee-email"></div></div>
     <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
-    <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div><div><label>⏱️ ZA-Übertrag VJ (Stunden)</label><input type="number" id="ee-za-carry" step="0.5"></div></div>
+    <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div><div><label>⏱️ ZA-Übertrag VJ (Std)</label><input type="number" id="ee-za-carry" step="0.5"></div></div>
     <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
     <div class="fr c2"><div><label>📅 Eintrittsdatum</label><input type="date" id="ee-start2"></div><div><label>🚪 Austrittsdatum <span style="font-weight:400;color:var(--ink3)">(optional)</span></label><input type="date" id="ee-exit" onchange="updateAliquotInfo()"></div></div>
     <div id="aliquot-info" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#b35c00;margin-top:-6px"></div>
     <div class="fr c2"><div><label>🔑 Neues Passwort setzen</label><input type="password" id="ee-password" placeholder="Leer lassen = nicht ändern" autocomplete="new-password"></div><div style="display:flex;align-items:flex-end;padding-bottom:4px"><span class="tm ts">Nur ausfüllen wenn du das Passwort ändern möchtest</span></div></div>
   </div>
-  <!-- STUNDENHISTORIE -->
   <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
     <div style="font-size:13px;font-weight:600;margin-bottom:8px">📅 Stundenhistorie <span style="font-size:11px;font-weight:400;color:var(--ink3)">— nur bei Änderung eintragen</span></div>
     <div id="ee-hh-list" style="margin-bottom:10px;font-size:12.5px"></div>
@@ -942,7 +941,7 @@ const holidayName = d => AT_HOLIDAYS_2026[d] || '';
 
 // Soll-Minuten für einen Tag (0 an Feiertagen, 1/5 der Wochenstunden sonst)
 // Stundenhistorie — wird beim Login aus Supabase geladen
-let hoursHistory = []; // [{empId, validFrom, hours}]
+let hoursHistory = []; // [{id, empId, validFrom, hours}]
 
 const getSollMin = (empId, dateStr) => {
   if(isHoliday(dateStr)) return 0;
@@ -950,13 +949,50 @@ const getSollMin = (empId, dateStr) => {
   if(d.getDay()===0||d.getDay()===6) return 0; // Wochenende
   const emp = employees.find(e=>e.id===empId);
   if(!emp) return 480; // default 8h
-  // Prüfe ob es einen historischen Eintrag gibt der für dieses Datum gilt
+  // Stundenhistorie prüfen
   const relevant = hoursHistory
     .filter(h=>h.empId===empId && h.validFrom<=dateStr)
-    .sort((a,b)=>b.validFrom.localeCompare(a.validFrom)); // neueste zuerst
+    .sort((a,b)=>b.validFrom.localeCompare(a.validFrom));
   const hours = relevant.length > 0 ? relevant[0].hours : emp.hours;
   return Math.round((hours / 5) * 60);
 };
+
+// getMonthSoll: Monatssoll über ALLE Arbeitstage berechnen
+// (nicht nur Tage mit Einträgen)
+function getMonthSoll(empId, monthKey){
+  const[y,m]=monthKey.split('-').map(Number);
+  const firstDayOfMonth=new Date(y,m-1,1);
+  const lastDayOfMonth=new Date(y,m,0);
+  const emp=employees.find(e=>e.id===empId);
+  // Eintrittsdatum
+  const startDate=emp&&emp.start?new Date(emp.start):firstDayOfMonth;
+  const exitDate=emp&&emp.exit?new Date(emp.exit):null;
+  const firstDay=startDate>firstDayOfMonth?startDate:firstDayOfMonth;
+  // Laufender Monat: nur bis heute
+  const today=new Date(TODAY);
+  const isCurrentMonth=(y===today.getFullYear()&&m===today.getMonth()+1);
+  let lastDay=isCurrentMonth?today:lastDayOfMonth;
+  if(exitDate&&exitDate<lastDay)lastDay=exitDate;
+  // Abwesenheiten: nur Urlaub/KS reduzieren das Soll, ZA nicht!
+  const SOLL_REDUZIERT=['urlaub','krankenstand','sonderurlaub','urlaub_genossen'];
+  const absentDays=new Set();
+  absences.forEach(a=>{
+    if(a.empId!==empId)return;
+    if(a.status==='abgelehnt')return;
+    if(!SOLL_REDUZIERT.includes(a.type))return;
+    datesBetween(a.from,a.to).forEach(d=>{
+      if(d>=firstDay.toISOString().slice(0,10)&&d<=lastDay.toISOString().slice(0,10))absentDays.add(d);
+    });
+  });
+  let soll=0;
+  let d=new Date(firstDay);
+  while(d<=lastDay){
+    const ds=d.toISOString().slice(0,10);
+    if(!absentDays.has(ds))soll+=getSollMin(empId,ds);
+    d.setDate(d.getDate()+1);
+  }
+  return soll;
+}
 
 const empName = id => { const e=employees.find(x=>x.id==id); return e?`${e.first} ${e.last}`:'–'; };
 const pt = t => { if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*60+m; };
@@ -1468,7 +1504,7 @@ function renderDashboard(){
     <div class="sc"><div class="sc-l">Wochenstunden</div><div class="sc-v tmono">${fmt(wH)}</div></div>
     <div class="sc"><div class="sc-l">Offene Ansuchen</div><div class="sc-v" style="color:${pending.length?'var(--or)':'var(--gr)'}">${pending.length}</div><div class="sc-s">zu bearbeiten</div></div>`;
   const aH=Object.entries(activeStamps).map(([id,s])=>`<div class="flex" style="padding:7px 0;border-bottom:1px solid var(--bd)"><div class="dot on"></div><b>${empName(parseInt(id))}</b><span class="tm ts">seit ${s.t}</span></div>`).join('');
-  const dbActive=document.getElementById('db-active');if(dbActive)dbActive.innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
+  const _dbActive=document.getElementById('db-active');if(_dbActive)_dbActive.innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
   const tw=entries.filter(e=>e.date===TODAY).flatMap(e=>{const w=calcWork(e.start,e.end,e.breakMin);return azgCheck(w,e.breakMin).map(x=>({name:empName(e.empId),...x}));});
     document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
   document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.type==='homeoffice'?'<span class="badge" style="background:#e1bee7;color:#4a148c">🏠 Homeoffice</span>':a.type==='urlaub'?'<span class="badge bg-gr">🌴 Urlaub</span>':a.type==='zeitausgleich'?'<span class="badge bg-bl">🔄 ZA</span>':'<span class="badge bg-gy">'+(absTypeLabel[a.type]||a.type)+'</span>'}</td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
@@ -1602,21 +1638,20 @@ function renderOTWarningDashboard(){
   const cutoff=new Date(now.getFullYear(),now.getMonth()-2,1);
   const cutoffStr=cutoff.toISOString().slice(0,7);
 
-  // Gleiche Logik wie renderOT: erst Ist & Soll pro Monat gruppieren
+  // Gleiche Logik wie renderOT
   const groups={};
   entries.forEach(e=>{
     if(ALLIN_IDS.includes(e.empId))return;
     if(isHoliday(e.date))return;
-    const[y,m]=e.date.split('-');
-    if((y+'-'+m)<cutoffStr)return;
-    const k=e.empId+'_'+(y+'-'+m);
-    if(!groups[k])groups[k]={empId:e.empId,month:(y+'-'+m),ist:0};
-    groups[k].ist+=calcWork(e.start,e.end,e.breakMin);
+    const[y,mn]=e.date.split('-');
+    const monthKey=y+'-'+mn;
+    if(monthKey<cutoffStr)return;
+    const k=e.empId+'_'+monthKey;
+    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[]};
+    groups[k].mins.push(calcWork(e.start,e.end,e.breakMin));
   });
 
-  // Monatssoll über ALLE Arbeitstage berechnen (nicht nur Eintrags-Tage)
-  const saldoMap={};
-  // ZA-Stunden zur Ist-Summe addieren
+  // ZA als IST addieren
   absences.forEach(a=>{
     if(ALLIN_IDS.includes(a.empId))return;
     if(a.type!=='zeitausgleich')return;
@@ -1628,20 +1663,21 @@ function renderOTWarningDashboard(){
       if(monthKey<cutoffStr)return;
       const k=a.empId+'_'+monthKey;
       if(!groups[k])return;
-      groups[k].ist+=getSollMin(a.empId,d);
+      groups[k].mins.push(getSollMin(a.empId,d));
     });
   });
 
+  // Saldo pro Mitarbeiter
+  const saldoMap={};
   Object.values(groups).forEach(g=>{
+    const ist=g.mins.reduce((s,m)=>s+m,0);
     const soll=getMonthSoll(g.empId,g.month);
     if(saldoMap[g.empId]===undefined){
       const emp=employees.find(e=>e.id===g.empId);
-      saldoMap[g.empId]=Math.round((emp?.za_carry||0)*60); // ZA-Übertrag VJ
+      saldoMap[g.empId]=Math.round((emp?.za_carry||0)*60);
     }
-    saldoMap[g.empId]+=(g.ist-soll);
+    saldoMap[g.empId]+=(ist-soll);
   });
-
-
 
   const warns=Object.entries(saldoMap).filter(([id,min])=>min>=OT_WARN_MIN);
   const box=document.getElementById('db-ot-warnings');
@@ -1811,7 +1847,7 @@ function renderEmployees(){
 function addEmployee(){
   const first=document.getElementById('ne-first').value.trim(),last=document.getElementById('ne-last').value.trim();
   if(!first||!last){alert('Vor- und Nachname sind Pflicht.');return;}
-  const newEmp={id:nextEmpId++,first,last,role:document.getElementById('ne-role').value,email:document.getElementById('ne-email').value,start:document.getElementById('ne-start').value||TODAY,model:document.getElementById('ne-model').value,hours:parseInt(document.getElementById('ne-hours').value)||40,vacation:parseInt(document.getElementById('ne-vacation').value)||25,carry:parseInt(document.getElementById('ne-carry').value)||0,za_carry:parseFloat(document.getElementById('ne-za-carry')?.value)||0,contract:document.getElementById('ne-contract').value,active:true};
+  const newEmp={id:nextEmpId++,first,last,role:document.getElementById('ne-role').value,email:document.getElementById('ne-email').value,start:document.getElementById('ne-start').value||TODAY,model:document.getElementById('ne-model').value,hours:parseInt(document.getElementById('ne-hours').value)||40,vacation:parseInt(document.getElementById('ne-vacation').value)||25,carry:parseInt(document.getElementById('ne-carry').value)||0,contract:document.getElementById('ne-contract').value,active:true};
   employees.push(newEmp);
   USERS.push({id:USERS.length,type:'employee',first,last,email:newEmp.email,role:newEmp.role,empId:newEmp.id});
   closeM('mo-add-emp');['ne-first','ne-last','ne-role','ne-email','ne-contract'].forEach(id=>document.getElementById(id).value='');
@@ -1819,48 +1855,40 @@ function addEmployee(){
 }
 // ══ STUNDENHISTORIE ══
 function renderHoursHistoryList(empId){
-  const list = hoursHistory.filter(h=>h.empId===empId).sort((a,b)=>a.validFrom.localeCompare(b.validFrom));
-  const el = document.getElementById('ee-hh-list');
-  if(!el) return;
-  if(!list.length){
-    el.innerHTML = '<span style="color:var(--ink3);font-size:12px">Keine Einträge — aktuelle Stunden aus Mitarbeiterprofil wird verwendet.</span>';
-    return;
-  }
-  el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
-    '<thead><tr style="background:var(--sf2)"><th style="padding:4px 8px;text-align:left">Gültig ab</th><th style="padding:4px 8px;text-align:left">Std/Woche</th><th></th></tr></thead>' +
-    '<tbody>' + list.map(h=>`<tr style="border-bottom:1px solid var(--bd)">
-      <td style="padding:4px 8px">${h.validFrom}</td>
-      <td style="padding:4px 8px"><b>${h.hours}h</b></td>
-      <td style="padding:4px 8px"><button class="btn btn-d btn-sm" onclick="deleteHoursHistory(${h.id})">✕</button></td>
-    </tr>`).join('') + '</tbody></table>';
+  const list=hoursHistory.filter(h=>h.empId===empId).sort((a,b)=>a.validFrom.localeCompare(b.validFrom));
+  const el=document.getElementById('ee-hh-list');
+  if(!el)return;
+  if(!list.length){el.innerHTML='<span style="color:var(--ink3);font-size:12px">Keine Einträge — aktueller Wert aus Mitarbeiterprofil wird verwendet.</span>';return;}
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:12.5px">'+
+    '<thead><tr style="background:var(--sf2)"><th style="padding:4px 8px;text-align:left">Gültig ab</th><th style="padding:4px 8px;text-align:left">Std/Woche</th><th></th></tr></thead>'+
+    '<tbody>'+list.map(h=>`<tr style="border-bottom:1px solid var(--bd)"><td style="padding:4px 8px">${h.validFrom}</td><td style="padding:4px 8px"><b>${h.hours}h</b></td><td style="padding:4px 8px"><button class="btn btn-d btn-sm" onclick="deleteHoursHistory(${h.id})">✕</button></td></tr>`).join('')+'</tbody></table>';
 }
 
 async function addHoursHistory(){
-  const empId = parseInt(document.getElementById('ee-id').value);
-  const from = document.getElementById('ee-hh-from').value;
-  const hours = parseFloat(document.getElementById('ee-hh-hours').value);
+  const empId=parseInt(document.getElementById('ee-id').value);
+  const from=document.getElementById('ee-hh-from').value;
+  const hours=parseFloat(document.getElementById('ee-hh-hours').value);
   if(!empId||!from||!hours){alert('Bitte Datum und Stunden angeben.');return;}
-  // In Supabase speichern
-  const {data,error} = await sb.from('employee_hours_history').insert({emp_id:empId, valid_from:from, hours}).select().single();
+  const{data,error}=await sb.from('employee_hours_history').insert({emp_id:empId,valid_from:from,hours}).select().single();
   if(error){showDbError('Fehler: '+error.message);return;}
-  hoursHistory.push({id:data.id, empId, validFrom:from, hours});
+  hoursHistory.push({id:data.id,empId,validFrom:from,hours});
   document.getElementById('ee-hh-from').value='';
   document.getElementById('ee-hh-hours').value='';
   renderHoursHistoryList(empId);
-  alert(`✅ Eingetragen: ${hours}h/Woche ab ${from}`);
+  alert('✅ Eingetragen: '+hours+'h/Woche ab '+from);
 }
 
 async function deleteHoursHistory(id){
-  if(!confirm('Eintrag löschen?')) return;
-  const {error} = await sb.from('employee_hours_history').delete().eq('id',id);
+  if(!confirm('Eintrag löschen?'))return;
+  const{error}=await sb.from('employee_hours_history').delete().eq('id',id);
   if(error){showDbError('Fehler: '+error.message);return;}
-  hoursHistory = hoursHistory.filter(h=>h.id!==id);
-  const empId = parseInt(document.getElementById('ee-id').value);
+  hoursHistory=hoursHistory.filter(h=>h.id!==id);
+  const empId=parseInt(document.getElementById('ee-id').value);
   renderHoursHistoryList(empId);
 }
 
 function editEmp(id){const e=employees.find(x=>x.id===id);if(!e)return;['id','first','last','role','email','model','hours','vacation','carry','contract','birthday'].forEach(k=>{const el=document.getElementById('ee-'+k);if(el)el.value=e[k]||'';});
-  const zaEl=document.getElementById('ee-za-carry');if(zaEl)zaEl.value=e.za_carry||0;
+  const _zaEl=document.getElementById('ee-za-carry');if(_zaEl)_zaEl.value=e.za_carry||0;
   renderHoursHistoryList(id);
   const s2=document.getElementById('ee-start2');if(s2)s2.value=e.start||'';
   const ex=document.getElementById('ee-exit');if(ex)ex.value=e.exit||'';
@@ -2088,14 +2116,13 @@ function renderMonthView(){
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge</td></tr>';document.getElementById('mv-summary-card').style.display='none';return;}
   const tl={normal:'Büro',homeoffice:'🏠 HO'};
   const totW=filtered.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
-  // Soll über alle Arbeitstage des Monats — gleiche Logik wie Mehrstunden-Seite
-  // Für jeden betroffenen Mitarbeiter getMonthSoll aufrufen
+  // Soll über alle AT des Monats — gleiche Logik wie Mehrstunden
   const empIdsInView=[...new Set(filtered.map(e=>e.empId))];
   const totS=empIdsInView.reduce((s,eid)=>s+getMonthSoll(eid,mv),0);
   const saldo=totW-totS;
   document.getElementById('mv-summary-card').style.display='block';
   document.getElementById('mv-summary').innerHTML=`
-    <div><div class="sc-l">Arbeitstage im Monat</div><div class="sc-v">${wDays(new Date(y,m-1,1).toISOString().slice(0,10), new Date(y,m,0).toISOString().slice(0,10))}</div></div>
+    <div><div class="sc-l">Arbeitstage</div><div class="sc-v">${filtered.length}</div></div>
     <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
     <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
     <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)'  :'var(--rd)'}">${saldo>=0?'+':''  }${fmt(saldo)}</div></div>`;
@@ -2294,62 +2321,19 @@ function renderOT(){
     const monthKey=y+'-'+m;
     if(monthKey<cutoffStr)return; // älter als 3 Monate ignorieren
     const k=e.empId+'_'+monthKey;
-    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],maxDay:0};
+    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[]};
     const wm=calcWork(e.start,e.end,e.breakMin);
     groups[k].mins.push(wm);
-    groups[k].maxDay=Math.max(groups[k].maxDay,wm);
   });
 
-  // Monatssoll: über ALLE Arbeitstage des Monats berechnen (nicht nur Tage mit Einträgen!)
-  function getMonthSoll(empId, monthKey){
-    const[y,m]=monthKey.split('-').map(Number);
-    const firstDayOfMonth=new Date(y,m-1,1);
-    const lastDayOfMonth=new Date(y,m,0);
+  const rows=Object.values(groups).map(g=>{
+    const ist=g.mins.reduce((s,m)=>s+m,0);
+    const soll=getMonthSoll(g.empId,g.month); // Soll über ALLE AT des Monats
+    const mehr=ist-soll; // kann negativ sein (Minusstunden)
+    return{...g,soll,ist,mehr};
+  }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
 
-    // Eintrittsdatum berücksichtigen — vor Eintritt kein Soll
-    const emp=employees.find(e=>e.id===empId);
-    const startDate=emp&&emp.start?new Date(emp.start):firstDayOfMonth;
-    const exitDate=emp&&emp.exit?new Date(emp.exit):null;
-
-    // Startpunkt: später von Monatsanfang und Eintrittsdatum
-    const firstDay=startDate>firstDayOfMonth?startDate:firstDayOfMonth;
-
-    // Für den laufenden Monat: nur bis heute rechnen
-    const today=new Date(TODAY);
-    const isCurrentMonth=(y===today.getFullYear()&&m===today.getMonth()+1);
-    let lastDay=isCurrentMonth?today:lastDayOfMonth;
-
-    // Austrittsdatum berücksichtigen
-    if(exitDate&&exitDate<lastDay) lastDay=exitDate;
-
-    // Nur echte freie Tage reduzieren das Soll:
-    // Urlaub, Krankenstand, Sonderurlaub → kein Soll
-    // Zeitausgleich → Soll bleibt! (ZA konsumiert die Sollstunden)
-    // Homeoffice → normaler Arbeitstag
-    const SOLL_REDUZIERT_BEI = ['urlaub','krankenstand','sonderurlaub','urlaub_genossen'];
-    const absentDays=new Set();
-    absences.forEach(a=>{
-      if(a.empId!==empId)return;
-      if(a.status==='abgelehnt')return;
-      if(!SOLL_REDUZIERT_BEI.includes(a.type))return; // ZA + HO: kein Abzug!
-      datesBetween(a.from,a.to).forEach(d=>{
-        if(d>=firstDay.toISOString().slice(0,10)&&d<=lastDay.toISOString().slice(0,10)) absentDays.add(d);
-      });
-    });
-
-    let soll=0;
-    let d=new Date(firstDay);
-    while(d<=lastDay){
-      const ds=d.toISOString().slice(0,10);
-      if(!absentDays.has(ds)){
-        soll+=getSollMin(empId,ds);
-      }
-      d.setDate(d.getDate()+1);
-    }
-    return soll;
-  }
-
-  // ZA-Stunden pro Mitarbeiter/Monat berechnen und zur Ist-Summe addieren
+  // ZA-Stunden als IST addieren (ZA = bereits geleistete Arbeit die konsumiert wird)
   absences.forEach(a=>{
     if(ALLIN_IDS.includes(a.empId))return;
     if(a.type!=='zeitausgleich')return;
@@ -2361,34 +2345,25 @@ function renderOT(){
       const monthKey=y+'-'+mn;
       if(monthKey<cutoffStr)return;
       const k=a.empId+'_'+monthKey;
-      if(!groups[k])return; // nur wenn es Einträge in diesem Monat gibt
-      groups[k].mins.push(getSollMin(a.empId,d)); // ZA-Tag zählt als gearbeitet
+      if(!groups[k])return;
+      groups[k].mins.push(getSollMin(a.empId,d));
     });
   });
 
-  const rows=Object.values(groups).map(g=>{
-    const ist=g.mins.reduce((s,m)=>s+m,0);
-    const soll=getMonthSoll(g.empId,g.month); // Soll über ALLE Arbeitstage des Monats
-    const mehr=ist-soll; // kann negativ sein (Minusstunden)
-    return{...g,soll,ist,mehr};
-  }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
-
-  // Kumuliertes Überstunden-Saldo pro Mitarbeiter (letzte 3 Monate)
-  // saldoMap mit ZA-Übertrag VJ initialisieren (in Minuten)
+  // Kumulierter Saldo pro Mitarbeiter (za_carry als Startwert)
   const saldoMap={};
   rows.forEach(r=>{
     if(saldoMap[r.empId]===undefined){
       const emp=employees.find(e=>e.id===r.empId);
-      saldoMap[r.empId]=Math.round((emp?.za_carry||0)*60); // ZA-Übertrag VJ als Startguthaben
+      saldoMap[r.empId]=Math.round((emp?.za_carry||0)*60);
     }
-    saldoMap[r.empId]+=r.mehr; // Monatssaldo aufaddieren
+    saldoMap[r.empId]+=r.mehr;
   });
-  // ZA bereits in getMonthSoll berücksichtigt — kein separater Abzug nötig
 
   // Warnungen ausgeben
   const warnBox=document.getElementById('ot-warnings');
   const warns=Object.entries(saldoMap)
-    .filter(([id,min])=>min>=OT_WARN_MIN) // nur bei positivem Saldo warnen
+    .filter(([id,min])=>min>=OT_WARN_MIN)
     .map(([id,min])=>{
       const h=Math.floor(min/60),m=min%60;
       return '<div class="alert aw" style="margin-bottom:8px"><span>⚠️</span><b>'+empName(parseInt(id))+'</b> hat '+h+'h'+( m?m+'min':'')+' offener Saldo — bitte Zeitausgleich einplanen!</div>';
@@ -2397,29 +2372,29 @@ function renderOT(){
 
   const totMehr=rows.reduce((s,r)=>s+r.mehr,0);
   document.getElementById('ot-stats').innerHTML=
-    '<div class="sc"><div class="sc-l">Offener Saldo</div><div class="sc-v tmono">'+((Object.values(saldoMap).reduce((s,v)=>s+v,0))>0?'+':'')+fmt(Object.values(saldoMap).reduce((s,v)=>s+v,0))+'</div><div class="sc-s">nach ZA-Abzug</div></div>'+
+    '<div class="sc"><div class="sc-l">Offener Saldo</div><div class="sc-v tmono">'+fmt(Math.max(0,Object.values(saldoMap).reduce((s,v)=>s+v,0)))+'</div><div class="sc-s">nach ZA-Abzug</div></div>'+
     '<div class="sc"><div class="sc-l">Warnungen</div><div class="sc-v" style="color:'+(warns.length?'var(--rd)':'var(--gr)')+'">'+warns.length+'</div></div>'+
     '<div class="sc"><div class="sc-l">Zeitraum</div><div class="sc-v" style="font-size:13px;font-weight:600">Letzte 3 Monate</div></div>';
 
-  // Laufenden kumulierten Saldo pro Mitarbeiter berechnen (chronologisch)
-  const runningMap={}; // empId → laufender Saldo bis zum aktuellen Monat
+    // Laufenden kumulierten Saldo pro Mitarbeiter aufbauen
+  const runningMap={};
   document.getElementById('ot-tbody').innerHTML=rows.map(r=>{
     if(runningMap[r.empId]===undefined){
       const emp=employees.find(e=>e.id===r.empId);
-      runningMap[r.empId]=Math.round((emp?.za_carry||0)*60); // ZA-Übertrag VJ
+      runningMap[r.empId]=Math.round((emp?.za_carry||0)*60);
     }
-    runningMap[r.empId]+=r.mehr; // Monatssaldo aufaddieren
-    // ZA bereits in getMonthSoll berücksichtigt
+    runningMap[r.empId]+=r.mehr;
     const laufend=runningMap[r.empId];
+    const mSaldo=r.mehr;
     return '<tr>'+
       '<td><b>'+empName(r.empId)+'</b></td>'+
       '<td>'+r.month+'</td>'+
       '<td class="tmono">'+fmt(r.soll)+'</td>'+
       '<td class="tmono">'+fmt(r.ist)+'</td>'+
-      '<td class="tmono" style="color:'+(r.mehr<0?'var(--rd)':r.mehr>=OT_WARN_MIN?'var(--or)':'inherit')+';font-weight:'+(r.mehr!==0?600:400)+'">'+(r.mehr>0?'+':'')+fmt(r.mehr)+'</td>'+
+      '<td class="tmono" style="color:'+(mSaldo<0?'var(--rd)':mSaldo>=OT_WARN_MIN?'var(--or)':'inherit')+';font-weight:'+(mSaldo!==0?600:400)+'">'+(mSaldo>0?'+':'')+fmt(mSaldo)+'</td>'+
       '<td class="tmono" style="color:'+(laufend<0?'var(--rd)':laufend>=OT_WARN_MIN?'var(--or)':'var(--gr)')+';font-weight:600">'+(laufend>0?'+':'')+fmt(laufend)+'</td>'+
     '</tr>';
-  }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">✅ Kein offener Saldo in den letzten 3 Monaten</td></tr>';
+  }).join('')||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--ink2)">✅ Kein offener Saldo in den letzten 3 Monaten</td></tr>';
 }
 
 // ══ CSV EXPORT ══
@@ -2555,7 +2530,7 @@ function renderDayNote(){
   const box = document.getElementById('day-note-box');
   if(!box) return;
   const saved = (typeof Storage !== 'undefined') ? (localStorage.getItem('nbs_daynote_'+TODAY)||'') : '';
-  const _dni=document.getElementById('day-note-input');if(_dni)_dni.value=saved;
+  document.getElementById('day-note-input').value = saved;
 }
 
 async function saveDayNote(){
@@ -2657,8 +2632,7 @@ async function loadFromSupabase() {
     if (empRes.error) throw empRes.error;
     if (entRes.error) throw entRes.error;
     if (absRes.error) throw absRes.error;
-    // hoursHistory laden (kein harter Fehler wenn Tabelle noch nicht existiert)
-    hoursHistory = (hoursHistRes.data||[]).map(h=>({empId:h.emp_id, validFrom:h.valid_from, hours:parseFloat(h.hours)}));
+    hoursHistory=(hoursHistRes.data||[]).map(h=>({id:h.id,empId:h.emp_id,validFrom:h.valid_from,hours:parseFloat(h.hours)}));
 
     // Map DB columns to app format
     employees = empRes.data.map(e => ({
