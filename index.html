@@ -2297,22 +2297,33 @@ function renderOT(){
   // Monatssoll: über ALLE Arbeitstage des Monats berechnen (nicht nur Tage mit Einträgen!)
   function getMonthSoll(empId, monthKey){
     const[y,m]=monthKey.split('-').map(Number);
-    const firstDay=new Date(y,m-1,1);
+    const firstDayOfMonth=new Date(y,m-1,1);
     const lastDayOfMonth=new Date(y,m,0);
 
-    // Für den laufenden Monat: nur bis heute rechnen, nicht bis Monatsende
+    // Eintrittsdatum berücksichtigen — vor Eintritt kein Soll
+    const emp=employees.find(e=>e.id===empId);
+    const startDate=emp&&emp.start?new Date(emp.start):firstDayOfMonth;
+    const exitDate=emp&&emp.exit?new Date(emp.exit):null;
+
+    // Startpunkt: später von Monatsanfang und Eintrittsdatum
+    const firstDay=startDate>firstDayOfMonth?startDate:firstDayOfMonth;
+
+    // Für den laufenden Monat: nur bis heute rechnen
     const today=new Date(TODAY);
     const isCurrentMonth=(y===today.getFullYear()&&m===today.getMonth()+1);
-    const lastDay=isCurrentMonth?today:lastDayOfMonth;
+    let lastDay=isCurrentMonth?today:lastDayOfMonth;
+
+    // Austrittsdatum berücksichtigen
+    if(exitDate&&exitDate<lastDay) lastDay=exitDate;
 
     // Sammle alle genehmigten Abwesenheitstage (außer Homeoffice)
     const absentDays=new Set();
     absences.forEach(a=>{
       if(a.empId!==empId)return;
       if(a.status==='abgelehnt')return;
-      if(a.type==='homeoffice')return; // Homeoffice = normaler Arbeitstag
+      if(a.type==='homeoffice')return;
       datesBetween(a.from,a.to).forEach(d=>{
-        if(d>=monthKey+'-01'&&d<=lastDay.toISOString().slice(0,10)) absentDays.add(d);
+        if(d>=firstDay.toISOString().slice(0,10)&&d<=lastDay.toISOString().slice(0,10)) absentDays.add(d);
       });
     });
 
@@ -2321,7 +2332,7 @@ function renderOT(){
     while(d<=lastDay){
       const ds=d.toISOString().slice(0,10);
       if(!absentDays.has(ds)){
-        soll+=getSollMin(empId,ds); // 0 für Feiertage + Wochenenden
+        soll+=getSollMin(empId,ds);
       }
       d.setDate(d.getDate()+1);
     }
