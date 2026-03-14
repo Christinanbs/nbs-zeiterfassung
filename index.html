@@ -499,14 +499,14 @@ tr:hover td{background:#faf8f5}
 
 <!-- ÜBERSTUNDEN -->
 <div id="page-ueberstunden" class="page">
-  <div class="ph"><div><h2>Überstunden</h2><p>Überstundenberechnung</p></div>
+  <div class="ph"><div><h2>Mehrstunden & Saldo</h2><p>Letzte 3 Monate</p></div>
     <select id="ot-emp" onchange="renderOT()" style="width:200px"><option value="alle">Alle Mitarbeiter</option></select>
   </div>
-  <div class="alert ai" style="margin-bottom:12px"><span>ℹ️</span><b>Überstunden müssen innerhalb von 3 Monaten als Zeitausgleich konsumiert werden.</b> Mitarbeiter mit All-In Vertrag werden nicht angezeigt. Überstunden die älter als 3 Monate sind werden nicht mehr angezeigt.</div>
+  <div class="alert ai" style="margin-bottom:12px"><span>ℹ️</span><b>Mehrstunden müssen innerhalb von 3 Monaten als Zeitausgleich konsumiert werden.</b> Mitarbeiter mit All-In Vertrag (Thomas, Christina) werden nicht angezeigt. Einträge älter als 3 Monate werden nicht berücksichtigt.</div>
   <div id="ot-warnings"></div>
   <div class="sr" id="ot-stats"></div>
   <div class="card"><div class="cb" style="padding:0">
-    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th title="Ist minus Soll">Mehrstunden</th><th title="Kumulierte offene Mehrstunden nach ZA-Abzug">Offener Saldo</th></tr></thead>
+    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>Monatssaldo</th><th>Kumulierter Saldo</th></tr></thead>
     <tbody id="ot-tbody"></tbody></table>
   </div></div>
 </div>
@@ -808,10 +808,8 @@ function updateEePreview(){
   const b=parseInt(document.getElementById('ee-break').value)||0;
   if(!s||!e){document.getElementById('ee-preview').textContent='';return;}
   const wm=calcWork(s,e,b);
-  const warns=azgCheck(wm,b);
-  const warnHtml=warns.length?` ⚠️ ${warns.map(w=>w.msg).join(' · ')}`:'✓ AZG ok';
   document.getElementById('ee-preview').innerHTML=
-    `<b>Nettodauer: ${fmt(wm)}</b> · Pause: ${b} Min.${warnHtml}`;
+    `<b>Nettodauer: ${fmt(wm)}</b> · Pause: ${b} Min.`;
 }
 
 async function saveEditEntry(){
@@ -1003,7 +1001,7 @@ function buildNav(){
     <div class="ni" onclick="P('urlaubskonto')">🌴 Urlaubskonto</div>
     <div class="ns">Auswertung</div>
     <div class="ni" onclick="P('monatsansicht')">📊 Monatsübersicht</div>
-    <div class="ni" onclick="P('ueberstunden')">⏰ Überstunden</div>
+    <div class="ni" onclick="P('ueberstunden')">⏰ Mehrstunden</div>
     <div class="ns">Daten</div>
     <div class="ni" onclick="P('export')">⬇️ Export & Stundenzettel</div>`;
   const empNav=`
@@ -1030,7 +1028,7 @@ function P(id){
     else if(n.textContent.includes('Urlaubskalender')&&id==='kalender')n.classList.add('active');
     else if(n.textContent.includes('Urlaubskonto')&&id==='urlaubskonto')n.classList.add('active');
     else if(n.textContent.includes('Monats')&&id==='monatsansicht')n.classList.add('active');
-    else if(n.textContent.includes('Überstunden')&&id==='ueberstunden')n.classList.add('active');
+    else if(n.textContent.includes('Mehrstunden')&&id==='ueberstunden')n.classList.add('active');
     else if(n.textContent.includes('Export')&&id==='export')n.classList.add('active');
     else if(n.textContent.includes('Stunden')&&id==='monatsansicht')n.classList.add('active');
   });
@@ -1454,8 +1452,7 @@ function renderDashboard(){
   const aH=Object.entries(activeStamps).map(([id,s])=>`<div class="flex" style="padding:7px 0;border-bottom:1px solid var(--bd)"><div class="dot on"></div><b>${empName(parseInt(id))}</b><span class="tm ts">seit ${s.t}</span></div>`).join('');
   document.getElementById('db-active').innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
   const tw=entries.filter(e=>e.date===TODAY).flatMap(e=>{const w=calcWork(e.start,e.end,e.breakMin);return azgCheck(w,e.breakMin).map(x=>({name:empName(e.empId),...x}));});
-  document.getElementById('db-warns').innerHTML=tw.map(w=>`<div class="alert ${w.l==='danger'?'ad':'aw'}" style="margin-bottom:6px"><span>${w.l==='danger'?'🚨':'⚠️'}</span><b>${w.name}:</b> ${w.msg}</div>`).join('')||'<div class="empty">✅ Alles OK</div>';
-  document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
+    document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
   document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.type==='homeoffice'?'<span class="badge" style="background:#e1bee7;color:#4a148c">🏠 Homeoffice</span>':a.type==='urlaub'?'<span class="badge bg-gr">🌴 Urlaub</span>':a.type==='zeitausgleich'?'<span class="badge bg-bl">🔄 ZA</span>':'<span class="badge bg-gy">'+(absTypeLabel[a.type]||a.type)+'</span>'}</td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
   if(isAdmin())renderMoodOverview();
   renderCelebrations();
@@ -1623,10 +1620,10 @@ function renderOTWarningDashboard(){
       warns.map(([id,min])=>{
         const h=Math.floor(min/60),m=min%60;
         return '<div style="font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--bd)">'+
-          '<b>'+empName(parseInt(id))+'</b> — '+h+'h'+(m?m+'min':'')+' offene Mehrstunden'+
+          '<b>'+empName(parseInt(id))+'</b> — '+h+'h'+(m?m+'min':'')+' offener Saldo'+
           '</div>';
       }).join('')+
-      '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Überstunden müssen innerhalb von 3 Monaten als Zeitausgleich konsumiert werden.</div>';
+      '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Mehrstunden müssen innerhalb von 3 Monaten als Zeitausgleich konsumiert werden.</div>';
   } else {
     box.style.display='none';
   }
@@ -2016,22 +2013,19 @@ function renderMonthView(){
   const totW=filtered.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   const totS=filtered.reduce((s,e)=>s+getSollMin(e.empId,e.date),0);
   const saldo=totW-totS;
-  const totOT=filtered.reduce((s,e)=>s+Math.max(0,calcWork(e.start,e.end,e.breakMin)-8*60),0);
   document.getElementById('mv-summary-card').style.display='block';
   document.getElementById('mv-summary').innerHTML=`
     <div><div class="sc-l">Arbeitstage</div><div class="sc-v">${filtered.length}</div></div>
     <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
     <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
-    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)'  :'var(--rd)'}">${saldo>=0?'+':''  }${fmt(saldo)}</div></div>
-    <div><div class="sc-l">Überstunden</div><div class="sc-v tmono" style="color:${totOT>0?'var(--ac)'  :'inherit'}">${fmt(totOT)}</div></div>`;
+    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)'  :'var(--rd)'}">${saldo>=0?'+':''  }${fmt(saldo)}</div></div>`;
   tbody.innerHTML=filtered.map(e=>{
     const wm=calcWork(e.start,e.end,e.breakMin);
     const sollMin=getSollMin(e.empId,e.date);
     const sal=wm-sollMin;
-    const warns=azgCheck(wm,e.breakMin);
     const dow=new Date(e.date).toLocaleDateString('de-AT',{weekday:'short'});
     const ftag=holidayName(e.date);
-    const wH=ftag?`<span class="badge bg-pu" title="${ftag}">🎉 Feiertag</span>`:(warns.length?warns.map(w=>`<span class="badge bg-${w.l==='danger'?'rd':'or'}" title="${w.msg}">⚠️</span>`).join(''):'<span class="badge bg-gr">✓</span>');
+    const wH=ftag?`<span class="badge bg-pu" title="${ftag}">🎉 Feiertag</span>`:'<span class="badge bg-gr">✓</span>';
     const rowStyle=ftag?'background:#faf5ff;':''  ;
     const eKey=e.empId+'_'+mv;
     const eStatus=monthApprovals[eKey]?monthApprovals[eKey].status:'offen'  ;
@@ -2263,7 +2257,7 @@ function renderOT(){
     .filter(([id,min])=>min>=OT_WARN_MIN)
     .map(([id,min])=>{
       const h=Math.floor(min/60),m=min%60;
-      return '<div class="alert aw" style="margin-bottom:8px"><span>⚠️</span><b>'+empName(parseInt(id))+'</b> hat '+h+'h'+( m?m+'min':'')+' offene Mehrstunden — bitte Zeitausgleich einplanen!</div>';
+      return '<div class="alert aw" style="margin-bottom:8px"><span>⚠️</span><b>'+empName(parseInt(id))+'</b> hat '+h+'h'+( m?m+'min':'')+' offener Saldo — bitte Zeitausgleich einplanen!</div>';
     });
   warnBox.innerHTML=warns.join('');
 
@@ -2283,7 +2277,7 @@ function renderOT(){
       '<td class="tmono" style="color:'+(r.mehr>=OT_WARN_MIN?'var(--rd)':'inherit')+';font-weight:'+(r.mehr>=OT_WARN_MIN?600:400)+'">'+fmt(r.mehr)+'</td>'+
       '<td class="tmono" style="color:'+(saldoMap[r.empId]>=OT_WARN_MIN?'var(--rd)':saldoMap[r.empId]>0?'var(--ac)':'var(--gr)')+';font-weight:600">'+fmt(Math.max(0,saldoMap[r.empId]||0))+'</td>'+
                 '</tr>';
-  }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">✅ Keine offenen Mehrstunden in den letzten 3 Monaten</td></tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">✅ Kein offener Saldo in den letzten 3 Monaten</td></tr>';
 }
 
 // ══ CSV EXPORT ══
