@@ -1602,18 +1602,27 @@ function renderOTWarningDashboard(){
   const cutoff=new Date(now.getFullYear(),now.getMonth()-2,1);
   const cutoffStr=cutoff.toISOString().slice(0,7);
 
-  const saldoMap={};
-  // Mehrstunden aus Stundeneinträgen aufaddieren
+  // Gleiche Logik wie renderOT: erst Ist & Soll pro Monat gruppieren
+  const groups={};
   entries.forEach(e=>{
     if(ALLIN_IDS.includes(e.empId))return;
     if(isHoliday(e.date))return;
     const[y,m]=e.date.split('-');
     if((y+'-'+m)<cutoffStr)return;
-    const mehr=Math.max(0,calcWork(e.start,e.end,e.breakMin)-getSollMin(e.empId,e.date));
-    if(!saldoMap[e.empId])saldoMap[e.empId]=0;
-    saldoMap[e.empId]+=mehr;
+    const k=e.empId+'_'+(y+'-'+m);
+    if(!groups[k])groups[k]={empId:e.empId,ist:0,soll:0};
+    groups[k].ist+=calcWork(e.start,e.end,e.breakMin);
+    groups[k].soll+=getSollMin(e.empId,e.date);
   });
-  // ZA-Tage vom Saldo abziehen (jeder konsumierte ZA-Tag = Soll-Minuten weniger)
+
+  // Saldo pro Mitarbeiter aus Monatssalden aufaddieren
+  const saldoMap={};
+  Object.values(groups).forEach(g=>{
+    if(!saldoMap[g.empId])saldoMap[g.empId]=0;
+    saldoMap[g.empId]+=(g.ist-g.soll); // kann negativ sein
+  });
+
+  // ZA-Tage vom Saldo abziehen
   absences.forEach(a=>{
     if(ALLIN_IDS.includes(a.empId))return;
     if(a.type!=='zeitausgleich')return;
