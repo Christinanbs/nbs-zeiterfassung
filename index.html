@@ -1616,6 +1616,22 @@ function renderOTWarningDashboard(){
 
   // Monatssoll über ALLE Arbeitstage berechnen (nicht nur Eintrags-Tage)
   const saldoMap={};
+  // ZA-Stunden zur Ist-Summe addieren
+  absences.forEach(a=>{
+    if(ALLIN_IDS.includes(a.empId))return;
+    if(a.type!=='zeitausgleich')return;
+    if(a.status==='abgelehnt')return;
+    datesBetween(a.from,a.to).forEach(d=>{
+      if(isHoliday(d))return;
+      const[y,mn]=d.split('-');
+      const monthKey=y+'-'+mn;
+      if(monthKey<cutoffStr)return;
+      const k=a.empId+'_'+monthKey;
+      if(!groups[k])return;
+      groups[k].ist+=getSollMin(a.empId,d);
+    });
+  });
+
   Object.values(groups).forEach(g=>{
     const soll=getMonthSoll(g.empId,g.month);
     if(saldoMap[g.empId]===undefined){
@@ -1625,20 +1641,7 @@ function renderOTWarningDashboard(){
     saldoMap[g.empId]+=(g.ist-soll);
   });
 
-  // ZA-Tage vom Saldo abziehen
-  absences.forEach(a=>{
-    if(ALLIN_IDS.includes(a.empId))return;
-    if(a.type!=='zeitausgleich')return;
-    if(a.status==='abgelehnt')return;
-    datesBetween(a.from,a.to).forEach(d=>{
-      if(isHoliday(d))return;
-      const[y,m]=d.split('-');
-      if((y+'-'+m)<cutoffStr)return;
-      const sollMin=getSollMin(a.empId,d);
-      if(!saldoMap[a.empId])saldoMap[a.empId]=0;
-      saldoMap[a.empId]-=sollMin;
-    });
-  });
+
 
   const warns=Object.entries(saldoMap).filter(([id,min])=>min>=OT_WARN_MIN);
   const box=document.getElementById('db-ot-warnings');
@@ -2319,12 +2322,16 @@ function renderOT(){
     // Austrittsdatum berücksichtigen
     if(exitDate&&exitDate<lastDay) lastDay=exitDate;
 
-    // Sammle alle genehmigten Abwesenheitstage (außer Homeoffice)
+    // Nur echte freie Tage reduzieren das Soll:
+    // Urlaub, Krankenstand, Sonderurlaub → kein Soll
+    // Zeitausgleich → Soll bleibt! (ZA konsumiert die Sollstunden)
+    // Homeoffice → normaler Arbeitstag
+    const SOLL_REDUZIERT_BEI = ['urlaub','krankenstand','sonderurlaub','urlaub_genossen'];
     const absentDays=new Set();
     absences.forEach(a=>{
       if(a.empId!==empId)return;
       if(a.status==='abgelehnt')return;
-      if(a.type==='homeoffice')return;
+      if(!SOLL_REDUZIERT_BEI.includes(a.type))return; // ZA + HO: kein Abzug!
       datesBetween(a.from,a.to).forEach(d=>{
         if(d>=firstDay.toISOString().slice(0,10)&&d<=lastDay.toISOString().slice(0,10)) absentDays.add(d);
       });
@@ -2341,6 +2348,23 @@ function renderOT(){
     }
     return soll;
   }
+
+  // ZA-Stunden pro Mitarbeiter/Monat berechnen und zur Ist-Summe addieren
+  absences.forEach(a=>{
+    if(ALLIN_IDS.includes(a.empId))return;
+    if(a.type!=='zeitausgleich')return;
+    if(a.status==='abgelehnt')return;
+    if(empF!=='alle'&&a.empId!=empF)return;
+    datesBetween(a.from,a.to).forEach(d=>{
+      if(isHoliday(d))return;
+      const[y,mn]=d.split('-');
+      const monthKey=y+'-'+mn;
+      if(monthKey<cutoffStr)return;
+      const k=a.empId+'_'+monthKey;
+      if(!groups[k])return; // nur wenn es Einträge in diesem Monat gibt
+      groups[k].mins.push(getSollMin(a.empId,d)); // ZA-Tag zählt als gearbeitet
+    });
+  });
 
   const rows=Object.values(groups).map(g=>{
     const ist=g.mins.reduce((s,m)=>s+m,0);
@@ -2359,22 +2383,7 @@ function renderOT(){
     }
     saldoMap[r.empId]+=r.mehr; // Monatssaldo aufaddieren
   });
-  // ZA-Tage vom Saldo abziehen
-  absences.forEach(a=>{
-    if(ALLIN_IDS.includes(a.empId))return;
-    if(empF!=='alle'&&a.empId!=empF)return;
-    if(a.type!=='zeitausgleich')return;
-    if(a.status==='abgelehnt')return;
-    datesBetween(a.from,a.to).forEach(d=>{
-      if(isHoliday(d))return;
-      const[y,m]=d.split('-');
-      if((y+'-'+m)<cutoffStr)return;
-      const sollMin=getSollMin(a.empId,d);
-      if(!saldoMap[a.empId])saldoMap[a.empId]=0;
-      saldoMap[a.empId]-=sollMin;
-      saldoMap[a.empId]=Math.max(0,saldoMap[a.empId]); // nie negativ
-    });
-  });
+  // ZA bereits in getMonthSoll berücksichtigt — kein separater Abzug nötig
 
   // Warnungen ausgeben
   const warnBox=document.getElementById('ot-warnings');
@@ -2400,17 +2409,7 @@ function renderOT(){
       runningMap[r.empId]=Math.round((emp?.za_carry||0)*60); // ZA-Übertrag VJ
     }
     runningMap[r.empId]+=r.mehr; // Monatssaldo aufaddieren
-    // ZA für diesen Monat abziehen
-    absences.forEach(a=>{
-      if(a.empId!==r.empId||a.type!=='zeitausgleich'||a.status==='abgelehnt')return;
-      datesBetween(a.from,a.to).forEach(d=>{
-        if(isHoliday(d))return;
-        const[y,m]=d.split('-');
-        if((y+'-'+m)===r.month){
-          runningMap[r.empId]-=getSollMin(r.empId,d);
-        }
-      });
-    });
+    // ZA bereits in getMonthSoll berücksichtigt
     const laufend=runningMap[r.empId];
     return '<tr>'+
       '<td><b>'+empName(r.empId)+'</b></td>'+
