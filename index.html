@@ -247,13 +247,6 @@ tr:hover td{background:#faf8f5}
 
 
 
-  <div class="law" style="display:none"><h4>⚖️ AZG Österreich</h4>
-    <ul>
-      <li>Max. <b>8 Std./Tag, 40 Std./Woche</b> · absolutes Maximum: 12 Std./Tag, 60 Std./Woche</li>
-      <li>Pflichtpause: <b>nach 6 Std. = mind. 30 Min.</b> · Tägliche Ruhezeit: mind. 11 Std.</li>
-      <li>Überstunden ab 9. Std./Tag oder 41. Std./Woche · 50% Zuschlag oder 1,5× ZA</li>
-    </ul>
-  </div>
   <div class="sr" id="db-stats"></div>
   <!-- STUNDEN EINTRAGEN (Admin) -->
   <div class="card" style="margin-bottom:14px">
@@ -277,8 +270,9 @@ tr:hover td{background:#faf8f5}
     </div>
   </div>
   <div class="g2">
-    <div class="card" style="display:none"><div class="ch"><h3>⚠️ AZG-Warnungen heute</h3></div><div class="cb" id="db-warns"></div></div>
+    
   </div>
+  <div id="db-ot-warnings" style="display:none;background:#fff8e1;border:2px solid var(--or);border-radius:12px;padding:16px 20px;margin-bottom:16px"></div>
   <div class="card mt2"><div class="ch"><h3>📋 Offene Ansuchen</h3><span id="pending-count"></span></div><div class="cb" style="padding:0" id="db-pending"></div></div>
 </div>
 
@@ -508,15 +502,11 @@ tr:hover td{background:#faf8f5}
   <div class="ph"><div><h2>Überstunden</h2><p>Überstundenberechnung</p></div>
     <select id="ot-emp" onchange="renderOT()" style="width:200px"><option value="alle">Alle Mitarbeiter</option></select>
   </div>
-  <div class="law" style="display:none"><h4>⚖️ AZG</h4>
-    <ul>
-      <li>Überstunden ab <b>9. Std./Tag</b> oder <b>41. Std./Woche</b> · Zuschlag: <b>50%</b> oder 1,5× Zeitausgleich</li>
-      <li>Anja Mayer: Teilzeit <b>25 Std./Woche</b> · Mehrstunden bis 8. Std./Tag ohne Zuschlag · Stundenlohn: € 15,-</li>
-    </ul>
-  </div>
+  <div class="alert ai" style="margin-bottom:12px"><span>ℹ️</span><b>Überstunden müssen innerhalb von 3 Monaten als Zeitausgleich konsumiert werden.</b> Mitarbeiter mit All-In Vertrag werden nicht angezeigt. Überstunden die älter als 3 Monate sind werden nicht mehr angezeigt.</div>
+  <div id="ot-warnings"></div>
   <div class="sr" id="ot-stats"></div>
   <div class="card"><div class="cb" style="padding:0">
-    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>Überstunden</th><th>Mehrstunden</th><th>Max. Tag</th></tr></thead>
+    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th title="Ist minus Soll">Mehrstunden</th><th title="Kumulierte offene Mehrstunden nach ZA-Abzug">Offener Saldo</th></tr></thead>
     <tbody id="ot-tbody"></tbody></table>
   </div></div>
 </div>
@@ -1470,6 +1460,7 @@ function renderDashboard(){
   if(isAdmin())renderMoodOverview();
   renderCelebrations();
   if(isAdmin())renderVacationWarnings();
+  if(isAdmin())renderOTWarningDashboard();
   renderDayNote();
   showDashboardQuote();
 }
@@ -1583,12 +1574,66 @@ async function submitVacRequest(){
   document.getElementById('vr-from').value='';document.getElementById('vr-to').value='';document.getElementById('vr-note').value='';
   document.getElementById('overlap-check-result').innerHTML='';
   renderCalendar();
+  renderDashboard(); // Admin-Dashboard immer aktualisieren
   if(!isAdmin())renderEmpDashboard();
-  else renderDashboard();
   alert(`✅ Urlaubsansuchen eingereicht!\n\nVom ${from} bis ${to} · Art: ${absTypeLabel[type]||type}\n\nDein Ansuchen wurde an die Geschäftsführung übermittelt und wird baldmöglichst bearbeitet.`);
 }
 
+// ══ OT WARNUNG AM DASHBOARD ══
+function renderOTWarningDashboard(){
+  const ALLIN_IDS=[2,9];
+  const OT_WARN_MIN=8*60;
+  const now=new Date();
+  const cutoff=new Date(now.getFullYear(),now.getMonth()-2,1);
+  const cutoffStr=cutoff.toISOString().slice(0,7);
+
+  const saldoMap={};
+  // Mehrstunden aus Stundeneinträgen aufaddieren
+  entries.forEach(e=>{
+    if(ALLIN_IDS.includes(e.empId))return;
+    if(isHoliday(e.date))return;
+    const[y,m]=e.date.split('-');
+    if((y+'-'+m)<cutoffStr)return;
+    const mehr=Math.max(0,calcWork(e.start,e.end,e.breakMin)-getSollMin(e.empId,e.date));
+    if(!saldoMap[e.empId])saldoMap[e.empId]=0;
+    saldoMap[e.empId]+=mehr;
+  });
+  // ZA-Tage vom Saldo abziehen (jeder konsumierte ZA-Tag = Soll-Minuten weniger)
+  absences.forEach(a=>{
+    if(ALLIN_IDS.includes(a.empId))return;
+    if(a.type!=='zeitausgleich')return;
+    if(a.status==='abgelehnt')return;
+    datesBetween(a.from,a.to).forEach(d=>{
+      if(isHoliday(d))return;
+      const[y,m]=d.split('-');
+      if((y+'-'+m)<cutoffStr)return;
+      const sollMin=getSollMin(a.empId,d);
+      if(!saldoMap[a.empId])saldoMap[a.empId]=0;
+      saldoMap[a.empId]-=sollMin;
+      saldoMap[a.empId]=Math.max(0,saldoMap[a.empId]); // nie negativ
+    });
+  });
+
+  const warns=Object.entries(saldoMap).filter(([id,min])=>min>=OT_WARN_MIN);
+  const box=document.getElementById('db-ot-warnings');
+  if(!box)return;
+  if(warns.length){
+    box.style.display='block';
+    box.innerHTML='<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--or)">⏰ Zeitausgleich fällig</div>'+
+      warns.map(([id,min])=>{
+        const h=Math.floor(min/60),m=min%60;
+        return '<div style="font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--bd)">'+
+          '<b>'+empName(parseInt(id))+'</b> — '+h+'h'+(m?m+'min':'')+' offene Mehrstunden'+
+          '</div>';
+      }).join('')+
+      '<div style="font-size:11px;color:var(--ink3);margin-top:8px">Überstunden müssen innerhalb von 3 Monaten als Zeitausgleich konsumiert werden.</div>';
+  } else {
+    box.style.display='none';
+  }
+}
+
 // ══ APPROVE REQUEST ══
+
 
 // ══ HOMEOFFICE REQUEST ══
 function openHoReq(){
@@ -1647,7 +1692,7 @@ async function submitHoRequest(){
   absences.push(newAbs);
   try{ const nid=await dbSaveAbsence({...newAbs,_new:true}); newAbs.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);return;}
   closeM('mo-horeq');
-  renderCalendar();renderEmpDashboard();
+  renderCalendar();renderEmpDashboard();renderDashboard();
   alert(`✅ Homeoffice-Ansuchen eingereicht!\n\nVom ${from} bis ${to} (${days} Tage)\n\nDein Ansuchen wurde an die Geschäftsführung übermittelt.`);
 }
 
@@ -2157,13 +2202,88 @@ function exportMonthToCSV(month,empId){
 
 // ══ OVERTIME ══
 function renderOT(){
+  const ALLIN_IDS=[2,9]; // Thomas & Christina — All-In, keine Überstundenberechnung
+  const OT_WARN_MIN=8*60; // Warnung ab 8 Stunden
   const empF=document.getElementById('ot-emp').value;
+
+  // 3-Monats-Fenster berechnen
+  const now=new Date();
+  const cutoff=new Date(now.getFullYear(),now.getMonth()-2,1); // vor 3 Monaten
+  const cutoffStr=cutoff.toISOString().slice(0,7); // YYYY-MM
+
   const groups={};
-  entries.forEach(e=>{if(empF!=='alle'&&e.empId!=empF)return;if(isHoliday(e.date))return;const[y,m]=e.date.split('-');const k=`${e.empId}_${y}-${m}`;if(!groups[k])groups[k]={empId:e.empId,month:`${y}-${m}`,mins:[],solls:[],maxDay:0};const wm=calcWork(e.start,e.end,e.breakMin);groups[k].mins.push(wm);groups[k].solls.push(getSollMin(e.empId,e.date));groups[k].maxDay=Math.max(groups[k].maxDay,wm);});
-  const rows=Object.values(groups).map(g=>{const ist=g.mins.reduce((s,m)=>s+m,0);const soll=g.solls.reduce((s,m)=>s+m,0);const ot=g.mins.reduce((s,m)=>s+Math.max(0,m-8*60),0);const mehr=Math.max(0,ist-soll);return{...g,soll,ist,ot,mehr,ok:g.maxDay<=12*60};});
-  const totOT=rows.reduce((s,r)=>s+r.ot,0);
-  document.getElementById('ot-stats').innerHTML=`<div class="sc"><div class="sc-l">Überstunden</div><div class="sc-v tmono">${fmt(totOT)}</div><div class="sc-s">gesamt</div></div><div class="sc"><div class="sc-l">Mehrstunden</div><div class="sc-v tmono">${fmt(rows.reduce((s,r)=>s+r.mehr,0))}</div></div><div class="sc"><div class="sc-l">AZG-Prüfen</div><div class="sc-v" style="color:${rows.filter(r=>!r.ok).length?'var(--rd)':'var(--gr)'}">${rows.filter(r=>!r.ok).length}</div></div><div class="sc"><div class="sc-l">Monate</div><div class="sc-v">${rows.length}</div></div>`;
-  document.getElementById('ot-tbody').innerHTML=rows.map(r=>`<tr><td><b>${empName(r.empId)}</b></td><td>${r.month}</td><td class="tmono">${fmt(r.soll)}</td><td class="tmono">${fmt(r.ist)}</td><td class="tmono" style="color:${r.ot>0?'var(--ac)':'inherit'};font-weight:${r.ot>0?600:400}">${fmt(r.ot)}</td><td class="tmono">${fmt(r.mehr)}</td><td class="tmono">${fmt(r.maxDay)}</td><td>${r.ok?'<span class="badge bg-gr">✓ OK</span>':'<span class="badge bg-rd">⚠️ Prüfen</span>'}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px">Keine Daten</td></tr>';
+  entries.forEach(e=>{
+    if(empF!=='alle'&&e.empId!=empF)return;
+    if(ALLIN_IDS.includes(e.empId))return; // All-In raus
+    if(isHoliday(e.date))return;
+    const[y,m]=e.date.split('-');
+    const monthKey=y+'-'+m;
+    if(monthKey<cutoffStr)return; // älter als 3 Monate ignorieren
+    const k=e.empId+'_'+monthKey;
+    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],solls:[],maxDay:0};
+    const wm=calcWork(e.start,e.end,e.breakMin);
+    groups[k].mins.push(wm);
+    groups[k].solls.push(getSollMin(e.empId,e.date));
+    groups[k].maxDay=Math.max(groups[k].maxDay,wm);
+  });
+
+  const rows=Object.values(groups).map(g=>{
+    const ist=g.mins.reduce((s,m)=>s+m,0);
+    const soll=g.solls.reduce((s,m)=>s+m,0);
+    const mehr=Math.max(0,ist-soll);
+    return{...g,soll,ist,ot,mehr};
+  }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
+
+  // Kumuliertes Überstunden-Saldo pro Mitarbeiter (letzte 3 Monate)
+  const saldoMap={};
+  rows.forEach(r=>{
+    if(!saldoMap[r.empId])saldoMap[r.empId]=0;
+    saldoMap[r.empId]+=r.mehr; // Mehrstunden kumulieren
+  });
+  // ZA-Tage vom Saldo abziehen
+  absences.forEach(a=>{
+    if(ALLIN_IDS.includes(a.empId))return;
+    if(empF!=='alle'&&a.empId!=empF)return;
+    if(a.type!=='zeitausgleich')return;
+    if(a.status==='abgelehnt')return;
+    datesBetween(a.from,a.to).forEach(d=>{
+      if(isHoliday(d))return;
+      const[y,m]=d.split('-');
+      if((y+'-'+m)<cutoffStr)return;
+      const sollMin=getSollMin(a.empId,d);
+      if(!saldoMap[a.empId])saldoMap[a.empId]=0;
+      saldoMap[a.empId]-=sollMin;
+      saldoMap[a.empId]=Math.max(0,saldoMap[a.empId]); // nie negativ
+    });
+  });
+
+  // Warnungen ausgeben
+  const warnBox=document.getElementById('ot-warnings');
+  const warns=Object.entries(saldoMap)
+    .filter(([id,min])=>min>=OT_WARN_MIN)
+    .map(([id,min])=>{
+      const h=Math.floor(min/60),m=min%60;
+      return '<div class="alert aw" style="margin-bottom:8px"><span>⚠️</span><b>'+empName(parseInt(id))+'</b> hat '+h+'h'+( m?m+'min':'')+' offene Mehrstunden — bitte Zeitausgleich einplanen!</div>';
+    });
+  warnBox.innerHTML=warns.join('');
+
+  const totMehr=rows.reduce((s,r)=>s+r.mehr,0);
+  document.getElementById('ot-stats').innerHTML=
+    '<div class="sc"><div class="sc-l">Offener Saldo</div><div class="sc-v tmono">'+fmt(Math.max(0,Object.values(saldoMap).reduce((s,v)=>s+v,0)))+'</div><div class="sc-s">nach ZA-Abzug</div></div>'+
+    '<div class="sc"><div class="sc-l">Warnungen</div><div class="sc-v" style="color:'+(warns.length?'var(--rd)':'var(--gr)')+'">'+warns.length+'</div></div>'+
+    '<div class="sc"><div class="sc-l">Zeitraum</div><div class="sc-v" style="font-size:13px;font-weight:600">Letzte 3 Monate</div></div>';
+
+  document.getElementById('ot-tbody').innerHTML=rows.map(r=>{
+    const saldo=saldoMap[r.empId]||0;
+    return '<tr>'+
+      '<td><b>'+empName(r.empId)+'</b></td>'+
+      '<td>'+r.month+'</td>'+
+      '<td class="tmono">'+fmt(r.soll)+'</td>'+
+      '<td class="tmono">'+fmt(r.ist)+'</td>'+
+      '<td class="tmono" style="color:'+(r.mehr>=OT_WARN_MIN?'var(--rd)':'inherit')+';font-weight:'+(r.mehr>=OT_WARN_MIN?600:400)+'">'+fmt(r.mehr)+'</td>'+
+      '<td class="tmono" style="color:'+(saldoMap[r.empId]>=OT_WARN_MIN?'var(--rd)':saldoMap[r.empId]>0?'var(--ac)':'var(--gr)')+';font-weight:600">'+fmt(Math.max(0,saldoMap[r.empId]||0))+'</td>'+
+                '</tr>';
+  }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">✅ Keine offenen Mehrstunden in den letzten 3 Monaten</td></tr>';
 }
 
 // ══ CSV EXPORT ══
@@ -2194,7 +2314,7 @@ function printZettel(){
       <thead><tr style="background:#f0f0f0">${['Datum','Typ','Kommen','Gehen','Pause','Arbeitsdauer'].map(h=>`<th style="padding:6px 8px;text-align:left">${h}</th>`).join('')}</tr></thead>
       <tbody>${me.map(e=>{const wm=calcWork(e.start,e.end,e.breakMin);const dow=new Date(e.date).toLocaleDateString('de-AT',{weekday:'short'});return`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px">${e.date} (${dow})</td><td style="padding:4px 8px">${tl[e.type]||'–'}</td><td style="padding:4px 8px;font-family:monospace">${e.start}</td><td style="padding:4px 8px;font-family:monospace">${e.end}</td><td style="padding:4px 8px">${e.breakMin} Min.</td><td style="padding:4px 8px;font-family:monospace;font-weight:600">${fmt(wm)}</td></tr>`;}).join('')||'<tr><td colspan="6" style="padding:10px;text-align:center;color:#999">Keine Einträge</td></tr>'}</tbody>
     </table>
-    <div style="display:flex;gap:20px;background:#f5f5f5;padding:10px 14px;border-radius:6px;margin-bottom:24px;font-size:12.5px"><div><b>Gesamt:</b> ${fmt(totW)} Std.</div><div><b>Überstunden:</b> ${fmt(totOT)}</div><div><b>Tage:</b> ${me.length}</div></div>
+    <div style="display:flex;gap:20px;background:#f5f5f5;padding:10px 14px;border-radius:6px;margin-bottom:24px;font-size:12.5px"><div><b>Gesamt:</b> ${fmt(totW)} Std.</div><div><b>Tage:</b> ${me.length}</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:30px">
       <div style="border-top:1px solid #999;padding-top:6px;font-size:11px">Datum, Unterschrift Arbeitgeber:in</div>
       <div style="border-top:1px solid #999;padding-top:6px;font-size:11px">Datum, Unterschrift Arbeitnehmer:in</div>
