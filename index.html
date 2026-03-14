@@ -2076,7 +2076,7 @@ function renderMonthView(){
   const saldo=totW-totS;
   document.getElementById('mv-summary-card').style.display='block';
   document.getElementById('mv-summary').innerHTML=`
-    <div><div class="sc-l">Arbeitstage</div><div class="sc-v">${filtered.length}</div></div>
+    <div><div class="sc-l">Arbeitstage im Monat</div><div class="sc-v">${wDays(new Date(y,m-1,1).toISOString().slice(0,10), new Date(y,m,0).toISOString().slice(0,10))}</div></div>
     <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
     <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
     <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)'  :'var(--rd)'}">${saldo>=0?'+':''  }${fmt(saldo)}</div></div>`;
