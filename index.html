@@ -2085,7 +2085,10 @@ function renderMonthView(){
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge</td></tr>';document.getElementById('mv-summary-card').style.display='none';return;}
   const tl={normal:'Büro',homeoffice:'🏠 HO'};
   const totW=filtered.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
-  const totS=filtered.reduce((s,e)=>s+getSollMin(e.empId,e.date),0);
+  // Soll über alle Arbeitstage des Monats — gleiche Logik wie Mehrstunden-Seite
+  // Für jeden betroffenen Mitarbeiter getMonthSoll aufrufen
+  const empIdsInView=[...new Set(filtered.map(e=>e.empId))];
+  const totS=empIdsInView.reduce((s,eid)=>s+getMonthSoll(eid,mv),0);
   const saldo=totW-totS;
   document.getElementById('mv-summary-card').style.display='block';
   document.getElementById('mv-summary').innerHTML=`
