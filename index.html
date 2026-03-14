@@ -593,6 +593,16 @@ tr:hover td{background:#faf8f5}
     <div id="aliquot-info" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#b35c00;margin-top:-6px"></div>
     <div class="fr c2"><div><label>🔑 Neues Passwort setzen</label><input type="password" id="ee-password" placeholder="Leer lassen = nicht ändern" autocomplete="new-password"></div><div style="display:flex;align-items:flex-end;padding-bottom:4px"><span class="tm ts">Nur ausfüllen wenn du das Passwort ändern möchtest</span></div></div>
   </div>
+  <!-- STUNDENHISTORIE -->
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📅 Stundenhistorie <span style="font-size:11px;font-weight:400;color:var(--ink3)">— nur bei Änderung eintragen</span></div>
+    <div id="ee-hh-list" style="margin-bottom:10px;font-size:12.5px"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div><label style="font-size:12px;display:block;margin-bottom:3px">Gültig ab</label><input type="date" id="ee-hh-from" style="font-size:12.5px;padding:5px 8px;border:1px solid var(--bd);border-radius:6px"></div>
+      <div><label style="font-size:12px;display:block;margin-bottom:3px">Std/Woche</label><input type="number" id="ee-hh-hours" min="1" max="60" step="0.5" style="width:75px;font-size:12.5px;padding:5px 8px;border:1px solid var(--bd);border-radius:6px"></div>
+      <button class="btn btn-p btn-sm" onclick="addHoursHistory()">+ Hinzufügen</button>
+    </div>
+  </div>
   <div class="mf"><button class="btn btn-s" onclick="closeM('mo-edit-emp')">Abbrechen</button><button class="btn btn-p" onclick="saveEmployee()">Speichern</button></div>
 </div></div>
 
@@ -931,13 +941,21 @@ const holidayName = d => AT_HOLIDAYS_2026[d] || '';
 // ══ HELPERS ══
 
 // Soll-Minuten für einen Tag (0 an Feiertagen, 1/5 der Wochenstunden sonst)
+// Stundenhistorie — wird beim Login aus Supabase geladen
+let hoursHistory = []; // [{empId, validFrom, hours}]
+
 const getSollMin = (empId, dateStr) => {
   if(isHoliday(dateStr)) return 0;
   const d = new Date(dateStr);
   if(d.getDay()===0||d.getDay()===6) return 0; // Wochenende
   const emp = employees.find(e=>e.id===empId);
   if(!emp) return 480; // default 8h
-  return Math.round((emp.hours / 5) * 60);
+  // Prüfe ob es einen historischen Eintrag gibt der für dieses Datum gilt
+  const relevant = hoursHistory
+    .filter(h=>h.empId===empId && h.validFrom<=dateStr)
+    .sort((a,b)=>b.validFrom.localeCompare(a.validFrom)); // neueste zuerst
+  const hours = relevant.length > 0 ? relevant[0].hours : emp.hours;
+  return Math.round((hours / 5) * 60);
 };
 
 const empName = id => { const e=employees.find(x=>x.id==id); return e?`${e.first} ${e.last}`:'–'; };
@@ -1785,7 +1803,50 @@ function addEmployee(){
   closeM('mo-add-emp');['ne-first','ne-last','ne-role','ne-email','ne-contract'].forEach(id=>document.getElementById(id).value='');
   populateSelects();renderEmployees();
 }
+// ══ STUNDENHISTORIE ══
+function renderHoursHistoryList(empId){
+  const list = hoursHistory.filter(h=>h.empId===empId).sort((a,b)=>a.validFrom.localeCompare(b.validFrom));
+  const el = document.getElementById('ee-hh-list');
+  if(!el) return;
+  if(!list.length){
+    el.innerHTML = '<span style="color:var(--ink3);font-size:12px">Keine Einträge — aktuelle Stunden aus Mitarbeiterprofil wird verwendet.</span>';
+    return;
+  }
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
+    '<thead><tr style="background:var(--sf2)"><th style="padding:4px 8px;text-align:left">Gültig ab</th><th style="padding:4px 8px;text-align:left">Std/Woche</th><th></th></tr></thead>' +
+    '<tbody>' + list.map(h=>`<tr style="border-bottom:1px solid var(--bd)">
+      <td style="padding:4px 8px">${h.validFrom}</td>
+      <td style="padding:4px 8px"><b>${h.hours}h</b></td>
+      <td style="padding:4px 8px"><button class="btn btn-d btn-sm" onclick="deleteHoursHistory(${h.id})">✕</button></td>
+    </tr>`).join('') + '</tbody></table>';
+}
+
+async function addHoursHistory(){
+  const empId = parseInt(document.getElementById('ee-id').value);
+  const from = document.getElementById('ee-hh-from').value;
+  const hours = parseFloat(document.getElementById('ee-hh-hours').value);
+  if(!empId||!from||!hours){alert('Bitte Datum und Stunden angeben.');return;}
+  // In Supabase speichern
+  const {data,error} = await sb.from('employee_hours_history').insert({emp_id:empId, valid_from:from, hours}).select().single();
+  if(error){showDbError('Fehler: '+error.message);return;}
+  hoursHistory.push({id:data.id, empId, validFrom:from, hours});
+  document.getElementById('ee-hh-from').value='';
+  document.getElementById('ee-hh-hours').value='';
+  renderHoursHistoryList(empId);
+  alert(`✅ Eingetragen: ${hours}h/Woche ab ${from}`);
+}
+
+async function deleteHoursHistory(id){
+  if(!confirm('Eintrag löschen?')) return;
+  const {error} = await sb.from('employee_hours_history').delete().eq('id',id);
+  if(error){showDbError('Fehler: '+error.message);return;}
+  hoursHistory = hoursHistory.filter(h=>h.id!==id);
+  const empId = parseInt(document.getElementById('ee-id').value);
+  renderHoursHistoryList(empId);
+}
+
 function editEmp(id){const e=employees.find(x=>x.id===id);if(!e)return;['id','first','last','role','email','model','hours','vacation','carry','contract','birthday'].forEach(k=>{const el=document.getElementById('ee-'+k);if(el)el.value=e[k]||'';});
+  renderHoursHistoryList(id);
   const s2=document.getElementById('ee-start2');if(s2)s2.value=e.start||'';
   const ex=document.getElementById('ee-exit');if(ex)ex.value=e.exit||'';
   document.getElementById('aliquot-info').style.display='none';
@@ -2502,18 +2563,21 @@ async function sbGetSession() {
 async function loadFromSupabase() {
   showLoadingOverlay('Verbinde mit Datenbank...');
   try {
-    const [empRes, entRes, absRes, moodRes, noteRes, approvalRes] = await Promise.all([
+    const [empRes, entRes, absRes, moodRes, noteRes, approvalRes, hoursHistRes] = await Promise.all([
       sb.from('employees').select('*').eq('active', true).order('first'),
       sb.from('entries').select('*').order('date'),
       sb.from('absences').select('*').order('from_date'),
       sb.from('mood_log').select('*'),
       sb.from('day_notes').select('*'),
       sb.from('month_approvals').select('*'),
+      sb.from('employee_hours_history').select('*').order('valid_from'),
     ]);
 
     if (empRes.error) throw empRes.error;
     if (entRes.error) throw entRes.error;
     if (absRes.error) throw absRes.error;
+    // hoursHistory laden (kein harter Fehler wenn Tabelle noch nicht existiert)
+    hoursHistory = (hoursHistRes.data||[]).map(h=>({empId:h.emp_id, validFrom:h.valid_from, hours:parseFloat(h.hours)}));
 
     // Map DB columns to app format
     employees = empRes.data.map(e => ({
