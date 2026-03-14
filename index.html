@@ -1468,7 +1468,7 @@ function renderDashboard(){
     <div class="sc"><div class="sc-l">Wochenstunden</div><div class="sc-v tmono">${fmt(wH)}</div></div>
     <div class="sc"><div class="sc-l">Offene Ansuchen</div><div class="sc-v" style="color:${pending.length?'var(--or)':'var(--gr)'}">${pending.length}</div><div class="sc-s">zu bearbeiten</div></div>`;
   const aH=Object.entries(activeStamps).map(([id,s])=>`<div class="flex" style="padding:7px 0;border-bottom:1px solid var(--bd)"><div class="dot on"></div><b>${empName(parseInt(id))}</b><span class="tm ts">seit ${s.t}</span></div>`).join('');
-  document.getElementById('db-active').innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
+  const dbActive=document.getElementById('db-active');if(dbActive)dbActive.innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
   const tw=entries.filter(e=>e.date===TODAY).flatMap(e=>{const w=calcWork(e.start,e.end,e.breakMin);return azgCheck(w,e.breakMin).map(x=>({name:empName(e.empId),...x}));});
     document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
   document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.type==='homeoffice'?'<span class="badge" style="background:#e1bee7;color:#4a148c">🏠 Homeoffice</span>':a.type==='urlaub'?'<span class="badge bg-gr">🌴 Urlaub</span>':a.type==='zeitausgleich'?'<span class="badge bg-bl">🔄 ZA</span>':'<span class="badge bg-gy">'+(absTypeLabel[a.type]||a.type)+'</span>'}</td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
@@ -2555,7 +2555,7 @@ function renderDayNote(){
   const box = document.getElementById('day-note-box');
   if(!box) return;
   const saved = (typeof Storage !== 'undefined') ? (localStorage.getItem('nbs_daynote_'+TODAY)||'') : '';
-  document.getElementById('day-note-input').value = saved;
+  const _dni=document.getElementById('day-note-input');if(_dni)_dni.value=saved;
 }
 
 async function saveDayNote(){
