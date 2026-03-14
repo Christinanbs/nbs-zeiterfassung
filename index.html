@@ -2298,18 +2298,21 @@ function renderOT(){
   function getMonthSoll(empId, monthKey){
     const[y,m]=monthKey.split('-').map(Number);
     const firstDay=new Date(y,m-1,1);
-    const lastDay=new Date(y,m,0);
+    const lastDayOfMonth=new Date(y,m,0);
 
-    // Sammle alle genehmigten Abwesenheitstage für diesen Mitarbeiter in diesem Monat
-    // (Urlaub, Krankenstand, Zeitausgleich, Sonderurlaub etc.)
+    // Für den laufenden Monat: nur bis heute rechnen, nicht bis Monatsende
+    const today=new Date(TODAY);
+    const isCurrentMonth=(y===today.getFullYear()&&m===today.getMonth()+1);
+    const lastDay=isCurrentMonth?today:lastDayOfMonth;
+
+    // Sammle alle genehmigten Abwesenheitstage (außer Homeoffice)
     const absentDays=new Set();
     absences.forEach(a=>{
       if(a.empId!==empId)return;
-      if(a.status==='abgelehnt')return; // abgelehnte zählen nicht
-      if(a.type==='homeoffice')return;  // Homeoffice = normaler Arbeitstag, kein Soll-Abzug
-      // Alle Tage der Abwesenheit durchgehen
+      if(a.status==='abgelehnt')return;
+      if(a.type==='homeoffice')return; // Homeoffice = normaler Arbeitstag
       datesBetween(a.from,a.to).forEach(d=>{
-        if(d>=monthKey+'-01' && d<=monthKey+'-31') absentDays.add(d);
+        if(d>=monthKey+'-01'&&d<=lastDay.toISOString().slice(0,10)) absentDays.add(d);
       });
     });
 
@@ -2318,9 +2321,8 @@ function renderOT(){
     while(d<=lastDay){
       const ds=d.toISOString().slice(0,10);
       if(!absentDays.has(ds)){
-        soll+=getSollMin(empId,ds); // gibt 0 für Feiertage und Wochenenden
+        soll+=getSollMin(empId,ds); // 0 für Feiertage + Wochenenden
       }
-      // An Abwesenheitstagen: kein Soll (Urlaub, KS, ZA etc.)
       d.setDate(d.getDate()+1);
     }
     return soll;
