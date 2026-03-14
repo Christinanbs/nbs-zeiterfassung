@@ -1625,7 +1625,6 @@ function renderOTWarningDashboard(){
       const sollMin=getSollMin(a.empId,d);
       if(!saldoMap[a.empId])saldoMap[a.empId]=0;
       saldoMap[a.empId]-=sollMin;
-      saldoMap[a.empId]=Math.max(0,saldoMap[a.empId]); // nie negativ
     });
   });
 
@@ -2285,8 +2284,8 @@ function renderOT(){
   const rows=Object.values(groups).map(g=>{
     const ist=g.mins.reduce((s,m)=>s+m,0);
     const soll=g.solls.reduce((s,m)=>s+m,0);
-    const mehr=Math.max(0,ist-soll);
-    return{...g,soll,ist,ot,mehr};
+    const mehr=ist-soll; // kann negativ sein (Minusstunden)
+    return{...g,soll,ist,mehr};
   }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
 
   // Kumuliertes Überstunden-Saldo pro Mitarbeiter (letzte 3 Monate)
@@ -2315,7 +2314,7 @@ function renderOT(){
   // Warnungen ausgeben
   const warnBox=document.getElementById('ot-warnings');
   const warns=Object.entries(saldoMap)
-    .filter(([id,min])=>min>=OT_WARN_MIN)
+    .filter(([id,min])=>min>=OT_WARN_MIN) // nur bei positivem Saldo warnen
     .map(([id,min])=>{
       const h=Math.floor(min/60),m=min%60;
       return '<div class="alert aw" style="margin-bottom:8px"><span>⚠️</span><b>'+empName(parseInt(id))+'</b> hat '+h+'h'+( m?m+'min':'')+' offener Saldo — bitte Zeitausgleich einplanen!</div>';
@@ -2324,7 +2323,7 @@ function renderOT(){
 
   const totMehr=rows.reduce((s,r)=>s+r.mehr,0);
   document.getElementById('ot-stats').innerHTML=
-    '<div class="sc"><div class="sc-l">Offener Saldo</div><div class="sc-v tmono">'+fmt(Math.max(0,Object.values(saldoMap).reduce((s,v)=>s+v,0)))+'</div><div class="sc-s">nach ZA-Abzug</div></div>'+
+    '<div class="sc"><div class="sc-l">Offener Saldo</div><div class="sc-v tmono">'+((Object.values(saldoMap).reduce((s,v)=>s+v,0))>0?'+':'')+fmt(Object.values(saldoMap).reduce((s,v)=>s+v,0))+'</div><div class="sc-s">nach ZA-Abzug</div></div>'+
     '<div class="sc"><div class="sc-l">Warnungen</div><div class="sc-v" style="color:'+(warns.length?'var(--rd)':'var(--gr)')+'">'+warns.length+'</div></div>'+
     '<div class="sc"><div class="sc-l">Zeitraum</div><div class="sc-v" style="font-size:13px;font-weight:600">Letzte 3 Monate</div></div>';
 
@@ -2335,8 +2334,8 @@ function renderOT(){
       '<td>'+r.month+'</td>'+
       '<td class="tmono">'+fmt(r.soll)+'</td>'+
       '<td class="tmono">'+fmt(r.ist)+'</td>'+
-      '<td class="tmono" style="color:'+(r.mehr>=OT_WARN_MIN?'var(--rd)':'inherit')+';font-weight:'+(r.mehr>=OT_WARN_MIN?600:400)+'">'+fmt(r.mehr)+'</td>'+
-      '<td class="tmono" style="color:'+(saldoMap[r.empId]>=OT_WARN_MIN?'var(--rd)':saldoMap[r.empId]>0?'var(--ac)':'var(--gr)')+';font-weight:600">'+fmt(Math.max(0,saldoMap[r.empId]||0))+'</td>'+
+      '<td class="tmono" style="color:'+(r.mehr<0?'var(--rd)':r.mehr>=OT_WARN_MIN?'var(--or)':'inherit')+';font-weight:'+(r.mehr!==0?600:400)+'">'+(r.mehr>0?'+':'')+fmt(r.mehr)+'</td>'+
+      '<td class="tmono" style="color:'+((saldoMap[r.empId]||0)<0?'var(--rd)':(saldoMap[r.empId]||0)>=OT_WARN_MIN?'var(--or)':'var(--gr)')+';font-weight:600">'+((saldoMap[r.empId]||0)>0?'+':'')+fmt(saldoMap[r.empId]||0)+'</td>'+
                 '</tr>';
   }).join('')||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink2)">✅ Kein offener Saldo in den letzten 3 Monaten</td></tr>';
 }
