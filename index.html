@@ -1027,8 +1027,8 @@ const empName = id => { const e=employees.find(x=>x.id==id); return e?`${e.first
 const pt = t => { if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*60+m; };
 const fmt = m => { const h=Math.floor(Math.abs(m)/60),mm=Math.abs(m)%60; return (m<0?'-':'')+h+':'+String(mm).padStart(2,'0'); };
 const calcWork = (s,e,b) => Math.max(0,pt(e)-pt(s)-b);
-const wDays = (f,t,excludeHolidays=true) => { let d=new Date(f),c=0,e=new Date(t); while(d<=e){const ds=d.toISOString().slice(0,10);if(d.getDay()&&d.getDay()<6&&!(excludeHolidays&&AT_HOLIDAYS_2026[ds]))c++; d.setDate(d.getDate()+1);} return c; };
-const absDays = (a) => a.halfDay ? 0.5 : absDays(a); // halber Urlaubstag = 0.5
+const wDays = (f,t,excludeHolidays=true) => { if(!f)return 0; const tf=t||f; let d=new Date(f+'T12:00:00'),c=0,e=new Date(tf+'T12:00:00'); while(d<=e){const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(d.getDay()&&d.getDay()<6&&!(excludeHolidays&&AT_HOLIDAYS_2026[ds]))c++; d.setDate(d.getDate()+1);} return c; };
+const absDays = (a) => { if(!a||!a.from) return 0; return a.halfDay ? 0.5 : wDays(a.from, a.to||a.from); }; // halber Urlaubstag = 0.5
 const datesBetween = (f,t) => { let d=new Date(f),res=[],e=new Date(t); while(d<=e){res.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);} return res; };
 const isAdmin = () => currentUser && currentUser.type==='admin';
 
@@ -2678,7 +2678,7 @@ async function loadFromSupabase() {
 
     absences = absRes.data.map(a => ({
       id: a.id, empId: a.emp_id, type: a.type,
-      from: a.from_date, to: a.to_date,
+      from: a.from_date, to: a.to_date||a.from_date,
       note: a.note || '', status: a.status, halfDay: a.half_day||false
     }));
 
