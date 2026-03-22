@@ -4,6 +4,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://nvhydcykjdifudokhsgs.supabase.co';
+const ALLIN_IDS = [2, 9]; // Thomas & Christina — All-In
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aHlkY3lramRpZnVkb2toc2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDY4MDksImV4cCI6MjA4ODQ4MjgwOX0.S9CLFkJNY6Im72BiyI0LcDdIXuGErDs8NDsAMbAlxJ0';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
@@ -2148,14 +2149,8 @@ function mvBuildEmpChips(){
 }
 
 function mvSelectEmp(id){
-  let hidden=document.getElementById('mv-emp');
-  if(!hidden){
-    hidden=document.createElement('input');
-    hidden.type='hidden'; hidden.id='mv-emp'; hidden.value='alle';
-    const box=document.getElementById('mv-emp-chips');
-    if(box) box.parentNode.insertBefore(hidden,box);
-  }
-  hidden.value=String(id);
+  const hidden=document.getElementById('mv-emp');
+  if(hidden)hidden.value=String(id);
   mvBuildEmpChips();
   renderMonthView();
 }
