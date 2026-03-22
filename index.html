@@ -261,7 +261,7 @@ tr:hover td{background:#faf8f5}
       </div>
       <div class="fr c3" style="margin-top:8px">
         <div><label>Pause (Min)</label><input type="number" id="m-break-db" value="30" min="0"></div>
-        <div><label>Typ</label><select id="m-type-db"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
+        <div><label>Typ</label><select id="m-type-db" onchange="toggleZA('m-db')"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
         <div><label>Notiz</label><input id="m-note-db" placeholder="optional…"></div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
@@ -369,7 +369,7 @@ tr:hover td{background:#faf8f5}
       </div>
       <div class="fr c3">
         <div><label>Pause (Min)</label><input type="number" id="m-break" value="30" min="0"></div>
-        <div><label>Typ</label><select id="m-type"><option value="normal">Normal</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
+        <div><label>Typ</label><select id="m-type" onchange="toggleZA('m')"><option value="normal">Normal</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
         <div><label>Notiz</label><input id="m-note" placeholder="Grund..."></div>
       </div>
       <button class="btn btn-p" onclick="addManual()">Eintragen</button>
@@ -1984,6 +1984,23 @@ function updateAliquotInfo() {
 }
 
 // ══ ABSENCES ══
+function toggleZA(prefix){
+  // prefix = 'm' oder 'm-db'
+  const typeId = prefix==='m' ? 'm-type' : 'm-type-db';
+  const startId = prefix==='m' ? 'm-start' : 'm-start-db';
+  const endId = prefix==='m' ? 'm-end' : 'm-end-db';
+  const breakId = prefix==='m' ? 'm-break' : 'm-break-db';
+  const isZA = document.getElementById(typeId)?.value === 'zeitausgleich';
+  if(isZA){
+    const startEl = document.getElementById(startId);
+    const endEl = document.getElementById(endId);
+    const breakEl = document.getElementById(breakId);
+    if(startEl) startEl.value = '00:00';
+    if(endEl) endEl.value = '00:00';
+    if(breakEl) breakEl.value = '0';
+  }
+}
+
 function toggleSonder(){
   const t=document.getElementById('ab-type').value;
   document.getElementById('sonder-wrap').style.display=t==='sonderurlaub'?'block':'none';
