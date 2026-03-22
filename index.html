@@ -4,7 +4,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://nvhydcykjdifudokhsgs.supabase.co';
-const ALLIN_IDS = [2, 9]; // Thomas & Christina — All-In
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aHlkY3lramRpZnVkb2toc2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDY4MDksImV4cCI6MjA4ODQ4MjgwOX0.S9CLFkJNY6Im72BiyI0LcDdIXuGErDs8NDsAMbAlxJ0';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 </script>
@@ -999,6 +998,18 @@ function getMonthSoll(empId, monthKey){
   // Wenn Einträge: bis zum letzten Eintrag
   let lastDay=lastEntryDate||null;
   if(!lastDay)return 0; // keine Einträge = kein Soll
+
+  // Urlaub/KS nach dem letzten Eintrag aber vor heute → lastDay erweitern
+  const SOLL_REDUZIERT_CHECK=['urlaub','krankenstand','sonderurlaub','urlaub_genossen'];
+  absences.forEach(a=>{
+    if(a.empId!==empId)return;
+    if(a.status==='abgelehnt')return;
+    if(!SOLL_REDUZIERT_CHECK.includes(a.type))return;
+    // Wenn Abwesenheit nach letztem Eintrag aber nicht in Zukunft
+    const absEnd=a.to||a.from;
+    const absEndCapped=absEnd<=todayStr?absEnd:todayStr;
+    if(absEndCapped>lastDay) lastDay=absEndCapped;
+  });
 
   // Austrittsdatum
   if(empExit&&empExit<lastDay)lastDay=empExit;
