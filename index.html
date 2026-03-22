@@ -476,14 +476,19 @@ tr:hover td{background:#faf8f5}
 <!-- MONATSÜBERSICHT -->
 <div id="page-monatsansicht" class="page">
   <div class="ph"><div><h2>Monatsübersicht</h2><p>Arbeitszeitnachweis</p></div>
-    <div class="flex" style="flex-wrap:wrap;gap:8px">
-      <input type="text" id="mv-search" placeholder="🔍 Mitarbeiter suchen…" oninput="renderMonthView()" style="width:180px">
-      <select id="mv-emp" onchange="renderMonthView()" style="width:180px"></select>
-      <input type="month" id="mv-month" onchange="renderMonthView()" style="width:150px">
+    <div class="flex" style="gap:8px;align-items:center">
+      <button class="btn btn-s btn-sm" onclick="mvMonthStep(-1)" style="padding:6px 12px;font-size:18px">‹</button>
+      <span id="mv-month-label" style="font-size:15px;font-weight:500;min-width:130px;text-align:center"></span>
+      <button class="btn btn-s btn-sm" onclick="mvMonthStep(1)" style="padding:6px 12px;font-size:18px">›</button>
+      <input type="month" id="mv-month" onchange="renderMonthView();mvUpdateLabel()" style="display:none">
       <button class="btn btn-p" id="mv-submit-btn" onclick="submitMonth()" style="display:none">📨 Monat einreichen</button>
       <button class="btn btn-p" id="mv-approve-btn" onclick="approveMonth()" style="display:none">✅ Freigeben</button>
       <button class="export-month-btn" id="mv-excel-btn" onclick="exportMonthExcel()" style="display:none">📊 Excel herunterladen</button>
     </div>
+  </div>
+  <!-- Mitarbeiter-Chips -->
+  <div id="mv-emp-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 20px 4px">
+    <input type="hidden" id="mv-emp" value="alle">
   </div>
   <div id="mv-approval-banner" style="display:none;margin-bottom:14px"></div>
   <div id="mv-signed-banner" style="display:none;margin-bottom:14px"></div>
@@ -1117,6 +1122,7 @@ function P(id){
     else if(n.textContent.includes('Stunden')&&id==='monatsansicht')n.classList.add('active');
   });
   // Filter month view for employees
+  if(id==='monatsansicht'){mvBuildEmpChips();mvUpdateLabel();}
   if(id==='monatsansicht'&&!isAdmin()){
     const sel=document.getElementById('mv-emp');
     if(sel&&currentUser.empId)sel.value=currentUser.empId;
@@ -1147,7 +1153,7 @@ function populateSelects(){
     employees.filter(e=>e.active).forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=`${e.first} ${e.last}`;el.appendChild(o);});
     if(v)el.value=v;
   });
-  ['mv-emp','ot-emp','exp-emp','xls-emp','abs-emp-filter'].forEach(sid=>{
+  ['ot-emp','exp-emp','xls-emp','abs-emp-filter'].forEach(sid=>{
     const el=document.getElementById(sid);if(!el)return;
     el.innerHTML='<option value="alle">Alle Mitarbeiter</option>';
     employees.filter(e=>e.active).forEach(e=>{const o=document.createElement('option');o.value=e.id;o.textContent=`${e.first} ${e.last}`;el.appendChild(o);});
@@ -2074,15 +2080,71 @@ function renderVacation(){
   }).join('');
 }
 
+// ══ MONATSÜBERSICHT NAVIGATION ══
+function mvInit(){
+  // Setze aktuellen Monat als Standard
+  const now=new Date();
+  const mv=document.getElementById('mv-month');
+  if(mv&&!mv.value){
+    mv.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  }
+  mvUpdateLabel();
+  mvBuildEmpChips();
+}
+
+function mvUpdateLabel(){
+  const mv=document.getElementById('mv-month');
+  const label=document.getElementById('mv-month-label');
+  if(!mv||!label)return;
+  const [y,m]=mv.value.split('-').map(Number);
+  const names=['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  label.textContent=(names[m-1]||'')+' '+y;
+}
+
+function mvMonthStep(dir){
+  const mv=document.getElementById('mv-month');
+  if(!mv)return;
+  const [y,m]=mv.value.split('-').map(Number);
+  let nm=m+dir, ny=y;
+  if(nm>12){nm=1;ny++;}
+  if(nm<1){nm=12;ny--;}
+  mv.value=ny+'-'+String(nm).padStart(2,'0');
+  mvUpdateLabel();
+  renderMonthView();
+}
+
+function mvBuildEmpChips(){
+  const box=document.getElementById('mv-emp-chips');
+  if(!box)return;
+  const hidden=document.getElementById('mv-emp');
+  const active=hidden?hidden.value:'alle';
+  const list=isAdmin()?employees.filter(e=>e.active):[employees.find(e=>e.id===currentUser?.empId)].filter(Boolean);
+  const chips=[{id:'alle',label:'Alle'},...list.map(e=>({id:e.id,label:e.first+' '+e.last}))];
+  box.innerHTML=chips.map(ch=>`<button
+    onclick="mvSelectEmp(${JSON.stringify(ch.id)})"
+    style="padding:5px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--bd);
+    background:${String(active)===String(ch.id)?'var(--ac)':'var(--sf2)'};
+    color:${String(active)===String(ch.id)?'#fff':'var(--ink)'};
+    font-weight:${String(active)===String(ch.id)?'600':'400'}"
+  >${ch.label}</button>`).join('');
+}
+
+function mvSelectEmp(id){
+  const hidden=document.getElementById('mv-emp');
+  if(hidden)hidden.value=id;
+  mvBuildEmpChips();
+  renderMonthView();
+}
+
+
 // ══ MONTH VIEW ══
 function renderMonthView(){
   const empF=document.getElementById('mv-emp').value;
   const mv=document.getElementById('mv-month').value;if(!mv)return;
-  const search=(document.getElementById('mv-search')?.value||'').toLowerCase().trim();
   const[y,m]=mv.split('-').map(Number);
   let filtered=entries.filter(e=>{const d=new Date(e.date);return d.getFullYear()===y&&d.getMonth()+1===m&&(empF==='alle'||e.empId==empF);});
   if(!isAdmin()&&currentUser.empId)filtered=filtered.filter(e=>e.empId===currentUser.empId);
-  if(search)filtered=filtered.filter(e=>empName(e.empId).toLowerCase().includes(search));
+;
   filtered.sort((a,b)=>a.date.localeCompare(b.date));
 
   // Approval status
@@ -2950,7 +3012,7 @@ async function initApp() {
   currentUser = matchedUser;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').style.display = 'block';
-  buildNav(); populateSelects();
+  buildNav(); populateSelects(); mvInit();
   const initPage = isAdmin() ? 'dashboard' : 'emp-dashboard';
   P(initPage);
   startClock();
