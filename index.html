@@ -620,6 +620,9 @@ tr:hover td{background:#faf8f5}
         <option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option>
         <option value="sonderurlaub">⭐ Sonderurlaub</option>
       </select></div>
+      <div id="za-hinweis" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:8px 12px;font-size:12.5px;color:#856404;margin-top:6px">
+        ⚠️ <b>Wichtig:</b> Für die korrekte Stundenberechnung müssen ZA-Tage zusätzlich als <b>Stunden-Eintrag</b> mit Typ "Zeitausgleich" eingetragen werden!
+      </div>
       <div id="sonder-wrap" style="display:none">
         <label>Sonderurlaub-Grund <span style="font-size:11px;color:var(--gr);font-weight:400">✓ wird NICHT vom Urlaubskonto abgezogen</span></label>
         <select id="ab-sonder">
@@ -2009,6 +2012,8 @@ function toggleZA(prefix){
 function toggleSonder(){
   const t=document.getElementById('ab-type').value;
   document.getElementById('sonder-wrap').style.display=t==='sonderurlaub'?'block':'none';
+  const zaHinweis=document.getElementById('za-hinweis');
+  if(zaHinweis) zaHinweis.style.display=t==='zeitausgleich'?'block':'none';
   const hw=document.getElementById('half-day-wrap');
   if(hw)hw.style.display=t==='urlaub'?'block':'none';
   // Halber Tag: Bis-Datum sperren (gleich wie Von)
