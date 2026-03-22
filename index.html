@@ -1122,7 +1122,7 @@ function P(id){
     else if(n.textContent.includes('Stunden')&&id==='monatsansicht')n.classList.add('active');
   });
   // Filter month view for employees
-  if(id==='monatsansicht'){mvBuildEmpChips();mvUpdateLabel();}
+  if(id==='monatsansicht'){mvBuildEmpChips();mvUpdateLabel();renderMonthView();}
   if(id==='monatsansicht'&&!isAdmin()){
     const sel=document.getElementById('mv-emp');
     if(sel&&currentUser.empId)sel.value=currentUser.empId;
@@ -2090,6 +2090,7 @@ function mvInit(){
   }
   mvUpdateLabel();
   mvBuildEmpChips();
+  renderMonthView(); // Tabelle sofort befüllen
 }
 
 function mvUpdateLabel(){
