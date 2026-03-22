@@ -2148,8 +2148,14 @@ function mvBuildEmpChips(){
 }
 
 function mvSelectEmp(id){
-  const hidden=document.getElementById('mv-emp');
-  if(hidden)hidden.value=String(id);
+  let hidden=document.getElementById('mv-emp');
+  if(!hidden){
+    hidden=document.createElement('input');
+    hidden.type='hidden'; hidden.id='mv-emp'; hidden.value='alle';
+    const box=document.getElementById('mv-emp-chips');
+    if(box) box.parentNode.insertBefore(hidden,box);
+  }
+  hidden.value=String(id);
   mvBuildEmpChips();
   renderMonthView();
 }
