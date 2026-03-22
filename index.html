@@ -2145,8 +2145,8 @@ function mvSelectEmp(id){
 
 // ══ MONTH VIEW ══
 function renderMonthView(){
-  const empF=document.getElementById('mv-emp').value;
-  const mv=document.getElementById('mv-month').value;if(!mv)return;
+  const empF=(document.getElementById('mv-emp')?.value)||'alle';
+  const mv=document.getElementById('mv-month')?.value;if(!mv)return;
   const[y,m]=mv.split('-').map(Number);
   let filtered=entries.filter(e=>{const d=new Date(e.date);return d.getFullYear()===y&&d.getMonth()+1===m&&(empF==='alle'||e.empId==empF);});
   if(!isAdmin()&&currentUser.empId)filtered=filtered.filter(e=>e.empId===currentUser.empId);
