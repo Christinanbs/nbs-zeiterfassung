@@ -260,7 +260,7 @@ tr:hover td{background:#faf8f5}
       </div>
       <div class="fr c3" style="margin-top:8px">
         <div><label>Pause (Min)</label><input type="number" id="m-break-db" value="30" min="0"></div>
-        <div><label>Typ</label><select id="m-type-db"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option></select></div>
+        <div><label>Typ</label><select id="m-type-db"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
         <div><label>Notiz</label><input id="m-note-db" placeholder="optional…"></div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
@@ -302,7 +302,7 @@ tr:hover td{background:#faf8f5}
         <div><label>Pause (Min)</label><input type="number" id="emp-m-break" value="30" min="0"></div>
       </div>
       <div class="fr c3" style="margin-top:8px">
-        <div><label>Typ</label><select id="emp-m-type"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option></select></div>
+        <div><label>Typ</label><select id="emp-m-type"><option value="normal">Büro</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
         <div><label>Notiz</label><input id="emp-m-note" placeholder="optional…"></div>
         <div style="display:flex;align-items:flex-end"><button class="btn btn-p" style="width:100%" onclick="addManualEmp()">✅ Eintragen</button></div>
       </div>
@@ -368,7 +368,7 @@ tr:hover td{background:#faf8f5}
       </div>
       <div class="fr c3">
         <div><label>Pause (Min)</label><input type="number" id="m-break" value="30" min="0"></div>
-        <div><label>Typ</label><select id="m-type"><option value="normal">Normal</option><option value="homeoffice">🏠 Homeoffice</option></select></div>
+        <div><label>Typ</label><select id="m-type"><option value="normal">Normal</option><option value="homeoffice">🏠 Homeoffice</option><option value="zeitausgleich">🔄 Zeitausgleich</option></select></div>
         <div><label>Notiz</label><input id="m-note" placeholder="Grund..."></div>
       </div>
       <button class="btn btn-p" onclick="addManual()">Eintragen</button>
@@ -506,7 +506,7 @@ tr:hover td{background:#faf8f5}
   <div id="ot-warnings"></div>
   <div class="sr" id="ot-stats"></div>
   <div class="card"><div class="cb" style="padding:0">
-    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>Monatssaldo</th><th>Kumulierter Saldo</th></tr></thead>
+    <table><thead><tr><th>Mitarbeiter</th><th>Monat</th><th>Soll</th><th>Ist</th><th>ZA-Konsum</th><th>Monatssaldo</th><th>Kumulierter Saldo</th></tr></thead>
     <tbody id="ot-tbody"></tbody></table>
   </div></div>
 </div>
@@ -587,7 +587,7 @@ tr:hover td{background:#faf8f5}
     <div class="fr c2"><div><label>Vorname</label><input id="ee-first"></div><div><label>Nachname</label><input id="ee-last"></div></div>
     <div class="fr c2"><div><label>Funktion</label><input id="ee-role"></div><div><label>E-Mail</label><input type="email" id="ee-email"></div></div>
     <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
-    <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div><div><label>⏱️ ZA-Übertrag VJ (Std)</label><input type="number" id="ee-za-carry" step="0.5"></div></div>
+    <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div><div><label>⏱️ ZA-Übertrag VJ (Std) <span style="font-size:11px;color:var(--ink3);font-weight:400">negativ = Minusstunden</span></label><input type="number" id="ee-za-carry" step="0.5"></div></div>
     <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
     <div class="fr c2"><div><label>📅 Eintrittsdatum</label><input type="date" id="ee-start2"></div><div><label>🚪 Austrittsdatum <span style="font-weight:400;color:var(--ink3)">(optional)</span></label><input type="date" id="ee-exit" onchange="updateAliquotInfo()"></div></div>
     <div id="aliquot-info" style="display:none;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:9px 12px;font-size:12.5px;color:#b35c00;margin-top:-6px"></div>
@@ -629,6 +629,12 @@ tr:hover td{background:#faf8f5}
       </div>
     </div>
     <div class="fr c2"><div><label>Von *</label><input type="date" id="ab-from"></div><div><label>Bis</label><input type="date" id="ab-to"></div></div>
+    <div class="fr" id="half-day-wrap" style="display:none">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px">
+        <input type="checkbox" id="ab-half-day" style="width:16px;height:16px;cursor:pointer">
+        <span>🌗 Halber Tag <span style="font-size:11px;color:var(--ink3);font-weight:400">(wird als 0.5 Urlaubstag abgezogen)</span></span>
+      </label>
+    </div>
     <div class="fr c2">
       <div><label>Status</label><select id="ab-status"><option value="genehmigt">✅ Genehmigt</option><option value="urlaub_genossen">✔️ Erholt!</option><option value="beantragt">⏳ Beantragt</option><option value="abgelehnt">❌ Abgelehnt</option></select></div>
       <div><label>Notiz</label><input id="ab-note" placeholder="Optional…"></div>
@@ -700,6 +706,7 @@ tr:hover td{background:#faf8f5}
           <select id="ee-type">
             <option value="normal">Büro</option>
             <option value="homeoffice">🏠 Homeoffice</option>
+            <option value="zeitausgleich">🔄 Zeitausgleich</option>
           </select>
         </div>
         <div><label>Notiz</label><input type="text" id="ee-note" placeholder="Optional…"></div>
@@ -986,23 +993,31 @@ function getMonthSoll(empId, monthKey){
 
   // Abwesenheiten: nur Urlaub/KS reduzieren das Soll, ZA nicht!
   const SOLL_REDUZIERT=['urlaub','krankenstand','sonderurlaub','urlaub_genossen'];
+  // absentDays: volle Tage; absentHalfDays: halbe Tage (0.5 Abzug)
   const absentDays=new Set();
+  const absentHalfDays=new Set();
   absences.forEach(a=>{
     if(a.empId!==empId)return;
     if(a.status==='abgelehnt')return;
     if(!SOLL_REDUZIERT.includes(a.type))return;
     datesBetween(a.from,a.to).forEach(d=>{
-      if(d>=firstDay&&d<=lastDay)absentDays.add(d);
+      if(d>=firstDay&&d<=lastDay){
+        if(a.halfDay) absentHalfDays.add(d);
+        else absentDays.add(d);
+      }
     });
   });
 
-  // Soll aufaddieren — rein String-basiert
+  // Soll aufaddieren — halbe Tage = 50% des Tages-Solls
   let soll=0;
-  let cur=new Date(firstDay+'T12:00:00'); // mittags um Timezone-Bugs zu vermeiden
+  let cur=new Date(firstDay+'T12:00:00');
   const endDate=new Date(lastDay+'T12:00:00');
   while(cur<=endDate){
     const ds=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
-    if(!absentDays.has(ds))soll+=getSollMin(empId,ds);
+    const tagSoll=getSollMin(empId,ds);
+    if(absentHalfDays.has(ds)) soll+=Math.round(tagSoll*0.5); // halber Tag
+    else if(!absentDays.has(ds)) soll+=tagSoll; // voller Tag
+    // absentDays: 0 Soll (voller Urlaub)
     cur.setDate(cur.getDate()+1);
   }
   return soll;
@@ -1013,6 +1028,7 @@ const pt = t => { if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*
 const fmt = m => { const h=Math.floor(Math.abs(m)/60),mm=Math.abs(m)%60; return (m<0?'-':'')+h+':'+String(mm).padStart(2,'0'); };
 const calcWork = (s,e,b) => Math.max(0,pt(e)-pt(s)-b);
 const wDays = (f,t,excludeHolidays=true) => { let d=new Date(f),c=0,e=new Date(t); while(d<=e){const ds=d.toISOString().slice(0,10);if(d.getDay()&&d.getDay()<6&&!(excludeHolidays&&AT_HOLIDAYS_2026[ds]))c++; d.setDate(d.getDate()+1);} return c; };
+const absDays = (a) => a.halfDay ? 0.5 : absDays(a); // halber Urlaubstag = 0.5
 const datesBetween = (f,t) => { let d=new Date(f),res=[],e=new Date(t); while(d<=e){res.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);} return res; };
 const isAdmin = () => currentUser && currentUser.type==='admin';
 
@@ -1339,7 +1355,7 @@ function renderTodayTable(){
   if(isAdmin()||true){Object.entries(activeStamps).forEach(([eid,s])=>{if(empFilter!==null&&parseInt(eid)!==empFilter)return;rows.push({empId:parseInt(eid),start:s.t,end:'–',breakMin:s.pauseMin||0,workMin:null,active:true,warns:[],type:'normal'});});}
   todayE.forEach(e=>{const wm=calcWork(e.start,e.end,e.breakMin);rows.push({empId:e.empId,start:e.start,end:e.end,breakMin:e.breakMin,workMin:wm,active:false,warns:azgCheck(wm,e.breakMin),type:e.type,manual:e.manual,id:e.id});});
   if(!rows.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--ink2)">Noch keine Einträge heute</td></tr>';return;}
-  const tl={normal:'Büro',homeoffice:'🏠 HO'};
+  const tl={normal:'Büro',homeoffice:'🏠 HO','zeitausgleich':'🔄 ZA'};
   tbody.innerHTML=rows.map(r=>{
     const wh=r.active?'<span class="badge bg-bl">● Aktiv</span>':(r.warns.length?r.warns.map(w=>`<span class="badge bg-${w.l==='danger'?'rd':'or'}" title="${w.msg}">⚠️</span>`).join(''):'<span class="badge bg-gr">✓ OK</span>');
     const del=(!r.active&&isAdmin())?`<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteEntry(${r.id})">✕</button>`:'';
@@ -1521,7 +1537,7 @@ function renderDashboard(){
   const _dbActive=document.getElementById('db-active');if(_dbActive)_dbActive.innerHTML=aH||'<div class="empty">😴 Niemand aktiv</div>';
   const tw=entries.filter(e=>e.date===TODAY).flatMap(e=>{const w=calcWork(e.start,e.end,e.breakMin);return azgCheck(w,e.breakMin).map(x=>({name:empName(e.empId),...x}));});
     document.getElementById('pending-count').innerHTML=pending.length?`<span class="badge bg-or">${pending.length} offen</span>`:'';
-  document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.type==='homeoffice'?'<span class="badge" style="background:#e1bee7;color:#4a148c">🏠 Homeoffice</span>':a.type==='urlaub'?'<span class="badge bg-gr">🌴 Urlaub</span>':a.type==='zeitausgleich'?'<span class="badge bg-bl">🔄 ZA</span>':'<span class="badge bg-gy">'+(absTypeLabel[a.type]||a.type)+'</span>'}</td><td>${a.from}</td><td>${a.to}</td><td>${wDays(a.from,a.to)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
+  document.getElementById('db-pending').innerHTML=pending.length?`<table><thead><tr><th>Mitarbeiter</th><th>Art</th><th>Von</th><th>Bis</th><th>Tage</th><th>Notiz</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td><b>${empName(a.empId)}</b></td><td>${a.type==='homeoffice'?'<span class="badge" style="background:#e1bee7;color:#4a148c">🏠 Homeoffice</span>':a.type==='urlaub'?'<span class="badge bg-gr">🌴 Urlaub</span>':a.type==='zeitausgleich'?'<span class="badge bg-bl">🔄 ZA</span>':'<span class="badge bg-gy">'+(absTypeLabel[a.type]||a.type)+'</span>'}</td><td>${a.from}</td><td>${a.to}</td><td>${absDays(a)} AT</td><td>${a.note||'–'}</td><td><button class="btn btn-p btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty" style="padding:16px">✅ Keine offenen Ansuchen</div>';
   if(isAdmin())renderMoodOverview();
   renderCelebrations();
   if(isAdmin())renderVacationWarnings();
@@ -1562,7 +1578,7 @@ function renderEmpDashboard(){
   const monthSaldo=monthH-monthSoll;
   const vacYear=String(now.getFullYear());
   const total=emp.carry+emp.vacation; // Feiertage zählen nie als Urlaub
-  const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(vacYear)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+  const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(vacYear)).reduce((s,a)=>s+absDays(a),0);
   document.getElementById('emp-db-stats').innerHTML=`
     <div class="sc"><div class="sc-l">Stunden ${month}</div><div class="sc-v tmono">${fmt(monthH)}</div></div>
     <div class="sc"><div class="sc-l">Saldo ${month}</div><div class="sc-v tmono" style="color:${monthSaldo>=0?'var(--gr)':'var(--rd)'}">${monthSaldo>=0?'+':''}${fmt(monthSaldo)}</div></div>
@@ -1604,8 +1620,8 @@ function checkOverlap(){
     const emp=employees.find(e=>e.id===currentUser.empId);
     if(emp){
       const now=new Date(),total=emp.carry+emp.vacation;
-      const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+wDays(a.from,a.to),0);
-      const pendingVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&a.status==='beantragt'&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+wDays(a.from,a.to),0);
+      const usedVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+absDays(a),0);
+      const pendingVac=absences.filter(a=>a.empId===emp.id&&a.type==='urlaub'&&a.status==='beantragt'&&a.from.startsWith(now.getFullYear())).reduce((s,a)=>s+absDays(a),0);
       const restAfterPending=total-usedVac-pendingVac;
       const req=from?wDays(from,to||from):0;
       const restAfterReq=restAfterPending-req;
@@ -1768,7 +1784,7 @@ function openApprove(id){
       <div><div class="sc-l">Mitarbeiter</div><div style="font-weight:600;font-size:14px">${empName(a.empId)}</div></div>
       <div><div class="sc-l">Art</div><div>${absTypeLabel[a.type]||a.type}</div></div>
       <div><div class="sc-l">Zeitraum</div><div class="tmono">${a.from} – ${a.to}</div></div>
-      <div><div class="sc-l">Arbeitstage</div><div class="tmono"><b>${wDays(a.from,a.to)} Tage</b></div></div>
+      <div><div class="sc-l">Arbeitstage</div><div class="tmono"><b>${absDays(a)} Tage</b></div></div>
     </div>
     ${a.note?`<div style="background:var(--sf2);padding:10px 12px;border-radius:7px;font-size:13px;margin-bottom:12px"><b>Notiz:</b> ${a.note}</div>`:''}`;
   openM('mo-approve');
@@ -1954,7 +1970,15 @@ function updateAliquotInfo() {
 }
 
 // ══ ABSENCES ══
-function toggleSonder(){document.getElementById('sonder-wrap').style.display=document.getElementById('ab-type').value==='sonderurlaub'?'block':'none';}
+function toggleSonder(){
+  const t=document.getElementById('ab-type').value;
+  document.getElementById('sonder-wrap').style.display=t==='sonderurlaub'?'block':'none';
+  const hw=document.getElementById('half-day-wrap');
+  if(hw)hw.style.display=t==='urlaub'?'block':'none';
+  // Halber Tag: Bis-Datum sperren (gleich wie Von)
+  const halfCheck=document.getElementById('ab-half-day');
+  if(t!=='urlaub'&&halfCheck)halfCheck.checked=false;
+}
 function filterAbs(type,el){document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderAbsences(type);}
 
 function renderAbsences(filter){
@@ -1993,12 +2017,12 @@ function renderAbsences(filter){
   const statusIcon={genehmigt:'✅',beantragt:'⏳',abgelehnt:'❌',urlaub_genossen:'✔️'};
   tbody.innerHTML=list.map(a=>`<tr>
     <td><b>${empName(a.empId)}</b></td><td>${absTypeLabel[a.type]||a.type}</td>
-    <td>${a.from}</td><td>${a.to}</td><td class="tmono">${wDays(a.from,a.to)} AT</td>
+    <td>${a.from}</td><td>${a.to}</td><td class="tmono">${absDays(a)} AT</td>
     <td>${a.note||'–'}</td><td><span class="badge ${absBadge[a.status]||'bg-gy'}">${statusIcon[a.status]||''} ${absStatusLabel[a.status]||a.status}</span></td>
     <td><div class="flex">${(a.status==='beantragt'||a.status==='genehmigt')&&isAdmin()?`<button class="btn btn-g btn-sm" onclick="openApprove(${a.id})">Bearbeiten</button>`:''}<button class="btn btn-d" style="padding:3px 8px;font-size:11px" onclick="deleteAbs(${a.id})">✕</button></div></td>
   </tr>`).join('');
   const counts={urlaub:0,krankenstand:0,homeoffice:0,zeitausgleich:0,sonderurlaub:0};
-  absences.filter(a=>a.status!=='abgelehnt'&&a.type!=='feiertag').forEach(a=>{if(counts[a.type]!==undefined)counts[a.type]+=wDays(a.from,a.to);});
+  absences.filter(a=>a.status!=='abgelehnt'&&a.type!=='feiertag').forEach(a=>{if(counts[a.type]!==undefined)counts[a.type]+=absDays(a);});
   document.getElementById('abs-summary').innerHTML=Object.entries(counts).map(([t,c])=>`<div class="sc"><div class="sc-l">${absTypeLabel[t]}</div><div class="sc-v">${c}</div><div class="sc-s">Arbeitstage</div></div>`).join('');
 }
 async function addAbsence(){
@@ -2008,7 +2032,14 @@ async function addAbsence(){
   const type=document.getElementById('ab-type').value;
   let note=document.getElementById('ab-note').value;
   if(type==='sonderurlaub')note=document.getElementById('ab-sonder').value+(note?' — '+note:'');
-  absences.push({id:nextAbsId++,empId,type,from,to,note,status:document.getElementById('ab-status').value});
+  const halfDay=type==='urlaub'&&(document.getElementById('ab-half-day')?.checked||false);
+  if(halfDay){
+    // Halber Tag: Bis = Von (immer nur 1 Tag)
+    const toVal=from;
+    absences.push({id:nextAbsId++,empId,type,from,to:toVal,note,status:document.getElementById('ab-status').value,halfDay:true});
+  } else {
+    absences.push({id:nextAbsId++,empId,type,from,to,note,status:document.getElementById('ab-status').value,halfDay:false});
+  }
   const lastAbs=absences[absences.length-1];
   try{ const nid=await dbSaveAbsence({...lastAbs,_new:true}); lastAbs.id=nid; }catch(err){showDbError('DB Fehler: '+err.message);return;}
   closeM('mo-abs');document.getElementById('ab-note').value='';
@@ -2023,8 +2054,8 @@ function renderVacation(){
   const list=employees.filter(e=>e.active&&(empFilter===null||e.id===empFilter));
   document.getElementById('vac-tbody').innerHTML=list.map(e=>{
     // Feiertage werden NIE als Urlaubstage gezählt!
-    const used=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
-    const pending=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&a.status==='beantragt'&&a.from.startsWith(year)).reduce((s,a)=>s+wDays(a.from,a.to),0);
+    const used=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&(a.status==='genehmigt'||a.status==='urlaub_genossen')&&a.from.startsWith(year)).reduce((s,a)=>s+absDays(a),0);
+    const pending=absences.filter(a=>a.empId===e.id&&a.type==='urlaub'&&a.status==='beantragt'&&a.from.startsWith(year)).reduce((s,a)=>s+absDays(a),0);
     const total=e.carry+e.vacation;
     const effFree=total-used-pending;
     const rest=total-used;
@@ -2113,18 +2144,20 @@ function renderMonthView(){
 
   const tbody=document.getElementById('mv-tbody');
   if(!filtered.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink2)">Keine Einträge</td></tr>';document.getElementById('mv-summary-card').style.display='none';return;}
-  const tl={normal:'Büro',homeoffice:'🏠 HO'};
-  const totW=filtered.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  const tl={normal:'Büro',homeoffice:'🏠 HO',zeitausgleich:'🔄 ZA'};
+  const totW=filtered.filter(e=>e.type!=='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  const totZA=filtered.filter(e=>e.type==='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   // Soll über alle AT des Monats — gleiche Logik wie Mehrstunden
   const empIdsInView=[...new Set(filtered.map(e=>e.empId))];
   const totS=empIdsInView.reduce((s,eid)=>s+getMonthSoll(eid,mv),0);
   const saldo=totW-totS;
   document.getElementById('mv-summary-card').style.display='block';
   document.getElementById('mv-summary').innerHTML=`
-    <div><div class="sc-l">Arbeitstage</div><div class="sc-v">${filtered.length}</div></div>
+    <div><div class="sc-l">Arbeitstage im Monat</div><div class="sc-v">${wDays(mv+'-01', mv+'-31')}</div></div>
     <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
+    ${totZA>0?`<div><div class="sc-l" style="color:var(--bl)">🔄 ZA-Konsum</div><div class="sc-v tmono" style="color:var(--bl)">-${fmt(totZA)}</div></div>`:''}
     <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
-    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)'  :'var(--rd)'}">${saldo>=0?'+':''  }${fmt(saldo)}</div></div>`;
+    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}">${saldo>=0?'+':''}${fmt(saldo)}</div></div>`;
   tbody.innerHTML=filtered.map(e=>{
     const wm=calcWork(e.start,e.end,e.breakMin);
     const sollMin=getSollMin(e.empId,e.date);
@@ -2295,7 +2328,7 @@ function exportMonthToCSV(month,empId){
   csv+=`\nAbwesenheiten ${mName}\n`;
   csv+=`Mitarbeiter;Art;Von;Bis;Arbeitstage;Status;Notiz\n`;
   const monthAbs=absences.filter(a=>{const from=new Date(a.from),to=new Date(a.to);const mStart=new Date(y,m-1,1),mEnd=new Date(y,m,0);return from<=mEnd&&to>=mStart&&(empId===null||a.empId===empId);});
-  monthAbs.forEach(a=>{csv+=`${empName(a.empId)};${absTypeLabel[a.type]||a.type};${a.from};${a.to};${wDays(a.from,a.to)};${absStatusLabel[a.status]||a.status};${a.note||''}\n`;});
+  monthAbs.forEach(a=>{csv+=`${empName(a.empId)};${absTypeLabel[a.type]||a.type};${a.from};${a.to};${absDays(a)};${absStatusLabel[a.status]||a.status};${a.note||''}\n`;});
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`NBS_Zeiterfassung_${month}${empId?'_'+empName(empId).replace(' ','_'):''}.csv`;link.click();
 }
@@ -2318,18 +2351,24 @@ function renderOT(){
     if(isHoliday(e.date))return;
     const[y,m]=e.date.split('-');
     const monthKey=y+'-'+m;
-    if(monthKey<cutoffStr)return; // älter als 3 Monate ignorieren
+    if(monthKey<cutoffStr)return;
     const k=e.empId+'_'+monthKey;
-    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[]};
+    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],zaMins:0};
     const wm=calcWork(e.start,e.end,e.breakMin);
-    groups[k].mins.push(wm);
+    if(e.type==='zeitausgleich'){
+      // ZA-Eintrag: Stunden vom Guthaben abziehen (nicht als IST zählen)
+      groups[k].zaMins+=wm;
+    } else {
+      groups[k].mins.push(wm);
+    }
   });
 
   const rows=Object.values(groups).map(g=>{
     const ist=g.mins.reduce((s,m)=>s+m,0);
-    const soll=getMonthSoll(g.empId,g.month); // Soll über ALLE AT des Monats
-    const mehr=ist-soll; // kann negativ sein (Minusstunden)
-    return{...g,soll,ist,mehr};
+    const soll=getMonthSoll(g.empId,g.month);
+    const arbeitsSaldo=ist-soll; // Arbeitssaldo (kann negativ sein)
+    const mehr=arbeitsSaldo-(g.zaMins||0); // ZA-Konsum reduziert das Guthaben
+    return{...g,soll,ist,zaMins:g.zaMins||0,arbeitsSaldo,mehr};
   }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
 
   // ZA: kein IST-Zusatz — ZA verrechnet sich gegen den Arbeitssaldo via za_carry
@@ -2369,11 +2408,13 @@ function renderOT(){
     runningMap[r.empId]+=r.mehr;
     const laufend=runningMap[r.empId];
     const mSaldo=r.mehr;
+    const zaH=r.zaMins||0;
     return '<tr>'+
       '<td><b>'+empName(r.empId)+'</b></td>'+
       '<td>'+r.month+'</td>'+
       '<td class="tmono">'+fmt(r.soll)+'</td>'+
       '<td class="tmono">'+fmt(r.ist)+'</td>'+
+      '<td class="tmono" style="color:'+(zaH>0?'var(--bl)':'var(--ink3)')+'">'+( zaH>0?'-'+fmt(zaH):'—')+'</td>'+
       '<td class="tmono" style="color:'+(mSaldo<0?'var(--rd)':mSaldo>=OT_WARN_MIN?'var(--or)':'inherit')+';font-weight:'+(mSaldo!==0?600:400)+'">'+(mSaldo>0?'+':'')+fmt(mSaldo)+'</td>'+
       '<td class="tmono" style="color:'+(laufend<0?'var(--rd)':laufend>=OT_WARN_MIN?'var(--or)':'var(--gr)')+';font-weight:600">'+(laufend>0?'+':'')+fmt(laufend)+'</td>'+
     '</tr>';
@@ -2485,7 +2526,7 @@ function renderVacationWarnings(){
     const committedDays = absences.filter(a=>
       a.empId===emp.id && a.type==='urlaub' &&
       (a.status==='genehmigt' || a.status==='beantragt' || a.status==='urlaub_genossen')
-    ).reduce((s,a)=>s+wDays(a.from,a.to),0);
+    ).reduce((s,a)=>s+absDays(a),0);
     const total = (emp.vacation||0) + (emp.carry||0);
     const remaining = total - committedDays;
     // Nur warnen wenn noch mehr als 5 Tage offen UND kein genehmigter Urlaub in der Zukunft
@@ -2638,7 +2679,7 @@ async function loadFromSupabase() {
     absences = absRes.data.map(a => ({
       id: a.id, empId: a.emp_id, type: a.type,
       from: a.from_date, to: a.to_date,
-      note: a.note || '', status: a.status
+      note: a.note || '', status: a.status, halfDay: a.half_day||false
     }));
 
     if (moodRes.data) {
@@ -2745,6 +2786,7 @@ async function dbSaveAbsence(abs) {
     emp_id: abs.empId, type: abs.type,
     from_date: abs.from, to_date: abs.to,
     note: abs.note || '', status: abs.status,
+    half_day: abs.halfDay||false,
     updated_at: new Date().toISOString()
   };
   if (abs.id && !abs._new) {
