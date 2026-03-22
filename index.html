@@ -1924,7 +1924,8 @@ function editEmp(id){const e=employees.find(x=>x.id===id);if(!e)return;['id','fi
 async function saveEmployee(){
   const id=parseInt(document.getElementById('ee-id').value);const e=employees.find(x=>x.id===id);if(!e)return;
   ['first','last','role','email','model','contract','birthday'].forEach(k=>{e[k]=document.getElementById('ee-'+k).value;});
-  ['hours','vacation','carry'].forEach(k=>{e[k]=parseInt(document.getElementById('ee-'+k).value)||0;});
+  ['vacation','carry'].forEach(k=>{e[k]=parseInt(document.getElementById('ee-'+k).value)||0;});
+  e.hours=parseFloat(document.getElementById('ee-hours').value)||0;
   e.za_carry=parseFloat(document.getElementById('ee-za-carry')?.value)||0;
   const s2=document.getElementById('ee-start2');if(s2&&s2.value)e.start=s2.value;
   const exitVal=document.getElementById('ee-exit')?.value||'';
@@ -2123,8 +2124,13 @@ function mvMonthStep(dir){
 function mvBuildEmpChips(){
   const box=document.getElementById('mv-emp-chips');
   if(!box)return;
-  const hidden=document.getElementById('mv-emp');
-  const active=String(hidden?hidden.value:'alle');
+  let hidden=document.getElementById('mv-emp');
+  if(!hidden){
+    hidden=document.createElement('input');
+    hidden.type='hidden'; hidden.id='mv-emp'; hidden.value='alle';
+    box.parentNode.insertBefore(hidden,box);
+  }
+  const active=String(hidden.value||'alle');
   const list=isAdmin()
     ?employees.filter(e=>e.active).sort((a,b)=>a.last.localeCompare(b.last,'de'))
     :[employees.find(e=>e.id===currentUser?.empId)].filter(Boolean);
