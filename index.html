@@ -2117,21 +2117,26 @@ function mvBuildEmpChips(){
   const box=document.getElementById('mv-emp-chips');
   if(!box)return;
   const hidden=document.getElementById('mv-emp');
-  const active=hidden?hidden.value:'alle';
-  const list=isAdmin()?employees.filter(e=>e.active):[employees.find(e=>e.id===currentUser?.empId)].filter(Boolean);
-  const chips=[{id:'alle',label:'Alle'},...list.map(e=>({id:e.id,label:e.first+' '+e.last}))];
-  box.innerHTML=chips.map(ch=>`<button
-    onclick="mvSelectEmp(${JSON.stringify(ch.id)})"
-    style="padding:5px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--bd);
-    background:${String(active)===String(ch.id)?'var(--ac)':'var(--sf2)'};
-    color:${String(active)===String(ch.id)?'#fff':'var(--ink)'};
-    font-weight:${String(active)===String(ch.id)?'600':'400'}"
-  >${ch.label}</button>`).join('');
+  const active=String(hidden?hidden.value:'alle');
+  const list=isAdmin()
+    ?employees.filter(e=>e.active).sort((a,b)=>a.last.localeCompare(b.last,'de'))
+    :[employees.find(e=>e.id===currentUser?.empId)].filter(Boolean);
+  const chips=[{id:'alle',label:'Alle'},...list.map(e=>({id:String(e.id),label:e.first+' '+e.last}))];
+  box.innerHTML='';
+  chips.forEach(ch=>{
+    const sel=active===ch.id;
+    const btn=document.createElement('button');
+    btn.textContent=ch.label;
+    btn.dataset.empId=ch.id;
+    btn.style.cssText='padding:5px 14px;border-radius:20px;font-size:13px;cursor:pointer;border:1px solid var(--bd);background:'+(sel?'var(--ac)':'var(--sf2)')+';color:'+(sel?'#fff':'var(--ink)')+';font-weight:'+(sel?'600':'400');
+    btn.addEventListener('click',()=>mvSelectEmp(ch.id));
+    box.appendChild(btn);
+  });
 }
 
 function mvSelectEmp(id){
   const hidden=document.getElementById('mv-emp');
-  if(hidden)hidden.value=id;
+  if(hidden)hidden.value=String(id);
   mvBuildEmpChips();
   renderMonthView();
 }
