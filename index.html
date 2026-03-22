@@ -493,7 +493,7 @@ tr:hover td{background:#faf8f5}
   <div id="mv-signed-banner" style="display:none;margin-bottom:14px"></div>
   
   <div class="card" id="mv-summary-card" style="margin-bottom:14px;display:none">
-    <div class="cb" style="display:flex;flex-wrap:wrap;gap:12px" id="mv-summary"></div>
+    <div class="cb" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px" id="mv-summary"></div>
   </div>
   <div class="card"><div class="cb" style="padding:0">
     <table><thead><tr><th>Datum</th><th>Mitarbeiter</th><th>Typ</th><th>Kommen</th><th>Gehen</th><th>Pause</th><th>Ist</th><th>Soll</th><th>Saldo</th><th></th></tr></thead>
@@ -590,7 +590,7 @@ tr:hover td{background:#faf8f5}
     <input type="hidden" id="ee-id">
     <div class="fr c2"><div><label>Vorname</label><input id="ee-first"></div><div><label>Nachname</label><input id="ee-last"></div></div>
     <div class="fr c2"><div><label>Funktion</label><input id="ee-role"></div><div><label>E-Mail</label><input type="email" id="ee-email"></div></div>
-    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" <input type="number" id="ee-hours" min="1" max="60" step="0.5"></div></div>
+    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60" step="0.5"></div></div>
     <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div><div><label>⏱️ ZA-Übertrag VJ (Std) <span style="font-size:11px;color:var(--ink3);font-weight:400">negativ = Minusstunden</span></label><input type="number" id="ee-za-carry" step="0.5"></div></div>
     <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
     <div class="fr c2"><div><label>📅 Eintrittsdatum</label><input type="date" id="ee-start2"></div><div><label>🚪 Austrittsdatum <span style="font-weight:400;color:var(--ink3)">(optional)</span></label><input type="date" id="ee-exit" onchange="updateAliquotInfo()"></div></div>
@@ -1924,8 +1924,7 @@ function editEmp(id){const e=employees.find(x=>x.id===id);if(!e)return;['id','fi
 async function saveEmployee(){
   const id=parseInt(document.getElementById('ee-id').value);const e=employees.find(x=>x.id===id);if(!e)return;
   ['first','last','role','email','model','contract','birthday'].forEach(k=>{e[k]=document.getElementById('ee-'+k).value;});
-  ['vacation','carry'].forEach(k=>{e[k]=parseInt(document.getElementById('ee-'+k).value)||0;});
-  e.hours=parseFloat(document.getElementById('ee-hours').value)||0;
+  ['hours','vacation','carry'].forEach(k=>{e[k]=parseInt(document.getElementById('ee-'+k).value)||0;});
   e.za_carry=parseFloat(document.getElementById('ee-za-carry')?.value)||0;
   const s2=document.getElementById('ee-start2');if(s2&&s2.value)e.start=s2.value;
   const exitVal=document.getElementById('ee-exit')?.value||'';
@@ -2124,16 +2123,8 @@ function mvMonthStep(dir){
 function mvBuildEmpChips(){
   const box=document.getElementById('mv-emp-chips');
   if(!box)return;
-  // Hidden input sicherstellen (kann durch innerHTML-Resets verloren gehen)
-  let hidden=document.getElementById('mv-emp');
-  if(!hidden){
-    hidden=document.createElement('input');
-    hidden.type='hidden';
-    hidden.id='mv-emp';
-    hidden.value='alle';
-    box.parentNode.insertBefore(hidden,box);
-  }
-  const active=String(hidden.value||'alle');
+  const hidden=document.getElementById('mv-emp');
+  const active=String(hidden?hidden.value:'alle');
   const list=isAdmin()
     ?employees.filter(e=>e.active).sort((a,b)=>a.last.localeCompare(b.last,'de'))
     :[employees.find(e=>e.id===currentUser?.empId)].filter(Boolean);
@@ -2160,10 +2151,7 @@ function mvSelectEmp(id){
 
 // ══ MONTH VIEW ══
 function renderMonthView(){
-  // Hidden input sicherstellen bevor wir den Wert lesen
-  let _mvEmp=document.getElementById('mv-emp');
-  if(!_mvEmp){const box=document.getElementById('mv-emp-chips');if(box){_mvEmp=document.createElement('input');_mvEmp.type='hidden';_mvEmp.id='mv-emp';_mvEmp.value='alle';box.parentNode.insertBefore(_mvEmp,box);}}
-  const empF=(_mvEmp?.value)||'alle';
+  const empF=(document.getElementById('mv-emp')?.value)||'alle';
   const mv=document.getElementById('mv-month')?.value;if(!mv)return;
   const[y,m]=mv.split('-').map(Number);
   let filtered=entries.filter(e=>{const d=new Date(e.date);return d.getFullYear()===y&&d.getMonth()+1===m&&(empF==='alle'||e.empId==empF);});
