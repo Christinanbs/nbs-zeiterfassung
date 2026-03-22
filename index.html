@@ -2222,21 +2222,36 @@ function renderMonthView(){
   const totW=filtered.filter(e=>e.type!=='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   const totZA=filtered.filter(e=>e.type==='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   // ZA aus absences (genehmigter ZA-Antrag) dazurechnen
+  // ZA aus absences — NUR Tage die im gewählten Monat (mv) liegen
   const totZAabs=absences.filter(a=>{
     if(a.type!=='zeitausgleich')return false;
     if(a.status==='abgelehnt')return false;
     if(empF!=='alle'&&a.empId!=empF)return false;
-    if(!isAdmin()&&currentUser.empId)return a.empId===currentUser.empId;
+    if(!isAdmin()&&currentUser.empId&&a.empId!==currentUser.empId)return false;
+    // Nur wenn der ZA im gewählten Monat liegt
     return a.from.slice(0,7)===mv||a.to.slice(0,7)===mv;
   }).reduce((s,a)=>{
-    // Nur Tage die in diesem Monat liegen
-    return s+datesBetween(a.from,a.to||a.from).filter(d=>d.slice(0,7)===mv&&!isHoliday(d)).reduce((ss,d)=>ss+getSollMin(empF!=='alle'?parseInt(empF):a.empId,d),0);
+    // Nur Tage die exakt in diesem Monat liegen
+    return s+datesBetween(a.from,a.to||a.from)
+      .filter(d=>d.slice(0,7)===mv&&!isHoliday(d))
+      .reduce((ss,d)=>ss+getSollMin(empF!=='alle'?parseInt(empF):a.empId,d),0);
   },0);
   const totZAgesamt=totZA+totZAabs;
+  // Zukünftige genehmigte ZA (Datum nach heute, aber im gewählten Monat)
+  const todayForZA=TODAY;
+  const futureZA=absences.filter(a=>{
+    if(a.type!=='zeitausgleich')return false;
+    if(a.status==='abgelehnt'||a.status==='beantragt')return false;
+    if(empF!=='alle'&&a.empId!=empF)return false;
+    if(!isAdmin()&&currentUser.empId&&a.empId!==currentUser.empId)return false;
+    return (a.from||'').slice(0,7)===mv&&(a.from||'')>todayForZA;
+  }).reduce((s,a)=>{
+    return s+datesBetween(a.from,a.to||a.from).filter(d=>d.slice(0,7)===mv&&!isHoliday(d)).reduce((ss,d)=>ss+getSollMin(empF!=='alle'?parseInt(empF):a.empId,d),0);
+  },0);
   // Soll über alle AT des Monats — gleiche Logik wie Mehrstunden
   const empIdsInView=[...new Set(filtered.map(e=>e.empId))];
   const totS=empIdsInView.reduce((s,eid)=>s+getMonthSoll(eid,mv),0);
-  const saldo=totW-totS-(totZA); // ZA-Konsum reduziert Saldo
+  const saldo=totW-totS; // reiner Arbeitssaldo (Ist minus Soll)
 
   // Vormonat-Übertrag berechnen
   // Alle Monate vor dem gewählten Monat kumulieren (gleiche Logik wie Mehrstunden)
@@ -2262,7 +2277,8 @@ function renderMonthView(){
     <div><div class="sc-l">Monatssaldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}"><b>${saldo>=0?'+':''}${fmt(saldo)}</b></div></div>
     ${(empF!=='alle'&&empF)?('<div><div class="sc-l" style="color:var(--ink2)">Übertrag Vormonat</div><div class="sc-v tmono" style="color:'+(prevSaldo>=0?'var(--gr)':'var(--rd)')+'">'+(prevSaldo>=0?'+':'')+fmt(prevSaldo)+'</div></div>'):''}
     ${(empF!=='alle'&&empF)?('<div><div class="sc-l"><b>Kumulierter Saldo</b></div><div class="sc-v tmono" style="color:'+((prevSaldo+saldo)>=0?'var(--gr)':'var(--rd)')+'"><b>'+((prevSaldo+saldo)>=0?'+':'')+fmt(prevSaldo+saldo)+'</b></div></div>'):''}
-    ${totZAgesamt>0?('<div><div class="sc-l" style="color:var(--bl)">🔄 ZA genommen</div><div class="sc-v tmono" style="color:var(--bl)">-'+fmt(totZAgesamt)+'</div></div>'):''}`;
+    ${totZAgesamt>0?('<div><div class="sc-l" style="color:var(--bl)">🔄 ZA genommen</div><div class="sc-v tmono" style="color:var(--bl)">-'+fmt(totZAgesamt)+'</div></div>'):''}
+    ${futureZA>0?('<div><div class="sc-l" style="color:#8B5CF6">📅 ZA genehmigt (noch offen)</div><div class="sc-v tmono" style="color:#8B5CF6">-'+fmt(futureZA)+'</div></div>'):''}`;
   tbody.innerHTML=filtered.map(e=>{
     const wm=calcWork(e.start,e.end,e.breakMin);
     const sollMin=getSollMin(e.empId,e.date);
