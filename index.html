@@ -987,19 +987,17 @@ function getMonthSoll(empId, monthKey){
   // firstDay: später von Monatsanfang und Eintrittsdatum
   const firstDay=(empStart&&empStart>firstOfMonth)?empStart:firstOfMonth;
 
-  // lastDay: bis zum letzten Eintragsdatum des Mitarbeiters in diesem Monat
-  // (nicht bis heute — nur was eingetragen ist zählt)
-  const empEntries=entries.filter(e=>e.empId===empId&&e.date.slice(0,7)===monthKey);
+  // lastDay: IMMER bis zum letzten Eintragsdatum des Mitarbeiters
+  // Vergangene UND laufende Monate: nur bis wohin eingetragen wurde
+  const empEntries=entries.filter(e=>e.empId===empId&&e.date.slice(0,7)===monthKey&&e.type!=='zeitausgleich');
   const lastEntryDate=empEntries.length
-    ?empEntries.map(e=>e.date).sort().slice(-1)[0]  // letzter Eintrag
+    ?empEntries.map(e=>e.date).sort().slice(-1)[0]
     :null;
   const todayStr=TODAY;
-  const isCurrentMonth=monthKey===todayStr.slice(0,7);
-  // Für vergangene Monate: voller Monat (alle Arbeitstage)
-  // Für laufenden Monat: bis zum letzten Eintrag (oder heute wenn kein Eintrag)
-  let lastDay=isCurrentMonth
-    ?(lastEntryDate&&lastEntryDate<todayStr?lastEntryDate:todayStr)
-    :lastOfMonth;
+  // Wenn keine Einträge: kein Soll (0)
+  // Wenn Einträge: bis zum letzten Eintrag
+  let lastDay=lastEntryDate||null;
+  if(!lastDay)return 0; // keine Einträge = kein Soll
 
   // Austrittsdatum
   if(empExit&&empExit<lastDay)lastDay=empExit;
@@ -2429,7 +2427,7 @@ function renderOT(){
     const monthKey=y+'-'+m;
     if(monthKey<cutoffStr)return;
     const k=e.empId+'_'+monthKey;
-    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],zaMins:0};
+    if(!groups[k])groups[k]={empId:e.empId,month:monthKey,mins:[],zaMins:0,zaDisplay:0};
     const wm=calcWork(e.start,e.end,e.breakMin);
     if(e.type==='zeitausgleich'){
       // ZA-Eintrag: Stunden vom Guthaben abziehen (nicht als IST zählen)
@@ -2443,11 +2441,11 @@ function renderOT(){
     const ist=g.mins.reduce((s,m)=>s+m,0);
     const soll=getMonthSoll(g.empId,g.month);
     const arbeitsSaldo=ist-soll; // Arbeitssaldo (kann negativ sein)
-    const mehr=arbeitsSaldo-(g.zaMins||0); // ZA-Konsum reduziert das Guthaben
-    return{...g,soll,ist,zaMins:g.zaMins||0,arbeitsSaldo,mehr};
+    const mehr=arbeitsSaldo-(g.zaMins||0); // ZA aus entries (selbst eingetragen) reduziert Guthaben
+    const zaDisplay=g.zaMins||0; // ZA zur Anzeige (nur selbst eingetragener ZA)
+    return{...g,soll,zaDisplay,ist,zaMins:g.zaMins||0,arbeitsSaldo,mehr};
   }).sort((a,b)=>a.empId-b.empId||a.month.localeCompare(b.month));
 
-  // ZA: kein IST-Zusatz — ZA verrechnet sich gegen den Arbeitssaldo via za_carry
   // Kumulierter Saldo pro Mitarbeiter (za_carry als Startwert)
   const saldoMap={};
   rows.forEach(r=>{
@@ -2484,7 +2482,7 @@ function renderOT(){
     runningMap[r.empId]+=r.mehr;
     const laufend=runningMap[r.empId];
     const mSaldo=r.mehr;
-    const zaH=r.zaMins||0;
+    const zaH=r.zaDisplay||0; // Gesamt ZA zur Anzeige
     return '<tr>'+
       '<td><b>'+empName(r.empId)+'</b></td>'+
       '<td>'+r.month+'</td>'+
