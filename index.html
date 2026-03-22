@@ -991,8 +991,11 @@ function getMonthSoll(empId, monthKey){
   // lastDay: IMMER bis zum letzten Eintragsdatum des Mitarbeiters
   // Vergangene UND laufende Monate: nur bis wohin eingetragen wurde
   const empEntries=entries.filter(e=>e.empId===empId&&e.date.slice(0,7)===monthKey&&e.type!=='zeitausgleich');
-  const lastEntryDate=empEntries.length
-    ?empEntries.map(e=>e.date).sort().slice(-1)[0]
+  // ZA-Einträge auch für lastDay berücksichtigen
+  const zaEntries=entries.filter(e=>e.empId===empId&&e.date.slice(0,7)===monthKey&&e.type==='zeitausgleich');
+  const allRelevantEntries=[...empEntries,...zaEntries];
+  const lastEntryDate=allRelevantEntries.length
+    ?allRelevantEntries.map(e=>e.date).sort().slice(-1)[0]
     :null;
   const todayStr=TODAY;
   // Wenn keine Einträge: kein Soll (0)
