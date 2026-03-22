@@ -987,10 +987,19 @@ function getMonthSoll(empId, monthKey){
   // firstDay: später von Monatsanfang und Eintrittsdatum
   const firstDay=(empStart&&empStart>firstOfMonth)?empStart:firstOfMonth;
 
-  // lastDay: laufender Monat nur bis heute
-  const todayStr=TODAY; // YYYY-MM-DD String
+  // lastDay: bis zum letzten Eintragsdatum des Mitarbeiters in diesem Monat
+  // (nicht bis heute — nur was eingetragen ist zählt)
+  const empEntries=entries.filter(e=>e.empId===empId&&e.date.slice(0,7)===monthKey);
+  const lastEntryDate=empEntries.length
+    ?empEntries.map(e=>e.date).sort().slice(-1)[0]  // letzter Eintrag
+    :null;
+  const todayStr=TODAY;
   const isCurrentMonth=monthKey===todayStr.slice(0,7);
-  let lastDay=isCurrentMonth?todayStr:lastOfMonth;
+  // Für vergangene Monate: voller Monat (alle Arbeitstage)
+  // Für laufenden Monat: bis zum letzten Eintrag (oder heute wenn kein Eintrag)
+  let lastDay=isCurrentMonth
+    ?(lastEntryDate&&lastEntryDate<todayStr?lastEntryDate:todayStr)
+    :lastOfMonth;
 
   // Austrittsdatum
   if(empExit&&empExit<lastDay)lastDay=empExit;
