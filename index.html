@@ -2280,13 +2280,8 @@ function renderMonthView(){
       if(m>=mv)break;
       const mEntries=entries.filter(e=>e.empId===empIdSingle&&e.date.slice(0,7)===m&&e.type!=='zeitausgleich');
       const mIst=mEntries.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
-      const mZA=entries.filter(e=>e.empId===empIdSingle&&e.date.slice(0,7)===m&&e.type==='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
-      // ZA aus Abwesenheiten (genehmigter ZA-Antrag) auch abziehen
-      const mZAabs=absences.filter(a=>a.empId===empIdSingle&&a.type==='zeitausgleich'&&a.status!=='abgelehnt'&&(a.from.slice(0,7)===m||a.to.slice(0,7)===m)).reduce((s,a)=>{
-        return s+datesBetween(a.from,a.to||a.from).filter(d=>d.slice(0,7)===m&&!isHoliday(d)).reduce((ss,d)=>ss+getSollMin(empIdSingle,d),0);
-      },0);
       const mSoll=getMonthSoll(empIdSingle,m);
-      prevSaldo+=(mIst-mSoll-mZA-mZAabs);
+      prevSaldo+=(mIst-mSoll);
     }
   }
   document.getElementById('mv-summary-card').style.display='block';
