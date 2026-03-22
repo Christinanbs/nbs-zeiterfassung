@@ -574,7 +574,7 @@ tr:hover td{background:#faf8f5}
       <div><label>Modell</label><select id="ne-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div>
     </div>
     <div class="fr c3">
-      <div><label>Wochenstunden</label><input type="number" id="ne-hours" value="40" min="1" max="60"></div>
+      <div><label>Wochenstunden</label><input type="number" id="ne-hours" value="40" min="1" max="60" step="0.5"></div>
       <div><label>Jahresurlaub (Tage)</label><input type="number" id="ne-vacation" value="25"></div>
       <div><label>Urlaubsübertrag VJ</label><input type="number" id="ne-carry" value="0"></div>
     </div>
@@ -590,7 +590,7 @@ tr:hover td{background:#faf8f5}
     <input type="hidden" id="ee-id">
     <div class="fr c2"><div><label>Vorname</label><input id="ee-first"></div><div><label>Nachname</label><input id="ee-last"></div></div>
     <div class="fr c2"><div><label>Funktion</label><input id="ee-role"></div><div><label>E-Mail</label><input type="email" id="ee-email"></div></div>
-    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60"></div></div>
+    <div class="fr c2"><div><label>Modell</label><select id="ee-model"><option value="vollzeit">Vollzeit</option><option value="teilzeit">Teilzeit</option><option value="allin">All-In</option></select></div><div><label>Wochenstunden</label><input type="number" id="ee-hours" min="1" max="60" step="0.5"></div></div>
     <div class="fr c2"><div><label>Jahresurlaub (Tage)</label><input type="number" id="ee-vacation"></div><div><label>Urlaubsübertrag VJ</label><input type="number" id="ee-carry"></div><div><label>⏱️ ZA-Übertrag VJ (Std) <span style="font-size:11px;color:var(--ink3);font-weight:400">negativ = Minusstunden</span></label><input type="number" id="ee-za-carry" step="0.5"></div></div>
     <div class="fr c2"><div><label>🔗 Arbeitsvertrag Link</label><input type="url" id="ee-contract"></div><div><label>🎂 Geburtstag</label><input type="date" id="ee-birthday"></div></div>
     <div class="fr c2"><div><label>📅 Eintrittsdatum</label><input type="date" id="ee-start2"></div><div><label>🚪 Austrittsdatum <span style="font-weight:400;color:var(--ink3)">(optional)</span></label><input type="date" id="ee-exit" onchange="updateAliquotInfo()"></div></div>
@@ -2221,17 +2221,48 @@ function renderMonthView(){
   const tl={normal:'Büro',homeoffice:'🏠 HO',zeitausgleich:'🔄 ZA'};
   const totW=filtered.filter(e=>e.type!=='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
   const totZA=filtered.filter(e=>e.type==='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+  // ZA aus absences (genehmigter ZA-Antrag) dazurechnen
+  const totZAabs=absences.filter(a=>{
+    if(a.type!=='zeitausgleich')return false;
+    if(a.status==='abgelehnt')return false;
+    if(empF!=='alle'&&a.empId!=empF)return false;
+    if(!isAdmin()&&currentUser.empId)return a.empId===currentUser.empId;
+    return a.from.slice(0,7)===mv||a.to.slice(0,7)===mv;
+  }).reduce((s,a)=>{
+    // Nur Tage die in diesem Monat liegen
+    return s+datesBetween(a.from,a.to||a.from).filter(d=>d.slice(0,7)===mv&&!isHoliday(d)).reduce((ss,d)=>ss+getSollMin(empF!=='alle'?parseInt(empF):a.empId,d),0);
+  },0);
+  const totZAgesamt=totZA+totZAabs;
   // Soll über alle AT des Monats — gleiche Logik wie Mehrstunden
   const empIdsInView=[...new Set(filtered.map(e=>e.empId))];
   const totS=empIdsInView.reduce((s,eid)=>s+getMonthSoll(eid,mv),0);
-  const saldo=totW-totS;
+  const saldo=totW-totS-(totZA); // ZA-Konsum reduziert Saldo
+
+  // Vormonat-Übertrag berechnen
+  // Alle Monate vor dem gewählten Monat kumulieren (gleiche Logik wie Mehrstunden)
+  const [mvY,mvM]=mv.split('-').map(Number);
+  let prevSaldo=0;
+  if(empF!=='alle'&&empF){
+    const empIdSingle=parseInt(empF);
+    const emp=employees.find(e=>e.id===empIdSingle);
+    prevSaldo=Math.round((emp?.za_carry||0)*60); // za_carry als Basis
+    // Alle Monate vor diesem aufaddieren
+    const allMonths=[...new Set(entries.filter(e=>e.empId===empIdSingle&&!ALLIN_IDS?.includes(e.empId)).map(e=>e.date.slice(0,7)))].sort();
+    for(const m of allMonths){
+      if(m>=mv)break;
+      const mEntries=entries.filter(e=>e.empId===empIdSingle&&e.date.slice(0,7)===m&&e.type!=='zeitausgleich');
+      const mIst=mEntries.reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+      const mZA=entries.filter(e=>e.empId===empIdSingle&&e.date.slice(0,7)===m&&e.type==='zeitausgleich').reduce((s,e)=>s+calcWork(e.start,e.end,e.breakMin),0);
+      const mSoll=getMonthSoll(empIdSingle,m);
+      prevSaldo+=(mIst-mSoll-mZA);
+    }
+  }
   document.getElementById('mv-summary-card').style.display='block';
   document.getElementById('mv-summary').innerHTML=`
-    <div><div class="sc-l">Arbeitstage im Monat</div><div class="sc-v">${wDays(mv+'-01', mv+'-31')}</div></div>
-    <div><div class="sc-l">Ist-Stunden</div><div class="sc-v tmono">${fmt(totW)}</div></div>
-    ${totZA>0?`<div><div class="sc-l" style="color:var(--bl)">🔄 ZA-Konsum</div><div class="sc-v tmono" style="color:var(--bl)">-${fmt(totZA)}</div></div>`:''}
-    <div><div class="sc-l">Soll-Stunden</div><div class="sc-v tmono">${fmt(totS)}</div></div>
-    <div><div class="sc-l">Saldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}">${saldo>=0?'+':''}${fmt(saldo)}</div></div>`;
+    <div><div class="sc-l">Monatssaldo</div><div class="sc-v tmono" style="color:${saldo>=0?'var(--gr)':'var(--rd)'}"><b>${saldo>=0?'+':''}${fmt(saldo)}</b></div></div>
+    ${(empF!=='alle'&&empF)?('<div><div class="sc-l" style="color:var(--ink2)">Übertrag Vormonat</div><div class="sc-v tmono" style="color:'+(prevSaldo>=0?'var(--gr)':'var(--rd)')+'">'+(prevSaldo>=0?'+':'')+fmt(prevSaldo)+'</div></div>'):''}
+    ${(empF!=='alle'&&empF)?('<div><div class="sc-l"><b>Kumulierter Saldo</b></div><div class="sc-v tmono" style="color:'+((prevSaldo+saldo)>=0?'var(--gr)':'var(--rd)')+'"><b>'+((prevSaldo+saldo)>=0?'+':'')+fmt(prevSaldo+saldo)+'</b></div></div>'):''}
+    ${totZAgesamt>0?('<div><div class="sc-l" style="color:var(--bl)">🔄 ZA genommen</div><div class="sc-v tmono" style="color:var(--bl)">-'+fmt(totZAgesamt)+'</div></div>'):''}`;
   tbody.innerHTML=filtered.map(e=>{
     const wm=calcWork(e.start,e.end,e.breakMin);
     const sollMin=getSollMin(e.empId,e.date);
