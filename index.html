@@ -1235,8 +1235,9 @@ async function addManual(){
   if(!empId){alert('Mitarbeiter wählen.');return;}
   const date=document.getElementById('m-date').value;if(!date){alert('Datum fehlt.');return;}
   const start=document.getElementById('m-start').value,end=document.getElementById('m-end').value;
+  const mType=document.getElementById('m-type').value;
   if(!start||!end){alert('Kommen und Gehen ausfüllen.');return;}
-  if(pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
+  if(mType!=='zeitausgleich'&&pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
   const existing=entries.filter(e=>e.empId===empId&&e.date===date);
   if(existing.length>0){
     const emp=employees.find(e=>e.id===empId);
@@ -1266,8 +1267,9 @@ async function addManualAdmin(){
   if(!date){alert('Bitte Datum auswählen.');return;}
   const start=document.getElementById('m-start-db').value;
   const end=document.getElementById('m-end-db').value;
+  const mTypeDb=document.getElementById('m-type-db').value;
   if(!start||!end){alert('Kommen und Gehen ausfüllen.');return;}
-  if(pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
+  if(mTypeDb!=='zeitausgleich'&&pt(end)<=pt(start)){alert('Endzeit muss nach Startzeit liegen.');return;}
   const existing=entries.filter(e=>e.empId===empId&&e.date===date);
   if(existing.length>0){
     const emp=employees.find(e=>e.id===empId);
