@@ -2123,8 +2123,16 @@ function mvMonthStep(dir){
 function mvBuildEmpChips(){
   const box=document.getElementById('mv-emp-chips');
   if(!box)return;
-  const hidden=document.getElementById('mv-emp');
-  const active=String(hidden?hidden.value:'alle');
+  // Hidden input sicherstellen (kann durch innerHTML-Resets verloren gehen)
+  let hidden=document.getElementById('mv-emp');
+  if(!hidden){
+    hidden=document.createElement('input');
+    hidden.type='hidden';
+    hidden.id='mv-emp';
+    hidden.value='alle';
+    box.parentNode.insertBefore(hidden,box);
+  }
+  const active=String(hidden.value||'alle');
   const list=isAdmin()
     ?employees.filter(e=>e.active).sort((a,b)=>a.last.localeCompare(b.last,'de'))
     :[employees.find(e=>e.id===currentUser?.empId)].filter(Boolean);
