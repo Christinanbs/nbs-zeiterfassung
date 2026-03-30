@@ -850,7 +850,7 @@ async function saveEditEntry(){
   // Apply changes
   e.start=s; e.end=end; e.breakMin=b; e.date=date; e.type=type; e.note=note; e.manual=true;
   closeM('mo-edit-entry');
-  try{ await dbSaveEntry(entries.find(x=>x.id===id)); }catch(err){showDbError('DB Fehler: '+err.message);}
+  try{ await dbSaveEntry(e); }catch(err){showDbError('DB Fehler: '+err.message);}
   renderTodayTable();
   if(document.getElementById('page-monatsansicht').classList.contains('active'))renderMonthView();
   // Confirmation
